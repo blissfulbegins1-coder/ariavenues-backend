@@ -1,0 +1,12 @@
+node_modules
+dist
+app.log
+.env
+.Prettierrc
+codeql-db
+codeql-queries
+js-queries
+tools
+setup-codeql.sh
+owasp-results.csv
+.DS_Store
