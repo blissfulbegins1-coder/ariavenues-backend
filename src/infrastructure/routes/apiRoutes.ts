@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { AwilixContainer } from 'awilix';
 import { IContainer } from '../ioc/registry';
-import { setupUserRoutes } from './userRoutes';
+import { setupUserRoutes } from './user/userRoutes';
 
 // Main API Router - centralizes all API routes
 export const setupApiRoutes = (container: AwilixContainer<IContainer>): Router => {
@@ -12,7 +12,6 @@ export const setupApiRoutes = (container: AwilixContainer<IContainer>): Router =
 
   // Mount other routes as needed
   // router.use('/admin', setupAdminRoutes(container));
-  // router.use('/booking', setupBookingRoutes(container));
 
   return router;
 };

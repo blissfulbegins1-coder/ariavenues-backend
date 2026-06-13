@@ -5,9 +5,9 @@ import {
   asClass,
 } from "awilix";
 import { DatabaseService } from "../services/mongodb/DatabaseService";
-import { UserRepository } from "../../repositories/UserRepository";
-import { UserEngine } from "../../engines/UserEngine";
-import { UserUseCase } from "../../useCases/User/UserUseCase";
+import { UserRepository } from "../../repositories/user/UserRepository";
+import { UserEngine } from "../../engines/user/UserEngine";
+import { UserUseCase } from "../../useCases/user/UserUseCase";
 import { UserController } from "../../controllers/UserController";
 
 // Type-safe container registry

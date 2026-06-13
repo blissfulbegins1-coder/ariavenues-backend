@@ -1,7 +1,6 @@
 import { User } from '../../domain/entities/User';
 import { CreateUserDTO } from '../../domain/dtos/user/CreateUserDTO';
 
-// Single interface for all User operations
-export interface IUserUseCase {
-  create(input: CreateUserDTO): Promise<User>;
+export interface IUserEngine {
+  createUser(data: CreateUserDTO): Promise<User>; 
 }
