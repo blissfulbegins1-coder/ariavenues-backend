@@ -7,14 +7,18 @@ import {
 import { DatabaseService } from "../services/mongodb/DatabaseService";
 import { UserRepository } from "../../repositories/user/UserRepository";
 import { UserEngine } from "../../engines/user/UserEngine";
+import { JwtManagementEngine } from "../../engines/jwt/JwtManagementEngine";
 import { UserUseCase } from "../../useCases/user/UserUseCase";
 import { UserController } from "../../controllers/UserController";
+import { OtpService } from "../services/otp/OtpService";
 
 // Type-safe container registry
 export interface IContainer {
   databaseService: DatabaseService;
+  otpService: OtpService;
   userRepository: UserRepository;
   userEngine: UserEngine;
+  jwtManagementEngine: JwtManagementEngine;
   userUseCase: UserUseCase;
   userController: UserController;
 }
@@ -29,18 +33,21 @@ export const setupContainer = (): AwilixContainer<IContainer> => {
   container.register({
     // Services
     databaseService: asClass(DatabaseService).singleton(),
+    otpService: asClass(OtpService).singleton(),
 
     // Repositories
     userRepository: asClass(UserRepository).singleton(),
 
     // Engines
     userEngine: asClass(UserEngine).singleton(),
+    jwtManagementEngine: asClass(JwtManagementEngine).singleton(),
 
     // Use Cases
     userUseCase: asClass(UserUseCase).singleton(),
 
     // Controllers
     userController: asClass(UserController).singleton(),
+
 
     // Ready for future services:
     // LogsRepository: asClass(LogsRepository).singleton(),

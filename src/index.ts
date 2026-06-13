@@ -1,10 +1,7 @@
-import dotenv from "dotenv";
+import "dotenv/config";
 import { setupContainer } from "./infrastructure/ioc/registry";
 import { Server } from "./infrastructure/webServer/server";
 import { DatabaseService } from "./infrastructure/services/mongodb/DatabaseService";
-
-// Load environment variables
-dotenv.config();
 
 const main = async (): Promise<void> => {
   try {

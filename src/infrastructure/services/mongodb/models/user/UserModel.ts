@@ -10,21 +10,33 @@ const userSchema = new Schema<User>(
     },
     email: {
       type: String,
-      required: true,
-      unique: true,
+      required: false,
       lowercase: true,
     },
-    phone: {
+    mobile: {
       type: String,
       required: true,
+      unique: true,
+    },
+    mobileVerified: {
+      type: Boolean,
+      required: true,
+      default: false,
     },
     role: {
       type: String,
-      enum: ['admin', 'user', 'moderator'],
-      default: 'user',
+      enum: ['customer', 'owner', 'admin'],
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ['active', 'blocked', 'deleted'],
+      required: true,
+      default: 'active',
     },
   },
   { timestamps: true } // auto adds createdAt and updatedAt
 );
+
 
 export const UserModel = mongoose.model<User>('User', userSchema);

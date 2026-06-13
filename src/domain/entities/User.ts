@@ -2,9 +2,12 @@
 export interface User {
   id: string;
   name: string;
-  email: string;
-  phone: string;
-  role: 'admin' | 'user' | 'moderator';
+  mobile: string;
+  email?: string; // optional
+  mobileVerified: boolean;
+  role: 'customer' | 'owner' | 'admin';
+  status: 'active' | 'blocked' | 'deleted';
   createdAt: Date;
   updatedAt: Date;
 }
+

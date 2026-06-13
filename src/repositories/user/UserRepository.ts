@@ -7,13 +7,66 @@ import { IUserRepository } from './IUserRepository';
 // Repository Implementation - talks to MongoDB through Mongoose
 export class UserRepository implements IUserRepository {
   async create(data: CreateUserDTO): Promise<User> {
-    const existingUser = await UserModel.findOne({ email: data.email });
+    const existingUser = await UserModel.findOne({ mobile: data.mobile });
     if (existingUser) {
-      throw new UserAlreadyExistsError(data.email);
+      throw new UserAlreadyExistsError(data.mobile);
     }
 
-    const user = new UserModel(data);
+    const user = new UserModel({
+      ...data,
+      mobileVerified: false,
+      status: 'active',
+    });
     await user.save();
-    return user.toObject() as User;
+    
+    const userObj = user.toObject();
+    return {
+      id: userObj._id.toString(),
+      name: userObj.name,
+      mobile: userObj.mobile,
+      email: userObj.email,
+      mobileVerified: userObj.mobileVerified,
+      role: userObj.role,
+      status: userObj.status,
+      createdAt: userObj.createdAt,
+      updatedAt: userObj.updatedAt,
+    } as User;
+  }
+
+  async findByMobile(mobile: string): Promise<User | null> {
+    const user = await UserModel.findOne({ mobile });
+    if (!user) return null;
+    
+    const userObj = user.toObject();
+    return {
+      id: userObj._id.toString(),
+      name: userObj.name,
+      mobile: userObj.mobile,
+      email: userObj.email,
+      mobileVerified: userObj.mobileVerified,
+      role: userObj.role,
+      status: userObj.status,
+      createdAt: userObj.createdAt,
+      updatedAt: userObj.updatedAt,
+    } as User;
+  }
+
+  async update(id: string, data: Partial<User>): Promise<User | null> {
+    const user = await UserModel.findByIdAndUpdate(id, data, { new: true });
+    if (!user) return null;
+    
+    const userObj = user.toObject();
+    return {
+      id: userObj._id.toString(),
+      name: userObj.name,
+      mobile: userObj.mobile,
+      email: userObj.email,
+      mobileVerified: userObj.mobileVerified,
+      role: userObj.role,
+      status: userObj.status,
+      createdAt: userObj.createdAt,
+      updatedAt: userObj.updatedAt,
+    } as User;
   }
 }
+

@@ -7,10 +7,31 @@ export const setupUserRoutes = (container: AwilixContainer<IContainer>): Router 
   const router = Router();
   const userController = container.resolve('userController');
 
-  // POST /user - Create a new user
-  router.post('/', async (req: Request, res: Response, next: NextFunction) =>
-    userController.create(req, res, next)
+  // POST /user/signup - Initiate user signup and send OTP
+  router.post('/signup', async (req: Request, res: Response, next: NextFunction) =>
+    userController.signUp(req, res, next)
+  );
+
+  // POST /user/verify-otp - Verify OTP and complete signup
+  router.post('/verify-otp', async (req: Request, res: Response, next: NextFunction) =>
+    userController.verifyOtp(req, res, next)
+  );
+
+  // POST /user/resend-otp - Resend OTP
+  router.post('/resend-otp', async (req: Request, res: Response, next: NextFunction) =>
+    userController.resendOtp(req, res, next)
+  );
+
+  // POST /user/signin - Initiate user sign in and send OTP
+  router.post('/signin', async (req: Request, res: Response, next: NextFunction) =>
+    userController.signIn(req, res, next)
+  );
+
+  // POST /user/signin/verify - Verify sign in OTP and login user
+  router.post('/signin/verify', async (req: Request, res: Response, next: NextFunction) =>
+    userController.verifySignInOtp(req, res, next)
   );
 
   return router;
 };
+
