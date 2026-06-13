@@ -5,7 +5,7 @@ import { ErrorCode } from "./ErrorCode";
 export class UserNotFoundError extends AppError {
   constructor(identifier?: string) {
     super(
-      identifier ? `User with identifier ${identifier} not found` : "User details not found",
+      identifier ? `User not found` : "User details not found",
       ErrorCode.UserNotFound
     );
     this.name = "UserNotFoundError";
@@ -14,7 +14,7 @@ export class UserNotFoundError extends AppError {
 
 export class UserAlreadyExistsError extends AppError {
   constructor(identifier: string) {
-    super(`User with identifier ${identifier} already exists`, ErrorCode.UserAlreadyExists);
+    super(`User already exists`, ErrorCode.UserAlreadyExists);
     this.name = "UserAlreadyExistsError";
   }
 }
