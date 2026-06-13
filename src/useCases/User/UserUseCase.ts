@@ -116,10 +116,6 @@ export class UserUseCase implements IUserUseCase {
       throw new UserNotFoundError(mobile);
     }
 
-    if (user.mobileVerified) {
-      throw new InvalidUserDataError('Mobile number already verified and registered');
-    }
-
     await this.otpService.sendOtp(mobile);
 
     return {
