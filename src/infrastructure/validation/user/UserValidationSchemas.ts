@@ -1,20 +1,25 @@
 import * as yup from 'yup';
 
+const mobileValidation = yup
+  .string()
+  .required('Mobile number is required')
+  .matches(/^(91)?\d{10}$/, 'Mobile number must be a valid 10-digit number (optionally prefixed with 91)');
+
 // Validation Schema for signing up a user
 export const signUpSchema = yup.object().shape({
   name: yup
     .string()
     .required('Name is required')
+    .trim()
     .min(1, 'Name must be at least 1 characters')
     .max(100, 'Name must not exceed 100 characters'),
   email: yup
     .string()
     .optional()
+    .trim()
+    .transform((value) => (value ? value.toLowerCase() : value))
     .email('Email must be a valid email address'),
-  mobile: yup
-    .string()
-    .required('Mobile number is required')
-    .matches(/^\d{10,}$/, 'Mobile number must be at least 10 digits'),
+  mobile: mobileValidation,
   role: yup
     .string()
     .required('Role is required')
@@ -23,10 +28,7 @@ export const signUpSchema = yup.object().shape({
 
 // Validation Schema for verifying OTP
 export const verifyOtpSchema = yup.object().shape({
-  mobile: yup
-    .string()
-    .required('Mobile number is required')
-    .matches(/^\d{10,}$/, 'Mobile number must be at least 10 digits'),
+  mobile: mobileValidation,
   otp: yup
     .string()
     .required('OTP is required')
@@ -35,10 +37,7 @@ export const verifyOtpSchema = yup.object().shape({
 
 // Validation Schema for resending OTP
 export const resendOtpSchema = yup.object().shape({
-  mobile: yup
-    .string()
-    .required('Mobile number is required')
-    .matches(/^\d{10,}$/, 'Mobile number must be at least 10 digits'),
+  mobile: mobileValidation,
 });
 
 // Validation Schema for ID parameter
@@ -51,22 +50,8 @@ export const idParamSchema = yup.object().shape({
 
 // Validation Schema for signing in a user
 export const signInSchema = yup.object().shape({
-  mobile: yup
-    .string()
-    .required('Mobile number is required')
-    .matches(/^\d{10,}$/, 'Mobile number must be at least 10 digits'),
+  mobile: mobileValidation,
 });
 
-// Validation Schema for verifying sign in OTP
-export const verifySignInOtpSchema = yup.object().shape({
-  mobile: yup
-    .string()
-    .required('Mobile number is required')
-    .matches(/^\d{10,}$/, 'Mobile number must be at least 10 digits'),
-  otp: yup
-    .string()
-    .required('OTP is required')
-    .matches(/^\d{4,6}$/, 'OTP must be 4 to 6 digits'),
-});
 
 

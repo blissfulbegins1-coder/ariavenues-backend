@@ -7,21 +7,14 @@ type UserEngineConstructorParams = {
   userRepository: IUserRepository;
 };
 
-// User Engine - handles business logic and data preparation
 export class UserEngine implements IUserEngine {
   private userRepository: IUserRepository;
-  
   constructor({ userRepository }: UserEngineConstructorParams) {
     this.userRepository = userRepository;
   }
 
   async createUser(data: CreateUserDTO): Promise<User> {
-    const preparedData = {
-      ...data,
-      email: data.email ? data.email.toLowerCase() : undefined,
-    };
-
-    return await this.userRepository.create(preparedData);
+    return await this.userRepository.create(data);
   }
 
   async getUserByMobile(mobile: string): Promise<User | null> {

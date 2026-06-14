@@ -1,8 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import * as yup from 'yup';
 
+interface HttpError extends Error {
+  status?: number;
+  statusCode?: number;
+}
+
 // Error Handling Middleware - centralizes error responses
-export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+export const errorHandler = (err: HttpError, req: Request, res: Response, next: NextFunction) => {
   // Handle Yup Validation Errors
   if (err instanceof yup.ValidationError) {
     const validationErrors: Record<string, string[]> = {};

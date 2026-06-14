@@ -1,11 +1,11 @@
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
 import { jwtExpiry, secret } from "../../domain/constants/constants";
 import { IJwtManagementEngine } from "./IJwtManagementEngine";
 
 export class JwtManagementEngine implements IJwtManagementEngine {
   generateToken(payload: object): string {
     return jwt.sign(payload, secret, {
-      expiresIn: jwtExpiry as any,
+      expiresIn: jwtExpiry as unknown as SignOptions['expiresIn'],
     });
   }
 

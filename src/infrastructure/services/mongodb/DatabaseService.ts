@@ -7,8 +7,8 @@ export class DatabaseService {
 
   constructor() {
     // Load database configuration from environment
-    this.databaseUri = process.env.DATABASE_URI || 'mongodb://localhost:27017';
-    this.databaseName = process.env.DATABASE_NAME || 'auditorium-booking';
+    this.databaseUri = process.env.DATABASE_URI!;
+    this.databaseName = process.env.DATABASE_NAME!;
   }
 
   /**
@@ -61,7 +61,7 @@ export class DatabaseService {
   /**
    * Get database configuration
    */
-  getConfig() {
+  getConfig(): { uri: string; name: string; fullUri: string } {
     return {
       uri: this.databaseUri,
       name: this.databaseName,

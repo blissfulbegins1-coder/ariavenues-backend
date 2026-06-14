@@ -1,6 +1,11 @@
 import { auth_Key, baseUrl, templateId, otpTimeout } from '../../../domain/constants/constants';
 import { InvalidUserDataError } from '../../../domain/errors/UserErrors';
 
+interface Msg91Response {
+  type: 'success' | 'error';
+  message: string;
+}
+
 export class OtpService {
   /**
    * Send OTP via MSG91
@@ -23,14 +28,15 @@ export class OtpService {
         },
       });
 
-      const result = await response.json() as any;
+      const result = await response.json() as Msg91Response;
       if (result.type === 'success') {
         return true;
       }
       throw new Error(result.message || 'Failed to send OTP via MSG91');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error sending OTP:', error);
-      throw new Error(`OTP send failed: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`OTP send failed: ${message}`);
     }
   }
 
@@ -67,14 +73,15 @@ export class OtpService {
         },
       });
 
-      const result = await response.json() as any;
+      const result = await response.json() as Msg91Response;
       if (result.type === 'success') {
         return true;
       }
       throw new InvalidUserDataError(result.message || 'Invalid OTP');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error verifying OTP:', error);
-      throw new Error(`OTP verification failed: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`OTP verification failed: ${message}`);
     }
   }
 }
