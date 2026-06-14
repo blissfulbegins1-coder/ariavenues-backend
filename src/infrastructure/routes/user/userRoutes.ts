@@ -27,11 +27,6 @@ export const setupUserRoutes = (container: AwilixContainer<IContainer>): Router 
     userController.signIn(req, res, next)
   );
 
-  // POST /user/signin/verify - Verify sign in OTP and login user
-  router.post('/signin/verify', async (req: Request, res: Response, next: NextFunction) =>
-    userController.verifySignInOtp(req, res, next)
-  );
-
   return router;
 };
 

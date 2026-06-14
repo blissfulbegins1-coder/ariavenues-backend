@@ -73,9 +73,9 @@ export class UserUseCase implements IUserUseCase {
   }
 
   /**
-   * Verify OTP - verifies code with MSG91 and activates the user
+   * Verify OTP - verifies code with MSG91, activates the user if needed, and returns user/token/redirect info
    */
-  async verifyOtp(mobile: string, otp: string): Promise<{ user: User; token: string }> {
+  async verifyOtp(mobile: string, otp: string): Promise<{ user: User; token: string; redirectUrl: string }> {
     // 1. Find the pending/existing user
     const user = await this.userEngine.getUserByMobile(mobile);
     if (!user) {
@@ -85,16 +85,29 @@ export class UserUseCase implements IUserUseCase {
     // 2. Verify OTP via service
     await this.otpService.verifyOtp(mobile, otp);
 
-    // 3. Mark user as verified
-    const updatedUser = await this.userEngine.updateUser(user.id, {
-      mobileVerified: true,
-    });
-
-    if (!updatedUser) {
-      throw new Error('Failed to update user verification status');
+    // 3. Mark user as verified (if not already verified)
+    let updatedUser = user;
+    if (!user.mobileVerified) {
+      const result = await this.userEngine.updateUser(user.id, {
+        mobileVerified: true,
+      });
+      if (!result) {
+        throw new Error('Failed to update user verification status');
+      }
+      updatedUser = result;
     }
 
-    // 4. Generate JWT
+    // 4. Calculate redirectUrl based on role
+    let redirectUrl = '/';
+    if (updatedUser.role === 'customer') {
+      redirectUrl = '/';
+    } else if (updatedUser.role === 'owner') {
+      redirectUrl = '/owner/dashboard';
+    } else if (updatedUser.role === 'admin') {
+      redirectUrl = '/admin/dashboard';
+    }
+
+    // 5. Generate JWT
     const token = this.jwtManagementEngine.generateToken({
       id: updatedUser.id,
       role: updatedUser.role,
@@ -104,6 +117,7 @@ export class UserUseCase implements IUserUseCase {
     return {
       user: updatedUser,
       token,
+      redirectUrl,
     };
   }
 
@@ -149,39 +163,7 @@ export class UserUseCase implements IUserUseCase {
     };
   }
 
-  /**
-   * Verify sign in OTP and return navigation route
-   */
-  async verifySignInOtp(mobile: string, otp: string): Promise<{ user: User; token: string; redirectUrl: string }> {
-    const user = await this.userEngine.getUserByMobile(mobile);
-    if (!user) {
-      throw new UserNotFoundError(mobile);
-    }
 
-    await this.otpService.verifyOtp(mobile, otp);
-
-    let redirectUrl = '/';
-    if (user.role === 'customer') {
-      redirectUrl = '/';
-    } else if (user.role === 'owner') {
-      redirectUrl = '/owner/dashboard';
-    } else if (user.role === 'admin') {
-      redirectUrl = '/admin/dashboard';
-    }
-
-    // Generate JWT
-    const token = this.jwtManagementEngine.generateToken({
-      id: user.id,
-      role: user.role,
-      mobile: user.mobile,
-    });
-
-    return {
-      user,
-      token,
-      redirectUrl,
-    };
-  }
 }
 
 

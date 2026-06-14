@@ -6,7 +6,6 @@ import {
   verifyOtpSchema,
   resendOtpSchema,
   signInSchema,
-  verifySignInOtpSchema,
 } from '../infrastructure/validation/user/UserValidationSchemas';
 
 
@@ -40,7 +39,7 @@ export class UserController {
   }
 
   /**
-   * Verify OTP and complete signup
+   * Verify OTP and complete sign-up/sign-in
    */
   async verifyOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -51,10 +50,10 @@ export class UserController {
       });
 
       const result = await this.userUseCase.verifyOtp(validatedData.mobile, validatedData.otp);
-      res.status(201).json({
+      res.status(200).json({
         success: true,
         data: result,
-        message: 'User registered and mobile verified successfully',
+        message: 'Verification successful',
       });
     } catch (error: any) {
       next(error); // Pass to error handling middleware
@@ -96,26 +95,7 @@ export class UserController {
     }
   }
 
-  /**
-   * Verify sign in OTP and return navigation route
-   */
-  async verifySignInOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const validatedData = await verifySignInOtpSchema.validate(req.body, {
-        abortEarly: false,
-        strict: true,
-      });
 
-      const result = await this.userUseCase.verifySignInOtp(validatedData.mobile, validatedData.otp);
-      res.status(200).json({
-        success: true,
-        data: result,
-        message: 'Sign in successful',
-      });
-    } catch (error: any) {
-      next(error);
-    }
-  }
 }
 
 

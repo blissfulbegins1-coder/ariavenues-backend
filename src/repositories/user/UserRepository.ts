@@ -52,7 +52,7 @@ export class UserRepository implements IUserRepository {
   }
 
   async update(id: string, data: Partial<User>): Promise<User | null> {
-    const user = await UserModel.findByIdAndUpdate(id, data, { new: true });
+    const user = await UserModel.findByIdAndUpdate(id, data, { returnDocument: 'after' });
     if (!user) return null;
     
     const userObj = user.toObject();
