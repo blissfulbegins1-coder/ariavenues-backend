@@ -1,7 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import { User } from '../../../../../domain/entities/User';
 
-// Mongoose Schema - defines MongoDB structure
 const userSchema = new Schema<User>(
   {
     name: {
@@ -35,7 +34,7 @@ const userSchema = new Schema<User>(
       default: 'active',
     },
   },
-  { timestamps: true } // auto adds createdAt and updatedAt
+  { timestamps: true }
 );
 
 
