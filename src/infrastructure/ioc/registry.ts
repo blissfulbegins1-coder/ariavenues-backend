@@ -11,6 +11,10 @@ import { JwtManagementEngine } from "../../engines/jwt/JwtManagementEngine";
 import { UserUseCase } from "../../useCases/user/UserUseCase";
 import { UserController } from "../../controllers/UserController";
 import { OtpService } from "../services/otp/OtpService";
+import { AuditoriumRepository } from "../../repositories/auditorium/AuditoriumRepository";
+import { AuditoriumEngine } from "../../engines/auditorium/AuditoriumEngine";
+import { AuditoriumUseCase } from "../../useCases/auditorium/AuditoriumUseCase";
+import { AuditoriumController } from "../../controllers/AuditoriumController";
 
 // Type-safe container registry
 export interface IContainer {
@@ -21,7 +25,12 @@ export interface IContainer {
   jwtManagementEngine: JwtManagementEngine;
   userUseCase: UserUseCase;
   userController: UserController;
+  auditoriumRepository: AuditoriumRepository;
+  auditoriumEngine: AuditoriumEngine;
+  auditoriumUseCase: AuditoriumUseCase;
+  auditoriumController: AuditoriumController;
 }
+
 
 // Setup Awilix DI Container
 export const setupContainer = (): AwilixContainer<IContainer> => {
@@ -37,16 +46,20 @@ export const setupContainer = (): AwilixContainer<IContainer> => {
 
     // Repositories
     userRepository: asClass(UserRepository).singleton(),
+    auditoriumRepository: asClass(AuditoriumRepository).singleton(),
 
     // Engines
     userEngine: asClass(UserEngine).singleton(),
+    auditoriumEngine: asClass(AuditoriumEngine).singleton(),
     jwtManagementEngine: asClass(JwtManagementEngine).singleton(),
 
     // Use Cases
     userUseCase: asClass(UserUseCase).singleton(),
+    auditoriumUseCase: asClass(AuditoriumUseCase).singleton(),
 
     // Controllers
     userController: asClass(UserController).singleton(),
+    auditoriumController: asClass(AuditoriumController).singleton(),
 
 
     // Ready for future services:

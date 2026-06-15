@@ -23,6 +23,12 @@ export class Server {
     this.app.use(express.json({ limit: "100mb" }));
     this.app.use(express.urlencoded({ limit: "100mb", extended: false }));
 
+    // Attach Awilix DI container to requests
+    this.app.use((req, res, next) => {
+      req.container = this.container;
+      next();
+    });
+
     // CORS middleware
     this.app.use(
       cors({
