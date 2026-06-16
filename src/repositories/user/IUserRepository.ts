@@ -1,5 +1,5 @@
-import { User } from '../../domain/entities/User';
-import { CreateUserDTO } from '../../domain/dtos/user/CreateUserDTO';
+import { User } from "../../domain/entities/User";
+import { CreateUserDTO } from "../../domain/dtos/user/CreateUserDTO";
 
 // Repository Interface - contract for data access
 export interface IUserRepository {
@@ -7,4 +7,3 @@ export interface IUserRepository {
   findByMobile(mobile: string): Promise<User | null>;
   update(id: string, data: Partial<User>): Promise<User | null>;
 }
-

@@ -1,14 +1,14 @@
-import { CreateUserDTO } from '../../domain/dtos/user/CreateUserDTO';
-import { IUserEngine } from '../../engines/user/IUserEngine';
-import { IJwtManagementEngine } from '../../engines/jwt/IJwtManagementEngine';
-import { IUserUseCase } from './IUserUseCase';
-import { OtpService } from '../../infrastructure/services/otp/OtpService';
-import { REDIRECT_PATHS } from '../../domain/constants/constants';
+import { CreateUserDTO } from "../../domain/dtos/user/CreateUserDTO";
+import { IUserEngine } from "../../engines/user/IUserEngine";
+import { IJwtManagementEngine } from "../../engines/jwt/IJwtManagementEngine";
+import { IUserUseCase } from "./IUserUseCase";
+import { OtpService } from "../../infrastructure/services/otp/OtpService";
+import { REDIRECT_PATHS } from "../../domain/constants/constants";
 import {
   UserNotFoundError,
   UserAlreadyExistsError,
   InvalidUserDataError,
-} from '../../domain/errors/UserErrors';
+} from "../../domain/errors/UserErrors";
 
 type UserUseCaseConstructorParams = {
   userEngine: IUserEngine;
@@ -21,13 +21,19 @@ export class UserUseCase implements IUserUseCase {
   private otpService: OtpService;
   private jwtManagementEngine: IJwtManagementEngine;
 
-  constructor({ userEngine, otpService, jwtManagementEngine }: UserUseCaseConstructorParams) {
+  constructor({
+    userEngine,
+    otpService,
+    jwtManagementEngine,
+  }: UserUseCaseConstructorParams) {
     this.userEngine = userEngine;
     this.otpService = otpService;
     this.jwtManagementEngine = jwtManagementEngine;
   }
 
-  async signUp(input: CreateUserDTO): Promise<{ success: boolean; message: string }> {
+  async signUp(
+    input: CreateUserDTO,
+  ): Promise<{ success: boolean; message: string }> {
     const existingUser = await this.userEngine.getUserByMobile(input.mobile);
     if (existingUser) {
       if (existingUser.mobileVerified) {
@@ -47,14 +53,18 @@ export class UserUseCase implements IUserUseCase {
 
     return {
       success: true,
-      message: 'OTP sent successfully',
+      message: "OTP sent successfully",
     };
   }
 
-  /**
-   * Verify OTP - verifies code with MSG91, activates the user if needed, and returns user/token/redirect info
-   */
-  async verifyOtp(mobile: string, otp: string): Promise<{ user: { id: string; name: string }; token: string; redirectUrl: string }> {
+  async verifyOtp(
+    mobile: string,
+    otp: string,
+  ): Promise<{
+    user: { id: string; name: string };
+    token: string;
+    redirectUrl: string;
+  }> {
     // 1. Find the pending/existing user
     const user = await this.userEngine.getUserByMobile(mobile);
     if (!user) {
@@ -71,7 +81,7 @@ export class UserUseCase implements IUserUseCase {
         mobileVerified: true,
       });
       if (!result) {
-        throw new Error('Failed to update user verification status');
+        throw new Error("Failed to update user verification status");
       }
       updatedUser = result;
     }
@@ -96,7 +106,9 @@ export class UserUseCase implements IUserUseCase {
     };
   }
 
-  async resendOtp(mobile: string): Promise<{ success: boolean; message: string }> {
+  async resendOtp(
+    mobile: string,
+  ): Promise<{ success: boolean; message: string }> {
     const user = await this.userEngine.getUserByMobile(mobile);
     if (!user) {
       throw new UserNotFoundError(mobile);
@@ -106,7 +118,7 @@ export class UserUseCase implements IUserUseCase {
 
     return {
       success: true,
-      message: 'OTP resent successfully',
+      message: "OTP resent successfully",
     };
   }
 
@@ -117,17 +129,16 @@ export class UserUseCase implements IUserUseCase {
     }
 
     if (!user.mobileVerified) {
-      throw new InvalidUserDataError('User mobile is not verified. Please complete verification via signup');
+      throw new InvalidUserDataError(
+        "User mobile is not verified. Please complete verification via signup",
+      );
     }
 
     await this.otpService.sendOtp(mobile);
 
     return {
       success: true,
-      message: 'OTP sent successfully',
+      message: "OTP sent successfully",
     };
   }
 }
-
-
-

@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 // Database Service - handles all MongoDB configuration and connection
 export class DatabaseService {
@@ -27,7 +27,7 @@ export class DatabaseService {
       await mongoose.connect(mongoUri);
       console.log(`✓ MongoDB connected to ${this.databaseName}`);
     } catch (error) {
-      console.error('✗ Failed to connect to MongoDB:', error);
+      console.error("✗ Failed to connect to MongoDB:", error);
       throw error;
     }
   }
@@ -38,9 +38,9 @@ export class DatabaseService {
   async disconnect(): Promise<void> {
     try {
       await mongoose.disconnect();
-      console.log('✓ MongoDB disconnected');
+      console.log("✓ MongoDB disconnected");
     } catch (error) {
-      console.error('✗ Failed to disconnect from MongoDB:', error);
+      console.error("✗ Failed to disconnect from MongoDB:", error);
       throw error;
     }
   }
@@ -53,7 +53,7 @@ export class DatabaseService {
       await mongoose.connection.db?.admin().ping();
       return true;
     } catch (error) {
-      console.error('✗ MongoDB health check failed:', error);
+      console.error("✗ MongoDB health check failed:", error);
       return false;
     }
   }

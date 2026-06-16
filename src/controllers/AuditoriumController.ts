@@ -1,9 +1,12 @@
-import { Request, Response, NextFunction } from 'express';
-import { IAuditoriumUseCase } from '../useCases/auditorium/IAuditoriumUseCase';
-import { CreateAuditoriumDTO } from '../domain/dtos/auditorium/CreateAuditoriumDTO';
-import { UpdateAuditoriumDTO } from '../domain/dtos/auditorium/UpdateAuditoriumDTO';
-import { createAuditoriumSchema, updateAuditoriumSchema } from '../infrastructure/validation/auditorium/AuditoriumValidationSchemas';
-import UserTokenDto from '../domain/dtos/user/UserTokenDto';
+import { Request, Response, NextFunction } from "express";
+import { IAuditoriumUseCase } from "../useCases/auditorium/IAuditoriumUseCase";
+import { CreateAuditoriumDTO } from "../domain/dtos/auditorium/CreateAuditoriumDTO";
+import { UpdateAuditoriumDTO } from "../domain/dtos/auditorium/UpdateAuditoriumDTO";
+import {
+  createAuditoriumSchema,
+  updateAuditoriumSchema,
+} from "../infrastructure/validation/auditorium/AuditoriumValidationSchemas";
+import UserTokenDto from "../domain/dtos/user/UserTokenDto";
 
 type AuditoriumControllerConstructorParams = {
   auditoriumUseCase: IAuditoriumUseCase;
@@ -27,7 +30,7 @@ export class AuditoriumController {
         {
           abortEarly: false,
           stripUnknown: true,
-        }
+        },
       );
 
       await this.auditoriumUseCase.createAuditorium({
@@ -37,17 +40,20 @@ export class AuditoriumController {
 
       res.status(201).json({
         success: true,
-        message: 'Auditorium created successfully',
+        message: "Auditorium created successfully",
       });
     } catch (error) {
       next(error);
     }
   }
 
-  async getMyAuditoriums(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getMyAuditoriums(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const user = req.user as UserTokenDto;
-
       const result = await this.auditoriumUseCase.getOwnerAuditoriums(user);
       res.status(200).json({
         success: true,
@@ -58,7 +64,11 @@ export class AuditoriumController {
     }
   }
 
-  async getPublicAuditoriums(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getPublicAuditoriums(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const result = await this.auditoriumUseCase.getPublicAuditoriums();
       res.status(200).json({
@@ -70,12 +80,20 @@ export class AuditoriumController {
     }
   }
 
-  async getAuditoriumById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getAuditoriumById(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { id } = req.params;
-      const result = await this.auditoriumUseCase.getAuditoriumById(id as string);
+      const result = await this.auditoriumUseCase.getAuditoriumById(
+        id as string,
+      );
       if (!result) {
-        res.status(404).json({ success: false, message: 'Auditorium not found' });
+        res
+          .status(404)
+          .json({ success: false, message: "Auditorium not found" });
         return;
       }
       res.status(200).json({
@@ -100,15 +118,19 @@ export class AuditoriumController {
         {
           abortEarly: false,
           stripUnknown: true,
-        }
+        },
       );
 
-      const result = await this.auditoriumUseCase.updateAuditorium(id as string, user, validatedData as UpdateAuditoriumDTO);
+      const result = await this.auditoriumUseCase.updateAuditorium(
+        id as string,
+        user,
+        validatedData as UpdateAuditoriumDTO,
+      );
 
       res.status(200).json({
         success: true,
         data: result,
-        message: 'Auditorium updated successfully',
+        message: "Auditorium updated successfully",
       });
     } catch (error) {
       next(error);

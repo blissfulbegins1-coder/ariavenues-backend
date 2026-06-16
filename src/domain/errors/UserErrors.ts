@@ -6,7 +6,7 @@ export class UserNotFoundError extends AppError {
   constructor(identifier?: string) {
     super(
       identifier ? `User not found` : "User details not found",
-      ErrorCode.UserNotFound
+      ErrorCode.UserNotFound,
     );
     this.name = "UserNotFoundError";
   }

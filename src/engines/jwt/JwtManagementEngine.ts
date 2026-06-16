@@ -5,7 +5,7 @@ import { IJwtManagementEngine } from "./IJwtManagementEngine";
 export class JwtManagementEngine implements IJwtManagementEngine {
   generateToken(payload: object): string {
     return jwt.sign(payload, secret, {
-      expiresIn: jwtExpiry as unknown as SignOptions['expiresIn'],
+      expiresIn: jwtExpiry as unknown as SignOptions["expiresIn"],
     });
   }
 

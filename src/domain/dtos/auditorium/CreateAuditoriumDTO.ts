@@ -9,5 +9,5 @@ export interface CreateAuditoriumDTO {
   dayRate: number; // INR
   amenities: string[];
   images: Express.Multer.File[] | string[];
-  status?: 'draft' | 'maintenance' | 'active';
+  status?: "draft" | "maintenance" | "active";
 }

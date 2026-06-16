@@ -33,7 +33,6 @@ export interface IContainer {
   auditoriumController: AuditoriumController;
 }
 
-
 // Setup Awilix DI Container
 export const setupContainer = (): AwilixContainer<IContainer> => {
   const container = createContainer<IContainer>({
@@ -63,7 +62,6 @@ export const setupContainer = (): AwilixContainer<IContainer> => {
     // Controllers
     userController: asClass(UserController).singleton(),
     auditoriumController: asClass(AuditoriumController).singleton(),
-
 
     // Ready for future services:
     // LogsRepository: asClass(LogsRepository).singleton(),

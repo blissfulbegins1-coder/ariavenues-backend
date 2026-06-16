@@ -1,8 +1,8 @@
-import { Auditorium } from '../../domain/entities/Auditorium';
-import { CreateAuditoriumDTO } from '../../domain/dtos/auditorium/CreateAuditoriumDTO';
-import { IAuditoriumRepository } from '../../repositories/auditorium/IAuditoriumRepository';
-import { IAuditoriumEngine } from './IAuditoriumEngine';
-import UserTokenDto from '../../domain/dtos/user/UserTokenDto';
+import { Auditorium } from "../../domain/entities/Auditorium";
+import { CreateAuditoriumDTO } from "../../domain/dtos/auditorium/CreateAuditoriumDTO";
+import { IAuditoriumRepository } from "../../repositories/auditorium/IAuditoriumRepository";
+import { IAuditoriumEngine } from "./IAuditoriumEngine";
+import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 
 type AuditoriumEngineConstructorParams = {
   auditoriumRepository: IAuditoriumRepository;
@@ -31,7 +31,10 @@ export class AuditoriumEngine implements IAuditoriumEngine {
     return await this.auditoriumRepository.findById(id);
   }
 
-  async updateAuditorium(id: string, data: Partial<Auditorium>): Promise<Auditorium> {
+  async updateAuditorium(
+    id: string,
+    data: Partial<Auditorium>,
+  ): Promise<Auditorium> {
     return await this.auditoriumRepository.update(id, data);
   }
 }

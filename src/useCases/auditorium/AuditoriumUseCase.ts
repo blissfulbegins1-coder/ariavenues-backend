@@ -1,10 +1,10 @@
-import { Auditorium } from '../../domain/entities/Auditorium';
-import { CreateAuditoriumDTO } from '../../domain/dtos/auditorium/CreateAuditoriumDTO';
-import { UpdateAuditoriumDTO } from '../../domain/dtos/auditorium/UpdateAuditoriumDTO';
-import { IAuditoriumEngine } from '../../engines/auditorium/IAuditoriumEngine';
-import { IAuditoriumUseCase } from './IAuditoriumUseCase';
-import { CloudinaryService } from '../../infrastructure/services/cloudinary/CloudinaryService';
-import UserTokenDto from '../../domain/dtos/user/UserTokenDto';
+import { Auditorium } from "../../domain/entities/Auditorium";
+import { CreateAuditoriumDTO } from "../../domain/dtos/auditorium/CreateAuditoriumDTO";
+import { UpdateAuditoriumDTO } from "../../domain/dtos/auditorium/UpdateAuditoriumDTO";
+import { IAuditoriumEngine } from "../../engines/auditorium/IAuditoriumEngine";
+import { IAuditoriumUseCase } from "./IAuditoriumUseCase";
+import { CloudinaryService } from "../../infrastructure/services/cloudinary/CloudinaryService";
+import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 
 type AuditoriumUseCaseConstructorParams = {
   auditoriumEngine: IAuditoriumEngine;
@@ -15,7 +15,10 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
   private auditoriumEngine: IAuditoriumEngine;
   private cloudinaryService: CloudinaryService;
 
-  constructor({ auditoriumEngine, cloudinaryService }: AuditoriumUseCaseConstructorParams) {
+  constructor({
+    auditoriumEngine,
+    cloudinaryService,
+  }: AuditoriumUseCaseConstructorParams) {
     this.auditoriumEngine = auditoriumEngine;
     this.cloudinaryService = cloudinaryService;
   }
@@ -42,13 +45,17 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
     return await this.auditoriumEngine.getAuditoriumById(id);
   }
 
-  async updateAuditorium(id: string, user: UserTokenDto, data: UpdateAuditoriumDTO): Promise<Auditorium> {
+  async updateAuditorium(
+    id: string,
+    user: UserTokenDto,
+    data: UpdateAuditoriumDTO,
+  ): Promise<Auditorium> {
     const venue = await this.auditoriumEngine.getAuditoriumById(id);
     if (!venue) {
-      throw new Error('Auditorium not found');
+      throw new Error("Auditorium not found");
     }
     if (venue.ownerId !== user.id) {
-      throw new Error('Unauthorized to update this auditorium');
+      throw new Error("Unauthorized to update this auditorium");
     }
 
     const { existingImages, newImages, ...rest } = data;
@@ -63,7 +70,7 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
       let fileIdx = 0;
       finalImages = existingImages.map((imgUrl: string) => {
         if (imgUrl) return imgUrl;
-        return newUrls[fileIdx++] || '';
+        return newUrls[fileIdx++] || "";
       });
     }
 

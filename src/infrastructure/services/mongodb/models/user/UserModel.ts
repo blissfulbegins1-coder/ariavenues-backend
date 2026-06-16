@@ -1,5 +1,5 @@
-import mongoose, { Schema } from 'mongoose';
-import { User } from '../../../../../domain/entities/User';
+import mongoose, { Schema } from "mongoose";
+import { User } from "../../../../../domain/entities/User";
 
 const userSchema = new Schema<User>(
   {
@@ -24,18 +24,17 @@ const userSchema = new Schema<User>(
     },
     role: {
       type: String,
-      enum: ['customer', 'owner', 'admin'],
+      enum: ["customer", "owner", "admin"],
       required: true,
     },
     status: {
       type: String,
-      enum: ['active', 'blocked', 'deleted'],
+      enum: ["active", "blocked", "deleted"],
       required: true,
-      default: 'active',
+      default: "active",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-
-export const UserModel = mongoose.model<User>('User', userSchema);
+export const UserModel = mongoose.model<User>("User", userSchema);

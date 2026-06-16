@@ -1,13 +1,12 @@
-import { Request, Response, NextFunction } from 'express';
-import { IUserUseCase } from '../useCases/user/IUserUseCase';
-import { CreateUserDTO } from '../domain/dtos/user/CreateUserDTO';
+import { Request, Response, NextFunction } from "express";
+import { IUserUseCase } from "../useCases/user/IUserUseCase";
+import { CreateUserDTO } from "../domain/dtos/user/CreateUserDTO";
 import {
   signUpSchema,
   verifyOtpSchema,
   resendOtpSchema,
   signInSchema,
-} from '../infrastructure/validation/user/UserValidationSchemas';
-
+} from "../infrastructure/validation/user/UserValidationSchemas";
 
 type UserControllerConstructorParams = {
   userUseCase: IUserUseCase;
@@ -26,31 +25,44 @@ export class UserController {
         abortEarly: false,
       });
 
-      const result = await this.userUseCase.signUp(validatedData as CreateUserDTO);
+      const result = await this.userUseCase.signUp(
+        validatedData as CreateUserDTO,
+      );
       res.status(200).json(result);
     } catch (error) {
       next(error);
     }
   }
 
-  async verifyOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async verifyOtp(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const validatedData = await verifyOtpSchema.validate(req.body, {
         abortEarly: false,
       });
 
-      const result = await this.userUseCase.verifyOtp(validatedData.mobile, validatedData.otp);
+      const result = await this.userUseCase.verifyOtp(
+        validatedData.mobile,
+        validatedData.otp,
+      );
       res.status(200).json({
         success: true,
         data: result,
-        message: 'Verification successful',
+        message: "Verification successful",
       });
     } catch (error) {
       next(error);
     }
   }
 
-  async resendOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async resendOtp(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const validatedData = await resendOtpSchema.validate(req.body, {
         abortEarly: false,
@@ -75,8 +87,4 @@ export class UserController {
       next(error);
     }
   }
-
-
 }
-
-

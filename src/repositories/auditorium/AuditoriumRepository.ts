@@ -1,8 +1,8 @@
-import { Auditorium } from '../../domain/entities/Auditorium';
-import { CreateAuditoriumDTO } from '../../domain/dtos/auditorium/CreateAuditoriumDTO';
-import { AuditoriumModel } from '../../infrastructure/services/mongodb/models/auditorium/AuditoriumModel';
-import { IAuditoriumRepository } from './IAuditoriumRepository';
-import UserTokenDto from '../../domain/dtos/user/UserTokenDto';
+import { Auditorium } from "../../domain/entities/Auditorium";
+import { CreateAuditoriumDTO } from "../../domain/dtos/auditorium/CreateAuditoriumDTO";
+import { AuditoriumModel } from "../../infrastructure/services/mongodb/models/auditorium/AuditoriumModel";
+import { IAuditoriumRepository } from "./IAuditoriumRepository";
+import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 
 export class AuditoriumRepository implements IAuditoriumRepository {
   private mapToEntity(doc: any): Auditorium {
@@ -47,7 +47,7 @@ export class AuditoriumRepository implements IAuditoriumRepository {
   }
 
   async listPublic(): Promise<Auditorium[]> {
-    const items = await AuditoriumModel.find({ status: 'active' });
+    const items = await AuditoriumModel.find({ status: "active" });
     return items.map((item) => this.mapToEntity(item));
   }
 
@@ -61,10 +61,10 @@ export class AuditoriumRepository implements IAuditoriumRepository {
     const item = await AuditoriumModel.findByIdAndUpdate(
       id,
       { $set: data },
-      { returnDocument: 'after' }
+      { returnDocument: "after" },
     );
     if (!item) {
-      throw new Error('Auditorium not found');
+      throw new Error("Auditorium not found");
     }
     return this.mapToEntity(item);
   }

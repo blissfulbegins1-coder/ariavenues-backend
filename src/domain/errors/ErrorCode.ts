@@ -7,4 +7,4 @@ export const ErrorCode = {
   InternalServerError: 500,
 } as const;
 
-export type ErrorCodeType = typeof ErrorCode[keyof typeof ErrorCode];
+export type ErrorCodeType = (typeof ErrorCode)[keyof typeof ErrorCode];

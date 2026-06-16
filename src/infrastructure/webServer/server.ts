@@ -38,7 +38,7 @@ export class Server {
       cors({
         origin: corsOrigins,
         credentials: true,
-        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
       }),
     );
 

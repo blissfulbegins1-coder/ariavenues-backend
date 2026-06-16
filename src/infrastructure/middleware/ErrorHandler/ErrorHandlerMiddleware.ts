@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import * as yup from 'yup';
+import { Request, Response, NextFunction } from "express";
+import * as yup from "yup";
 
 interface HttpError extends Error {
   status?: number;
@@ -7,12 +7,17 @@ interface HttpError extends Error {
 }
 
 // Error Handling Middleware - centralizes error responses
-export const errorHandler = (err: HttpError, req: Request, res: Response, next: NextFunction) => {
+export const errorHandler = (
+  err: HttpError,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   // Handle Yup Validation Errors
   if (err instanceof yup.ValidationError) {
     const validationErrors: Record<string, string[]> = {};
     err.inner.forEach((error) => {
-      const field = error.path || 'unknown';
+      const field = error.path || "unknown";
       if (!validationErrors[field]) {
         validationErrors[field] = [];
       }
@@ -21,7 +26,7 @@ export const errorHandler = (err: HttpError, req: Request, res: Response, next: 
 
     res.status(400).json({
       success: false,
-      error: 'Validation failed',
+      error: "Validation failed",
       errors: validationErrors,
     });
     return;
@@ -29,13 +34,13 @@ export const errorHandler = (err: HttpError, req: Request, res: Response, next: 
 
   // Handle other errors
   const status = err.status || err.statusCode || 500;
-  const message = err.message || 'Internal Server Error';
+  const message = err.message || "Internal Server Error";
 
   console.error(`[${status}] ${message}`, err);
 
   res.status(status).json({
     success: false,
     error: message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   });
 };

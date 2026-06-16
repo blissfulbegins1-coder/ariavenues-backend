@@ -1,64 +1,64 @@
-import { auth_Key, baseUrl, templateId, otpTimeout } from '../../../domain/constants/constants';
-import { InvalidUserDataError } from '../../../domain/errors/UserErrors';
+import {
+  auth_Key,
+  baseUrl,
+  templateId,
+  otpTimeout,
+} from "../../../domain/constants/constants";
+import { InvalidUserDataError } from "../../../domain/errors/UserErrors";
 
 interface Msg91Response {
-  type: 'success' | 'error';
+  type: "success" | "error";
   message: string;
 }
 
 export class OtpService {
-  /**
-   * Send OTP via MSG91
-   * @param mobile Mobile number with country code (e.g., "91XXXXXXXXXX")
-   */
   async sendOtp(mobile: string): Promise<boolean> {
-    if (auth_Key === 'mock' || !auth_Key) {
-      console.log(`[MOCK OTP SERVICE] OTP sent to ${mobile} (Template ID: ${templateId})`);
+    if (auth_Key === "mock" || !auth_Key) {
+      console.log(
+        `[MOCK OTP SERVICE] OTP sent to ${mobile} (Template ID: ${templateId})`,
+      );
       return true;
     }
 
-    const url = `${baseUrl}?template_id=${encodeURIComponent(templateId || '')}&mobile=${encodeURIComponent(mobile)}&otp_expiry=${encodeURIComponent(otpTimeout)}`;
+    const url = `${baseUrl}?template_id=${encodeURIComponent(templateId || "")}&mobile=${encodeURIComponent(mobile)}&otp_expiry=${encodeURIComponent(otpTimeout)}`;
 
     try {
       const response = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'authkey': auth_Key,
-          'content-type': 'application/json',
+          authkey: auth_Key,
+          "content-type": "application/json",
         },
       });
 
-      const result = await response.json() as Msg91Response;
-      if (result.type === 'success') {
+      const result = (await response.json()) as Msg91Response;
+      if (result.type === "success") {
         return true;
       }
-      throw new Error(result.message || 'Failed to send OTP via MSG91');
+      throw new Error(result.message || "Failed to send OTP via MSG91");
     } catch (error) {
-      console.error('Error sending OTP:', error);
+      console.error("Error sending OTP:", error);
       const message = error instanceof Error ? error.message : String(error);
       throw new Error(`OTP send failed: ${message}`);
     }
   }
 
-  /**
-   * Verify OTP via MSG91
-   * @param mobile Mobile number with country code (e.g., "91XXXXXXXXXX")
-   * @param otp The verification code
-   */
   async verifyOtp(mobile: string, otp: string): Promise<boolean> {
-    if (auth_Key === 'mock' || !auth_Key) {
-      if (otp === '123456') {
-        console.log(`[MOCK OTP SERVICE] OTP verified successfully for ${mobile}`);
+    if (auth_Key === "mock" || !auth_Key) {
+      if (otp === "123456") {
+        console.log(
+          `[MOCK OTP SERVICE] OTP verified successfully for ${mobile}`,
+        );
         return true;
       }
-      throw new InvalidUserDataError('Invalid mock OTP. Use 123456');
+      throw new InvalidUserDataError("Invalid mock OTP. Use 123456");
     }
 
     let verifyUrl = baseUrl;
-    if (baseUrl.endsWith('/otp')) {
-      verifyUrl = baseUrl.replace(/\/otp$/, '/otp/verify');
-    } else if (baseUrl.endsWith('/otp/')) {
-      verifyUrl = baseUrl.replace(/\/otp\/$/, '/otp/verify');
+    if (baseUrl.endsWith("/otp")) {
+      verifyUrl = baseUrl.replace(/\/otp$/, "/otp/verify");
+    } else if (baseUrl.endsWith("/otp/")) {
+      verifyUrl = baseUrl.replace(/\/otp\/$/, "/otp/verify");
     } else {
       verifyUrl = `${baseUrl}/verify`;
     }
@@ -67,19 +67,19 @@ export class OtpService {
 
     try {
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'authkey': auth_Key,
+          authkey: auth_Key,
         },
       });
 
-      const result = await response.json() as Msg91Response;
-      if (result.type === 'success') {
+      const result = (await response.json()) as Msg91Response;
+      if (result.type === "success") {
         return true;
       }
-      throw new InvalidUserDataError(result.message || 'Invalid OTP');
+      throw new InvalidUserDataError(result.message || "Invalid OTP");
     } catch (error) {
-      console.error('Error verifying OTP:', error);
+      console.error("Error verifying OTP:", error);
       const message = error instanceof Error ? error.message : String(error);
       throw new Error(`OTP verification failed: ${message}`);
     }

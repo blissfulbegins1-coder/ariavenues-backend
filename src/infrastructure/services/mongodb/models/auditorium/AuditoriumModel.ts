@@ -1,11 +1,11 @@
-import mongoose, { Schema } from 'mongoose';
-import { Auditorium } from '../../../../../domain/entities/Auditorium';
+import mongoose, { Schema } from "mongoose";
+import { Auditorium } from "../../../../../domain/entities/Auditorium";
 
 const auditoriumSchema = new Schema<Auditorium>(
   {
     ownerId: {
       type: Schema.Types.ObjectId as any,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
     name: {
@@ -55,9 +55,9 @@ const auditoriumSchema = new Schema<Auditorium>(
     },
     status: {
       type: String,
-      enum: ['draft', 'maintenance', 'active'],
+      enum: ["draft", "maintenance", "active"],
       required: true,
-      default: 'draft',
+      default: "draft",
     },
     isActive: {
       type: Boolean,
@@ -65,7 +65,11 @@ const auditoriumSchema = new Schema<Auditorium>(
       default: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export const AuditoriumModel = mongoose.model<Auditorium>('Auditorium', auditoriumSchema, 'auditoriums');
+export const AuditoriumModel = mongoose.model<Auditorium>(
+  "Auditorium",
+  auditoriumSchema,
+  "auditoriums",
+);

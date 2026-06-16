@@ -1,8 +1,8 @@
-import { User } from '../../domain/entities/User';
-import { CreateUserDTO } from '../../domain/dtos/user/CreateUserDTO';
-import { UserAlreadyExistsError } from '../../domain/errors/UserErrors';
-import { UserModel } from '../../infrastructure/services/mongodb/models/user/UserModel';
-import { IUserRepository } from './IUserRepository';
+import { User } from "../../domain/entities/User";
+import { CreateUserDTO } from "../../domain/dtos/user/CreateUserDTO";
+import { UserAlreadyExistsError } from "../../domain/errors/UserErrors";
+import { UserModel } from "../../infrastructure/services/mongodb/models/user/UserModel";
+import { IUserRepository } from "./IUserRepository";
 
 // Repository Implementation - talks to MongoDB through Mongoose
 export class UserRepository implements IUserRepository {
@@ -15,10 +15,10 @@ export class UserRepository implements IUserRepository {
     const user = new UserModel({
       ...data,
       mobileVerified: false,
-      status: 'active',
+      status: "active",
     });
     await user.save();
-    
+
     const userObj = user.toObject();
     return {
       id: userObj._id.toString(),
@@ -36,7 +36,7 @@ export class UserRepository implements IUserRepository {
   async findByMobile(mobile: string): Promise<User | null> {
     const user = await UserModel.findOne({ mobile });
     if (!user) return null;
-    
+
     const userObj = user.toObject();
     return {
       id: userObj._id.toString(),
@@ -52,9 +52,11 @@ export class UserRepository implements IUserRepository {
   }
 
   async update(id: string, data: Partial<User>): Promise<User | null> {
-    const user = await UserModel.findByIdAndUpdate(id, data, { returnDocument: 'after' });
+    const user = await UserModel.findByIdAndUpdate(id, data, {
+      returnDocument: "after",
+    });
     if (!user) return null;
-    
+
     const userObj = user.toObject();
     return {
       id: userObj._id.toString(),
@@ -69,4 +71,3 @@ export class UserRepository implements IUserRepository {
     } as User;
   }
 }
-

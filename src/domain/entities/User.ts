@@ -4,9 +4,8 @@ export interface User {
   mobile: string;
   email?: string;
   mobileVerified: boolean;
-  role: 'customer' | 'owner' | 'admin';
-  status: 'active' | 'blocked' | 'deleted';
+  role: "customer" | "owner" | "admin";
+  status: "active" | "blocked" | "deleted";
   createdAt: Date;
   updatedAt: Date;
 }
-

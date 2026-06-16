@@ -7,5 +7,5 @@ export interface UpdateAuditoriumDTO {
   amenities: string[];
   existingImages: string[];
   newImages?: Express.Multer.File[];
-  status?: 'draft' | 'maintenance' | 'active';
+  status?: "draft" | "maintenance" | "active";
 }

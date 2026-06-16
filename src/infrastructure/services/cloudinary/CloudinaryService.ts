@@ -1,4 +1,4 @@
-import { v2 as cloudinary } from 'cloudinary';
+import { v2 as cloudinary } from "cloudinary";
 
 export class CloudinaryService {
   constructor() {
@@ -13,8 +13,8 @@ export class CloudinaryService {
     return new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
-          folder: 'auditoriums',
-          public_id: originalname.split('.')[0] + '-' + Date.now(),
+          folder: "auditoriums",
+          public_id: originalname.split(".")[0] + "-" + Date.now(),
         },
         (error, result) => {
           if (error) {
@@ -23,8 +23,8 @@ export class CloudinaryService {
           if (result) {
             return resolve(result.secure_url);
           }
-          return reject(new Error('Cloudinary upload returned no result'));
-        }
+          return reject(new Error("Cloudinary upload returned no result"));
+        },
       );
 
       uploadStream.end(buffer);
@@ -33,7 +33,7 @@ export class CloudinaryService {
 
   async uploadMultiple(files: Express.Multer.File[]): Promise<string[]> {
     const uploadPromises = files.map((file) =>
-      this.uploadBuffer(file.buffer, file.originalname)
+      this.uploadBuffer(file.buffer, file.originalname),
     );
     return Promise.all(uploadPromises);
   }

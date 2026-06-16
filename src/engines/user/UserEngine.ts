@@ -1,7 +1,7 @@
-import { User } from '../../domain/entities/User';
-import { CreateUserDTO } from '../../domain/dtos/user/CreateUserDTO';
-import { IUserRepository } from '../../repositories/user/IUserRepository';
-import { IUserEngine } from './IUserEngine';
+import { User } from "../../domain/entities/User";
+import { CreateUserDTO } from "../../domain/dtos/user/CreateUserDTO";
+import { IUserRepository } from "../../repositories/user/IUserRepository";
+import { IUserEngine } from "./IUserEngine";
 
 type UserEngineConstructorParams = {
   userRepository: IUserRepository;
@@ -25,4 +25,3 @@ export class UserEngine implements IUserEngine {
     return await this.userRepository.update(id, data);
   }
 }
-
