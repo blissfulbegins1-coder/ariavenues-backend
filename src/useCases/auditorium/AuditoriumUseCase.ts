@@ -34,6 +34,10 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
     return await this.auditoriumEngine.getAuditoriumsByOwner(user);
   }
 
+  async getPublicAuditoriums(): Promise<Auditorium[]> {
+    return await this.auditoriumEngine.getPublicAuditoriums();
+  }
+
   async getAuditoriumById(id: string): Promise<Auditorium | null> {
     return await this.auditoriumEngine.getAuditoriumById(id);
   }

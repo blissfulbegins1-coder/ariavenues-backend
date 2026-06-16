@@ -18,6 +18,10 @@ export const setupAuditoriumRoutes = (container: AwilixContainer<IContainer>): R
     auditoriumController.getMyAuditoriums(req, res, next)
   );
 
+  router.get('/', async (req: Request, res: Response, next: NextFunction) =>
+    auditoriumController.getPublicAuditoriums(req, res, next)
+  );
+
   router.get('/:id', async (req: Request, res: Response, next: NextFunction) =>
     auditoriumController.getAuditoriumById(req, res, next)
   );

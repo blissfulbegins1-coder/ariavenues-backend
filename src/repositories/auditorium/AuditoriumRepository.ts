@@ -46,6 +46,11 @@ export class AuditoriumRepository implements IAuditoriumRepository {
     return items.map((item) => this.mapToEntity(item));
   }
 
+  async listPublic(): Promise<Auditorium[]> {
+    const items = await AuditoriumModel.find({ status: 'active' });
+    return items.map((item) => this.mapToEntity(item));
+  }
+
   async findById(id: string): Promise<Auditorium | null> {
     const item = await AuditoriumModel.findById(id);
     if (!item) return null;

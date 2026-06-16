@@ -23,6 +23,10 @@ export class AuditoriumEngine implements IAuditoriumEngine {
     return await this.auditoriumRepository.listByOwner(user);
   }
 
+  async getPublicAuditoriums(): Promise<Auditorium[]> {
+    return await this.auditoriumRepository.listPublic();
+  }
+
   async getAuditoriumById(id: string): Promise<Auditorium | null> {
     return await this.auditoriumRepository.findById(id);
   }
