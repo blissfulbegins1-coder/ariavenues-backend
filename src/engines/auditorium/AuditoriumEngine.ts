@@ -2,6 +2,7 @@ import { Auditorium } from '../../domain/entities/Auditorium';
 import { CreateAuditoriumDTO } from '../../domain/dtos/auditorium/CreateAuditoriumDTO';
 import { IAuditoriumRepository } from '../../repositories/auditorium/IAuditoriumRepository';
 import { IAuditoriumEngine } from './IAuditoriumEngine';
+import UserTokenDto from '../../domain/dtos/user/UserTokenDto';
 
 type AuditoriumEngineConstructorParams = {
   auditoriumRepository: IAuditoriumRepository;
@@ -18,7 +19,7 @@ export class AuditoriumEngine implements IAuditoriumEngine {
     return await this.auditoriumRepository.create(data);
   }
 
-  async getAuditoriumsByOwner(ownerId: string): Promise<Auditorium[]> {
-    return await this.auditoriumRepository.listByOwner(ownerId);
+  async getAuditoriumsByOwner(user: UserTokenDto): Promise<Auditorium[]> {
+    return await this.auditoriumRepository.listByOwner(user);
   }
 }

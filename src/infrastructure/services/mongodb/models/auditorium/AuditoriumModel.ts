@@ -68,4 +68,4 @@ const auditoriumSchema = new Schema<Auditorium>(
   { timestamps: true }
 );
 
-export const AuditoriumModel = mongoose.model<Auditorium>('Auditorium', auditoriumSchema);
+export const AuditoriumModel = mongoose.model<Auditorium>('Auditorium', auditoriumSchema, 'auditoriums');

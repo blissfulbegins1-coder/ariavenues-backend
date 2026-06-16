@@ -18,25 +18,44 @@ export const createAuditoriumSchema = yup.object().shape({
     .trim(),
   capacity: yup
     .number()
+    .transform((value, originalValue) => {
+      if (originalValue === '') return undefined;
+      const num = Number(originalValue);
+      return isNaN(num) ? undefined : num;
+    })
     .required('Capacity is required')
     .integer('Capacity must be an integer')
     .positive('Capacity must be positive')
     .min(1, 'Capacity must be at least 1 seated person'),
   dayRate: yup
     .number()
+    .transform((value, originalValue) => {
+      if (originalValue === '') return undefined;
+      const num = Number(originalValue);
+      return isNaN(num) ? undefined : num;
+    })
     .required('Day rate is required')
     .positive('Day rate must be positive')
     .min(0, 'Day rate cannot be negative'),
   amenities: yup
     .array()
     .of(yup.string().required())
+    .transform((value, originalValue) => {
+      if (typeof originalValue === 'string') {
+        try {
+          return JSON.parse(originalValue);
+        } catch (e) {
+          return [];
+        }
+      }
+      return value;
+    })
     .required('Amenities are required')
     .min(1, 'At least one amenity is required')
     .max(20, 'Maximum of 20 amenities allowed'),
   images: yup
     .array()
-    .of(yup.string().url('Each image must be a valid URL').required())
-    .required('Images are required')
+    .required('Exactly 6 images are required')
     .min(6, 'Exactly 6 images are required')
     .max(6, 'Exactly 6 images are required'),
   status: yup

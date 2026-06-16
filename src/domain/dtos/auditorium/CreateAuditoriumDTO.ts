@@ -1,11 +1,13 @@
+import UserTokenDto from "../user/UserTokenDto";
+
 export interface CreateAuditoriumDTO {
-  ownerId: string;
+  user: UserTokenDto;
   name: string;
   description: string;
   address: string;
   capacity: number;
   dayRate: number; // INR
   amenities: string[];
-  images: string[];
+  images: Express.Multer.File[] | string[];
   status?: 'draft' | 'maintenance' | 'active';
 }

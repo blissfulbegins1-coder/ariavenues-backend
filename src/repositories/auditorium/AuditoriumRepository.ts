@@ -2,18 +2,21 @@ import { Auditorium } from '../../domain/entities/Auditorium';
 import { CreateAuditoriumDTO } from '../../domain/dtos/auditorium/CreateAuditoriumDTO';
 import { AuditoriumModel } from '../../infrastructure/services/mongodb/models/auditorium/AuditoriumModel';
 import { IAuditoriumRepository } from './IAuditoriumRepository';
+import UserTokenDto from '../../domain/dtos/user/UserTokenDto';
 
 export class AuditoriumRepository implements IAuditoriumRepository {
   async create(data: CreateAuditoriumDTO): Promise<Auditorium> {
+    const { user, ...rest } = data;
     const auditorium = new AuditoriumModel({
-      ...data,
+      ...rest,
+      ownerId: user.id,
       averageRating: 0,
       totalReviews: 0,
       totalBookings: 0,
       isActive: true,
     });
     await auditorium.save();
-    
+
     const obj = auditorium.toObject();
     return {
       id: obj._id.toString(),
@@ -35,8 +38,8 @@ export class AuditoriumRepository implements IAuditoriumRepository {
     } as Auditorium;
   }
 
-  async listByOwner(ownerId: string): Promise<Auditorium[]> {
-    const items = await AuditoriumModel.find({ ownerId });
+  async listByOwner(user: UserTokenDto): Promise<Auditorium[]> {
+    const items = await AuditoriumModel.find({ ownerId: user.id });
     return items.map((item) => {
       const obj = item.toObject();
       return {

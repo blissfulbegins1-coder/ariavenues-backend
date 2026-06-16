@@ -7,8 +7,11 @@ export const setupAuditoriumRoutes = (container: AwilixContainer<IContainer>): R
   const router = Router();
   const auditoriumController = container.resolve('auditoriumController');
 
-  router.post('/', requireRole(['owner']), async (req: Request, res: Response, next: NextFunction) =>
-    auditoriumController.create(req, res, next)
+  router.post(
+    '/',
+    requireRole(['owner']),
+    async (req: Request, res: Response, next: NextFunction) =>
+      auditoriumController.create(req, res, next)
   );
 
   router.get('/my', requireRole(['owner']), async (req: Request, res: Response, next: NextFunction) =>

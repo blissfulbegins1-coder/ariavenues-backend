@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { IAuditoriumUseCase } from '../useCases/auditorium/IAuditoriumUseCase';
 import { CreateAuditoriumDTO } from '../domain/dtos/auditorium/CreateAuditoriumDTO';
 import { createAuditoriumSchema } from '../infrastructure/validation/auditorium/AuditoriumValidationSchemas';
+import UserTokenDto from '../domain/dtos/user/UserTokenDto';
 
 type AuditoriumControllerConstructorParams = {
   auditoriumUseCase: IAuditoriumUseCase;
@@ -16,24 +17,25 @@ export class AuditoriumController {
 
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const validatedData = await createAuditoriumSchema.validate(req.body, {
-        abortEarly: false,
-      });
+      const user = req.user as UserTokenDto;
+      const validatedData = await createAuditoriumSchema.validate(
+        {
+          ...req.body,
+          images: req.files,
+        },
+        {
+          abortEarly: false,
+          stripUnknown: true,
+        }
+      );
 
-      const ownerId = req.user?.id;
-      if (!ownerId) {
-        res.status(401).json({ success: false, message: 'Unauthorized. Owner context missing' });
-        return;
-      }
-
-      const result = await this.auditoriumUseCase.createAuditorium({
+      await this.auditoriumUseCase.createAuditorium({
         ...validatedData,
-        ownerId,
+        user,
       } as CreateAuditoriumDTO);
 
       res.status(201).json({
         success: true,
-        data: result,
         message: 'Auditorium created successfully',
       });
     } catch (error) {
@@ -43,13 +45,9 @@ export class AuditoriumController {
 
   async getMyAuditoriums(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const ownerId = req.user?.id;
-      if (!ownerId) {
-        res.status(401).json({ success: false, message: 'Unauthorized. Owner context missing' });
-        return;
-      }
+      const user = req.user as UserTokenDto;
 
-      const result = await this.auditoriumUseCase.getOwnerAuditoriums(ownerId);
+      const result = await this.auditoriumUseCase.getOwnerAuditoriums(user);
       res.status(200).json({
         success: true,
         data: result,

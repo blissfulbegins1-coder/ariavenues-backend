@@ -15,11 +15,13 @@ import { AuditoriumRepository } from "../../repositories/auditorium/AuditoriumRe
 import { AuditoriumEngine } from "../../engines/auditorium/AuditoriumEngine";
 import { AuditoriumUseCase } from "../../useCases/auditorium/AuditoriumUseCase";
 import { AuditoriumController } from "../../controllers/AuditoriumController";
+import { CloudinaryService } from "../services/cloudinary/CloudinaryService";
 
 // Type-safe container registry
 export interface IContainer {
   databaseService: DatabaseService;
   otpService: OtpService;
+  cloudinaryService: CloudinaryService;
   userRepository: UserRepository;
   userEngine: UserEngine;
   jwtManagementEngine: JwtManagementEngine;
@@ -43,6 +45,7 @@ export const setupContainer = (): AwilixContainer<IContainer> => {
     // Services
     databaseService: asClass(DatabaseService).singleton(),
     otpService: asClass(OtpService).singleton(),
+    cloudinaryService: asClass(CloudinaryService).singleton(),
 
     // Repositories
     userRepository: asClass(UserRepository).singleton(),
