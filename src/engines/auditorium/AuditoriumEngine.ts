@@ -22,4 +22,12 @@ export class AuditoriumEngine implements IAuditoriumEngine {
   async getAuditoriumsByOwner(user: UserTokenDto): Promise<Auditorium[]> {
     return await this.auditoriumRepository.listByOwner(user);
   }
+
+  async getAuditoriumById(id: string): Promise<Auditorium | null> {
+    return await this.auditoriumRepository.findById(id);
+  }
+
+  async updateAuditorium(id: string, data: Partial<Auditorium>): Promise<Auditorium> {
+    return await this.auditoriumRepository.update(id, data);
+  }
 }
