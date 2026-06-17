@@ -3,6 +3,8 @@ import { AwilixContainer } from "awilix";
 import { IContainer } from "../ioc/registry";
 import { setupUserRoutes } from "./user/userRoutes";
 import { setupAuditoriumRoutes } from "./auditorium/auditoriumRoutes";
+import { setupBookingRoutes } from "./booking/bookingRoutes";
+import { setupPaymentRoutes } from "./payment/paymentRoutes";
 
 // Main API Router - centralizes all API routes
 export const setupApiRoutes = (
@@ -16,8 +18,11 @@ export const setupApiRoutes = (
   // Mount Auditorium Routes under /auditorium
   router.use("/auditorium", setupAuditoriumRoutes(container));
 
-  // Mount other routes as needed
-  // router.use('/admin', setupAdminRoutes(container));
+  // Mount Booking Routes under /booking
+  router.use("/booking", setupBookingRoutes(container));
+
+  // Mount Payment Routes under /payment
+  router.use("/payment", setupPaymentRoutes(container));
 
   return router;
 };

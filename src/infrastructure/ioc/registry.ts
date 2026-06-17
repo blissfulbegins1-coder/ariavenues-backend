@@ -16,6 +16,14 @@ import { AuditoriumEngine } from "../../engines/auditorium/AuditoriumEngine";
 import { AuditoriumUseCase } from "../../useCases/auditorium/AuditoriumUseCase";
 import { AuditoriumController } from "../../controllers/AuditoriumController";
 import { CloudinaryService } from "../services/cloudinary/CloudinaryService";
+import { BookingRepository } from "../../repositories/booking/BookingRepository";
+import { PaymentRepository } from "../../repositories/payment/PaymentRepository";
+import { BookingEngine } from "../../engines/booking/BookingEngine";
+import { PaymentEngine } from "../../engines/payment/PaymentEngine";
+import { BookingUseCase } from "../../useCases/booking/BookingUseCase";
+import { PaymentUseCase } from "../../useCases/payment/PaymentUseCase";
+import { BookingController } from "../../controllers/BookingController";
+import { PaymentController } from "../../controllers/PaymentController";
 
 // Type-safe container registry
 export interface IContainer {
@@ -31,6 +39,14 @@ export interface IContainer {
   auditoriumEngine: AuditoriumEngine;
   auditoriumUseCase: AuditoriumUseCase;
   auditoriumController: AuditoriumController;
+  bookingRepository: BookingRepository;
+  paymentRepository: PaymentRepository;
+  bookingEngine: BookingEngine;
+  paymentEngine: PaymentEngine;
+  bookingUseCase: BookingUseCase;
+  paymentUseCase: PaymentUseCase;
+  bookingController: BookingController;
+  paymentController: PaymentController;
 }
 
 // Setup Awilix DI Container
@@ -49,25 +65,27 @@ export const setupContainer = (): AwilixContainer<IContainer> => {
     // Repositories
     userRepository: asClass(UserRepository).singleton(),
     auditoriumRepository: asClass(AuditoriumRepository).singleton(),
+    bookingRepository: asClass(BookingRepository).singleton(),
+    paymentRepository: asClass(PaymentRepository).singleton(),
 
     // Engines
     userEngine: asClass(UserEngine).singleton(),
     auditoriumEngine: asClass(AuditoriumEngine).singleton(),
+    bookingEngine: asClass(BookingEngine).singleton(),
+    paymentEngine: asClass(PaymentEngine).singleton(),
     jwtManagementEngine: asClass(JwtManagementEngine).singleton(),
 
     // Use Cases
     userUseCase: asClass(UserUseCase).singleton(),
     auditoriumUseCase: asClass(AuditoriumUseCase).singleton(),
+    bookingUseCase: asClass(BookingUseCase).singleton(),
+    paymentUseCase: asClass(PaymentUseCase).singleton(),
 
     // Controllers
     userController: asClass(UserController).singleton(),
     auditoriumController: asClass(AuditoriumController).singleton(),
-
-    // Ready for future services:
-    // LogsRepository: asClass(LogsRepository).singleton(),
-    // LogsEngine: asClass(LogsEngine).singleton(),
-    // LogsUseCase: asClass(LogsUseCase).singleton(),
-    // LogsController: asClass(LogsController).singleton(),
+    bookingController: asClass(BookingController).singleton(),
+    paymentController: asClass(PaymentController).singleton(),
   });
 
   return container;

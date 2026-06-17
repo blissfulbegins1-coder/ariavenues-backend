@@ -1,0 +1,27 @@
+import { Router, Request, Response, NextFunction } from "express";
+import { AwilixContainer } from "awilix";
+import { IContainer } from "../../ioc/registry";
+import { requireRole } from "../../middleware/Auth/AuthMiddleware";
+
+export const setupPaymentRoutes = (
+  container: AwilixContainer<IContainer>,
+): Router => {
+  const router = Router();
+  const paymentController = container.resolve("paymentController");
+
+  router.post(
+    "/order",
+    requireRole(["customer"]),
+    async (req: Request, res: Response, next: NextFunction) =>
+      paymentController.createOrder(req, res, next),
+  );
+
+  router.post(
+    "/verify",
+    requireRole(["customer"]),
+    async (req: Request, res: Response, next: NextFunction) =>
+      paymentController.verifyPayment(req, res, next),
+  );
+
+  return router;
+};
