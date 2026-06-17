@@ -22,7 +22,7 @@ export class PaymentController {
     req: Request,
     res: Response,
     next: NextFunction,
-  ): Promise<void> {
+  ): Promise<Response | void> {
     try {
       const user = req.user as UserTokenDto;
       const validatedData = await createRazorpayOrderSchema.validate(req.body, {
@@ -34,7 +34,7 @@ export class PaymentController {
         user,
       );
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: result,
         message: "Razorpay order created successfully",
@@ -48,7 +48,7 @@ export class PaymentController {
     req: Request,
     res: Response,
     next: NextFunction,
-  ): Promise<void> {
+  ): Promise<Response | void> {
     try {
       const user = req.user as UserTokenDto;
       const validatedData = await verifyPaymentSchema.validate(req.body, {
@@ -60,7 +60,7 @@ export class PaymentController {
         user,
       );
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: result,
         message: "Payment verified successfully, booking confirmed",

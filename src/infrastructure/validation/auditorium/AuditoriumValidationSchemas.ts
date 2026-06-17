@@ -148,3 +148,12 @@ export const updateAuditoriumSchema = yup
       return existingCount + newCount === 6;
     },
   );
+
+export const auditoriumIdParamSchema = yup.object().shape({
+  id: yup
+    .string()
+    .required("Auditorium ID is required")
+    .trim()
+    .matches(/^[a-f\d]{24}$/i, "Auditorium ID must be a valid MongoDB ObjectId"),
+});
+

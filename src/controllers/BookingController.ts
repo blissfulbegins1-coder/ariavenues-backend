@@ -18,7 +18,11 @@ export class BookingController {
     this.bookingUseCase = bookingUseCase;
   }
 
-  async create(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async create(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<Response | void> {
     try {
       const user = req.user as UserTokenDto;
       const validatedData = await createBookingSchema.validate(req.body, {
@@ -30,7 +34,7 @@ export class BookingController {
         user,
       );
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         data: result,
         message: "Booking created successfully",
@@ -44,11 +48,11 @@ export class BookingController {
     req: Request,
     res: Response,
     next: NextFunction,
-  ): Promise<void> {
+  ): Promise<Response | void> {
     try {
       const user = req.user as UserTokenDto;
       const result = await this.bookingUseCase.getCustomerBookings(user);
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: result,
       });
@@ -61,11 +65,11 @@ export class BookingController {
     req: Request,
     res: Response,
     next: NextFunction,
-  ): Promise<void> {
+  ): Promise<Response | void> {
     try {
       const user = req.user as UserTokenDto;
       const result = await this.bookingUseCase.getOwnerBookings(user);
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: result,
       });
@@ -78,14 +82,14 @@ export class BookingController {
     req: Request,
     res: Response,
     next: NextFunction,
-  ): Promise<void> {
+  ): Promise<Response | void> {
     try {
       const user = req.user as UserTokenDto;
       const { id } = await bookingIdParamSchema.validate(req.params, {
         abortEarly: false,
       });
       const result = await this.bookingUseCase.getBookingDetails(id, user);
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: result,
       });
@@ -98,14 +102,14 @@ export class BookingController {
     req: Request,
     res: Response,
     next: NextFunction,
-  ): Promise<void> {
+  ): Promise<Response | void> {
     try {
       const user = req.user as UserTokenDto;
       const { id } = await bookingIdParamSchema.validate(req.params, {
         abortEarly: false,
       });
       await this.bookingUseCase.cancelPendingBooking(id, user);
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: "Booking cancelled and removed successfully",
       });

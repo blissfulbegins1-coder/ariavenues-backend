@@ -5,6 +5,7 @@ import { UpdateAuditoriumDTO } from "../domain/dtos/auditorium/UpdateAuditoriumD
 import {
   createAuditoriumSchema,
   updateAuditoriumSchema,
+  auditoriumIdParamSchema,
 } from "../infrastructure/validation/auditorium/AuditoriumValidationSchemas";
 import UserTokenDto from "../domain/dtos/user/UserTokenDto";
 
@@ -19,7 +20,11 @@ export class AuditoriumController {
     this.auditoriumUseCase = auditoriumUseCase;
   }
 
-  async create(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async create(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<Response | void> {
     try {
       const user = req.user as UserTokenDto;
       const validatedData = await createAuditoriumSchema.validate(
@@ -38,7 +43,7 @@ export class AuditoriumController {
         user,
       } as CreateAuditoriumDTO);
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         message: "Auditorium created successfully",
       });
@@ -51,11 +56,11 @@ export class AuditoriumController {
     req: Request,
     res: Response,
     next: NextFunction,
-  ): Promise<void> {
+  ): Promise<Response | void> {
     try {
       const user = req.user as UserTokenDto;
       const result = await this.auditoriumUseCase.getOwnerAuditoriums(user);
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: result,
       });
@@ -68,10 +73,10 @@ export class AuditoriumController {
     req: Request,
     res: Response,
     next: NextFunction,
-  ): Promise<void> {
+  ): Promise<Response | void> {
     try {
       const result = await this.auditoriumUseCase.getPublicAuditoriums();
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: result,
       });
@@ -84,19 +89,18 @@ export class AuditoriumController {
     req: Request,
     res: Response,
     next: NextFunction,
-  ): Promise<void> {
+  ): Promise<Response | void> {
     try {
-      const { id } = req.params;
-      const result = await this.auditoriumUseCase.getAuditoriumById(
-        id as string,
-      );
+      const { id } = await auditoriumIdParamSchema.validate(req.params, {
+        abortEarly: false,
+      });
+      const result = await this.auditoriumUseCase.getAuditoriumById(id);
       if (!result) {
-        res
+        return res
           .status(404)
           .json({ success: false, message: "Auditorium not found" });
-        return;
       }
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: result,
       });
@@ -105,9 +109,15 @@ export class AuditoriumController {
     }
   }
 
-  async update(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async update(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<Response | void> {
     try {
-      const { id } = req.params;
+      const { id } = await auditoriumIdParamSchema.validate(req.params, {
+        abortEarly: false,
+      });
       const user = req.user as UserTokenDto;
 
       const validatedData = await updateAuditoriumSchema.validate(
@@ -122,12 +132,12 @@ export class AuditoriumController {
       );
 
       const result = await this.auditoriumUseCase.updateAuditorium(
-        id as string,
+        id,
         user,
         validatedData as UpdateAuditoriumDTO,
       );
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: result,
         message: "Auditorium updated successfully",

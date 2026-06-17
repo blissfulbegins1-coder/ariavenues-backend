@@ -19,7 +19,11 @@ export class UserController {
     this.userUseCase = userUseCase;
   }
 
-  async signUp(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async signUp(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<Response | void> {
     try {
       const validatedData = await signUpSchema.validate(req.body, {
         abortEarly: false,
@@ -28,7 +32,7 @@ export class UserController {
       const result = await this.userUseCase.signUp(
         validatedData as CreateUserDTO,
       );
-      res.status(200).json(result);
+      return res.status(200).json(result);
     } catch (error) {
       next(error);
     }
@@ -38,7 +42,7 @@ export class UserController {
     req: Request,
     res: Response,
     next: NextFunction,
-  ): Promise<void> {
+  ): Promise<Response | void> {
     try {
       const validatedData = await verifyOtpSchema.validate(req.body, {
         abortEarly: false,
@@ -48,7 +52,7 @@ export class UserController {
         validatedData.mobile,
         validatedData.otp,
       );
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: result,
         message: "Verification successful",
@@ -62,27 +66,31 @@ export class UserController {
     req: Request,
     res: Response,
     next: NextFunction,
-  ): Promise<void> {
+  ): Promise<Response | void> {
     try {
       const validatedData = await resendOtpSchema.validate(req.body, {
         abortEarly: false,
       });
 
       const result = await this.userUseCase.resendOtp(validatedData.mobile);
-      res.status(200).json(result);
+      return res.status(200).json(result);
     } catch (error) {
       next(error);
     }
   }
 
-  async signIn(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async signIn(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<Response | void> {
     try {
       const validatedData = await signInSchema.validate(req.body, {
         abortEarly: false,
       });
 
       const result = await this.userUseCase.signIn(validatedData.mobile);
-      res.status(200).json(result);
+      return res.status(200).json(result);
     } catch (error) {
       next(error);
     }

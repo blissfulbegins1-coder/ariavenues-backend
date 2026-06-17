@@ -13,7 +13,6 @@ export class JwtManagementEngine implements IJwtManagementEngine {
     try {
       return jwt.verify(token, secret) as object;
     } catch (error) {
-      console.error("Token verification failed:", error);
       return null;
     }
   }
