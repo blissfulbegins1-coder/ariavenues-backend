@@ -16,6 +16,8 @@ import { AuditoriumEngine } from "../../engines/auditorium/AuditoriumEngine";
 import { AuditoriumUseCase } from "../../useCases/auditorium/AuditoriumUseCase";
 import { AuditoriumController } from "../../controllers/AuditoriumController";
 import { CloudinaryService } from "../services/cloudinary/CloudinaryService";
+import { RazorpayService } from "../services/razorpay/RazorpayService";
+import { IRazorpayService } from "../services/razorpay/IRazorpayService";
 import { BookingRepository } from "../../repositories/booking/BookingRepository";
 import { PaymentRepository } from "../../repositories/payment/PaymentRepository";
 import { BookingEngine } from "../../engines/booking/BookingEngine";
@@ -30,6 +32,7 @@ export interface IContainer {
   databaseService: DatabaseService;
   otpService: OtpService;
   cloudinaryService: CloudinaryService;
+  razorpayService: IRazorpayService;
   userRepository: UserRepository;
   userEngine: UserEngine;
   jwtManagementEngine: JwtManagementEngine;
@@ -61,6 +64,7 @@ export const setupContainer = (): AwilixContainer<IContainer> => {
     databaseService: asClass(DatabaseService).singleton(),
     otpService: asClass(OtpService).singleton(),
     cloudinaryService: asClass(CloudinaryService).singleton(),
+    razorpayService: asClass(RazorpayService).singleton(),
 
     // Repositories
     userRepository: asClass(UserRepository).singleton(),

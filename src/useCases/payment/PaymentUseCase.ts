@@ -3,7 +3,7 @@ import { Payment } from "../../domain/entities/Payment";
 import { VerifyPaymentDTO } from "../../domain/dtos/payment/VerifyPaymentDTO";
 import { IPaymentEngine } from "../../engines/payment/IPaymentEngine";
 import { IBookingEngine } from "../../engines/booking/IBookingEngine";
-import { RazorpayService } from "../../infrastructure/services/razorpay/RazorpayService";
+import { IRazorpayService } from "../../infrastructure/services/razorpay/IRazorpayService";
 import { IPaymentUseCase, RazorpayOrderResult } from "./IPaymentUseCase";
 import { AppError } from "../../domain/errors/AppError";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
@@ -14,20 +14,22 @@ import { PaymentStatus } from "../../domain/enums/PaymentStatus";
 type PaymentUseCaseConstructorParams = {
   paymentEngine: IPaymentEngine;
   bookingEngine: IBookingEngine;
+  razorpayService: IRazorpayService;
 };
 
 export class PaymentUseCase implements IPaymentUseCase {
   private paymentEngine: IPaymentEngine;
   private bookingEngine: IBookingEngine;
-  private razorpayService: RazorpayService;
+  private razorpayService: IRazorpayService;
 
   constructor({
     paymentEngine,
     bookingEngine,
+    razorpayService
   }: PaymentUseCaseConstructorParams) {
     this.paymentEngine = paymentEngine;
     this.bookingEngine = bookingEngine;
-    this.razorpayService = new RazorpayService();
+    this.razorpayService = razorpayService;
   }
 
   async createRazorpayOrder(

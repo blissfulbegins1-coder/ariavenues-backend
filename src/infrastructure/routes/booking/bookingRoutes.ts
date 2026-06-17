@@ -32,7 +32,7 @@ export const setupBookingRoutes = (
 
   router.get(
     "/:id",
-    requireRole(["customer", "owner", "admin"]),
+    requireRole(["customer"]),
     async (req: Request, res: Response, next: NextFunction) =>
       bookingController.getBookingById(req, res, next),
   );

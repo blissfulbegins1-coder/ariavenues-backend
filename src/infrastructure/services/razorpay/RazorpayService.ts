@@ -1,5 +1,6 @@
 import Razorpay from "razorpay";
 import crypto from "crypto";
+import { IRazorpayService } from "./IRazorpayService";
 
 export interface RazorpayOrderResponse {
   id: string;
@@ -14,7 +15,7 @@ export interface RazorpayOrderResponse {
   created_at: number;
 }
 
-export class RazorpayService {
+export class RazorpayService implements IRazorpayService {
   private razorpayClient: Razorpay;
   private keyId: string;
   private keySecret: string;
@@ -43,7 +44,6 @@ export class RazorpayService {
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Razorpay API order creation failed";
-      console.error("Razorpay Order Creation Error:", error);
       throw new Error(message);
     }
   }
