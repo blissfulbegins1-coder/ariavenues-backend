@@ -71,5 +71,19 @@ export const setupAdminRoutes = (
       adminController.updateAuditoriumStatus(req, res, next)
   );
 
+  router.patch(
+    "/users/:id/status",
+    requireRole(["admin"]),
+    async (req: Request, res: Response, next: NextFunction) =>
+      adminController.updateUserStatus(req, res, next)
+  );
+
+  router.patch(
+    "/bookings/:id/status",
+    requireRole(["admin"]),
+    async (req: Request, res: Response, next: NextFunction) =>
+      adminController.updateBookingStatus(req, res, next)
+  );
+
   return router;
 };

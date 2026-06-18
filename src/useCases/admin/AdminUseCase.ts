@@ -261,4 +261,26 @@ export class AdminUseCase implements IAdminUseCase {
     }
     return await this.auditoriumEngine.updateAuditorium(id, updateData);
   }
+
+  async updateUserStatus(
+    id: string,
+    status: "active" | "blocked"
+  ): Promise<User> {
+    const updated = await this.userEngine.updateUser(id, { status });
+    if (!updated) {
+      throw new UserNotFoundError(id);
+    }
+    return updated;
+  }
+
+  async updateBookingStatus(
+    id: string,
+    status: "CONFIRMED" | "CANCELLED"
+  ): Promise<Booking> {
+    const updated = await this.bookingEngine.updateBooking(id, { bookingStatus: status });
+    if (!updated) {
+      throw new InvalidUserDataError(`Booking with id ${id} not found`);
+    }
+    return updated;
+  }
 }

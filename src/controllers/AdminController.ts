@@ -189,4 +189,56 @@ export class AdminController {
       next(error);
     }
   }
+
+  async updateUserStatus(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
+    try {
+      const id = req.params.id as string;
+      const { status } = req.body;
+
+      if (!["active", "blocked"].includes(status)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid status value. Must be 'active' or 'blocked'." });
+      }
+
+      const result = await this.adminUseCase.updateUserStatus(id, status as "active" | "blocked");
+      return res.status(200).json({
+        success: true,
+        data: result,
+        message: `User status updated to ${status} successfully`,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateBookingStatus(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
+    try {
+      const id = req.params.id as string;
+      const { status } = req.body;
+
+      if (!["CONFIRMED", "CANCELLED"].includes(status)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid booking status. Must be 'CONFIRMED' or 'CANCELLED'." });
+      }
+
+      const result = await this.adminUseCase.updateBookingStatus(id, status as "CONFIRMED" | "CANCELLED");
+      return res.status(200).json({
+        success: true,
+        data: result,
+        message: `Booking status updated to ${status} successfully`,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

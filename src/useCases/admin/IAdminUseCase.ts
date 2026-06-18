@@ -40,4 +40,12 @@ export interface IAdminUseCase {
     adminAdvance?: number,
     auditoriumAdvance?: number
   ): Promise<Auditorium>;
+  updateUserStatus(
+    id: string,
+    status: "active" | "blocked"
+  ): Promise<User>;
+  updateBookingStatus(
+    id: string,
+    status: "CONFIRMED" | "CANCELLED"
+  ): Promise<Booking>;
 }
