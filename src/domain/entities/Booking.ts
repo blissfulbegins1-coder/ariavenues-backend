@@ -11,8 +11,11 @@ export interface Booking {
   totalDays: number;
   dayRate: number;
   totalAmount: number;
+  adminAdvance?: number;
+  auditoriumAdvance?: number;
   bookingStatus: BookingStatus;
   guestCount: number;
+  isActive?: boolean;
   createdAt: Date;
   updatedAt: Date;
   auditorium?: {

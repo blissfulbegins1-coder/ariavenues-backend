@@ -18,6 +18,7 @@ export class PaymentRepository implements IPaymentRepository {
       paymentMethod: obj.paymentMethod,
       paymentStatus: obj.paymentStatus,
       paidAt: obj.paidAt,
+      isActive: obj.isActive ?? true,
       createdAt: obj.createdAt,
       updatedAt: obj.updatedAt,
     };
@@ -33,13 +34,13 @@ export class PaymentRepository implements IPaymentRepository {
   }
 
   async findByOrderId(orderId: string): Promise<Payment | null> {
-    const payment = await PaymentModel.findOne({ orderId });
+    const payment = await PaymentModel.findOne({ orderId, isActive: true });
     if (!payment) return null;
     return this.toEntity(payment);
   }
 
   async findByBookingId(bookingId: string): Promise<Payment | null> {
-    const payment = await PaymentModel.findOne({ bookingId });
+    const payment = await PaymentModel.findOne({ bookingId, isActive: true });
     if (!payment) return null;
     return this.toEntity(payment);
   }
@@ -49,10 +50,14 @@ export class PaymentRepository implements IPaymentRepository {
     data: Partial<Payment>,
     session?: ClientSession,
   ): Promise<Payment | null> {
-    const payment = await PaymentModel.findByIdAndUpdate(id, data, {
-      new: true,
-      session,
-    });
+    const payment = await PaymentModel.findOneAndUpdate(
+      { _id: id, isActive: true },
+      data,
+      {
+        new: true,
+        session,
+      },
+    );
     if (!payment) return null;
     return this.toEntity(payment);
   }

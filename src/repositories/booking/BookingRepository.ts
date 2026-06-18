@@ -11,11 +11,12 @@ interface BookingAggregationDoc {
   ownerId: mongoose.Types.ObjectId;
   startDate: Date;
   endDate: Date;
-  totalDays: number;
   dayRate: number;
-  totalAmount: number;
+  adminAdvance?: number;
+  auditoriumAdvance?: number;
   bookingStatus: string;
   guestCount: number;
+  isActive?: boolean;
   createdAt: Date;
   updatedAt: Date;
   auditorium?: {
@@ -45,6 +46,16 @@ const auditoriumLookup = [
 
 export class BookingRepository implements IBookingRepository {
   private toEntity(doc: BookingAggregationDoc): Booking {
+    const start = new Date(doc.startDate);
+    const end = new Date(doc.endDate);
+    const totalDays = Math.max(
+      1,
+      Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
+    );
+    const adminAdvance = doc.adminAdvance ?? 0;
+    const auditoriumAdvance = doc.auditoriumAdvance ?? 0;
+    const totalAmount = adminAdvance + auditoriumAdvance;
+
     const booking: Booking = {
       id: doc._id.toString(),
       bookingNumber: doc.bookingNumber,
@@ -53,11 +64,14 @@ export class BookingRepository implements IBookingRepository {
       ownerId: doc.ownerId.toString(),
       startDate: doc.startDate,
       endDate: doc.endDate,
-      totalDays: doc.totalDays,
+      totalDays,
       dayRate: doc.dayRate,
-      totalAmount: doc.totalAmount,
+      totalAmount,
+      adminAdvance,
+      auditoriumAdvance,
       bookingStatus: doc.bookingStatus as Booking["bookingStatus"],
       guestCount: doc.guestCount,
+      isActive: doc.isActive ?? true,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     };
@@ -91,7 +105,7 @@ export class BookingRepository implements IBookingRepository {
 
   async findById(id: string): Promise<Booking | null> {
     const results = await BookingModel.aggregate<BookingAggregationDoc>([
-      { $match: { _id: new mongoose.Types.ObjectId(id) } },
+      { $match: { _id: new mongoose.Types.ObjectId(id), isActive: true } },
       ...auditoriumLookup,
     ]);
     if (!results.length) return null;
@@ -100,7 +114,7 @@ export class BookingRepository implements IBookingRepository {
 
   async findByBookingNumber(bookingNumber: string): Promise<Booking | null> {
     const results = await BookingModel.aggregate<BookingAggregationDoc>([
-      { $match: { bookingNumber } },
+      { $match: { bookingNumber, isActive: true } },
       ...auditoriumLookup,
     ]);
     if (!results.length) return null;
@@ -112,10 +126,14 @@ export class BookingRepository implements IBookingRepository {
     data: Partial<Booking>,
     session?: ClientSession,
   ): Promise<Booking | null> {
-    await BookingModel.findByIdAndUpdate(id, data, { session });
+    await BookingModel.findOneAndUpdate(
+      { _id: new mongoose.Types.ObjectId(id), isActive: true },
+      data,
+      { session },
+    );
 
     const results = await BookingModel.aggregate<BookingAggregationDoc>([
-      { $match: { _id: new mongoose.Types.ObjectId(id) } },
+      { $match: { _id: new mongoose.Types.ObjectId(id), isActive: true } },
       ...auditoriumLookup,
     ]).session(session ?? null);
 
@@ -124,12 +142,12 @@ export class BookingRepository implements IBookingRepository {
   }
 
   async deleteById(id: string): Promise<void> {
-    await BookingModel.findByIdAndDelete(id);
+    await BookingModel.findByIdAndUpdate(id, { isActive: false });
   }
 
   async listByCustomer(userId: string): Promise<Booking[]> {
     const results = await BookingModel.aggregate<BookingAggregationDoc>([
-      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+      { $match: { userId: new mongoose.Types.ObjectId(userId), isActive: true } },
       ...auditoriumLookup,
       { $sort: { createdAt: -1 } },
     ]);
@@ -138,7 +156,7 @@ export class BookingRepository implements IBookingRepository {
 
   async listByOwner(ownerId: string): Promise<Booking[]> {
     const results = await BookingModel.aggregate<BookingAggregationDoc>([
-      { $match: { ownerId: new mongoose.Types.ObjectId(ownerId) } },
+      { $match: { ownerId: new mongoose.Types.ObjectId(ownerId), isActive: true } },
       ...auditoriumLookup,
       { $sort: { createdAt: -1 } },
     ]);
@@ -156,10 +174,20 @@ export class BookingRepository implements IBookingRepository {
       bookingStatus: { $in: ["PENDING_PAYMENT", "CONFIRMED", "COMPLETED"] },
       startDate: { $lte: endDate },
       endDate: { $gte: startDate },
+      isActive: true,
       ...(excludeBookingId && {
         _id: { $ne: new mongoose.Types.ObjectId(excludeBookingId) },
       }),
     });
     return !overlapping;
+  }
+
+  async listAll(): Promise<Booking[]> {
+    const results = await BookingModel.aggregate<BookingAggregationDoc>([
+      { $match: { isActive: true } },
+      ...auditoriumLookup,
+      { $sort: { createdAt: -1 } },
+    ]);
+    return results.map((doc) => this.toEntity(doc));
   }
 }

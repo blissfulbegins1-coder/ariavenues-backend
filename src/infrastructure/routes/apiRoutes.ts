@@ -5,6 +5,7 @@ import { setupUserRoutes } from "./user/userRoutes";
 import { setupAuditoriumRoutes } from "./auditorium/auditoriumRoutes";
 import { setupBookingRoutes } from "./booking/bookingRoutes";
 import { setupPaymentRoutes } from "./payment/paymentRoutes";
+import { setupAdminRoutes } from "./admin/adminRoutes";
 
 // Main API Router - centralizes all API routes
 export const setupApiRoutes = (
@@ -23,6 +24,9 @@ export const setupApiRoutes = (
 
   // Mount Payment Routes under /payment
   router.use("/payment", setupPaymentRoutes(container));
+
+  // Mount Admin Routes under /admin
+  router.use("/admin", setupAdminRoutes(container));
 
   return router;
 };

@@ -11,7 +11,10 @@ export interface Auditorium {
   averageRating: number;
   totalReviews: number;
   totalBookings: number;
-  status: "draft" | "maintenance" | "active";
+  status: "pending" | "draft" | "maintenance" | "active" | "rejected";
+  approved: boolean;
+  adminAdvance?: number;
+  auditoriumAdvance?: number;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

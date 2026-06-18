@@ -21,6 +21,9 @@ export class AuditoriumRepository implements IAuditoriumRepository {
       totalReviews: obj.totalReviews,
       totalBookings: obj.totalBookings,
       status: obj.status,
+      approved: obj.approved ?? false,
+      adminAdvance: obj.adminAdvance ?? 0,
+      auditoriumAdvance: obj.auditoriumAdvance ?? 0,
       isActive: obj.isActive,
       createdAt: obj.createdAt,
       updatedAt: obj.updatedAt,
@@ -35,6 +38,9 @@ export class AuditoriumRepository implements IAuditoriumRepository {
       averageRating: 0,
       totalReviews: 0,
       totalBookings: 0,
+      approved: false,
+      adminAdvance: 0,
+      auditoriumAdvance: 0,
       isActive: true,
     });
     await auditorium.save();
@@ -42,24 +48,24 @@ export class AuditoriumRepository implements IAuditoriumRepository {
   }
 
   async listByOwner(user: UserTokenDto): Promise<Auditorium[]> {
-    const items = await AuditoriumModel.find({ ownerId: user.id });
+    const items = await AuditoriumModel.find({ ownerId: user.id, isActive: true });
     return items.map((item) => this.mapToEntity(item));
   }
 
   async listPublic(): Promise<Auditorium[]> {
-    const items = await AuditoriumModel.find({ status: "active" });
+    const items = await AuditoriumModel.find({ status: "active", isActive: true });
     return items.map((item) => this.mapToEntity(item));
   }
 
   async findById(id: string): Promise<Auditorium | null> {
-    const item = await AuditoriumModel.findById(id);
+    const item = await AuditoriumModel.findOne({ _id: id, isActive: true });
     if (!item) return null;
     return this.mapToEntity(item);
   }
 
   async update(id: string, data: Partial<Auditorium>): Promise<Auditorium> {
-    const item = await AuditoriumModel.findByIdAndUpdate(
-      id,
+    const item = await AuditoriumModel.findOneAndUpdate(
+      { _id: id, isActive: true },
       { $set: data },
       { returnDocument: "after" },
     );
@@ -67,5 +73,10 @@ export class AuditoriumRepository implements IAuditoriumRepository {
       throw new Error("Auditorium not found");
     }
     return this.mapToEntity(item);
+  }
+
+  async listAll(): Promise<Auditorium[]> {
+    const items = await AuditoriumModel.find({ isActive: true }).sort({ createdAt: -1 });
+    return items.map((item) => this.mapToEntity(item));
   }
 }

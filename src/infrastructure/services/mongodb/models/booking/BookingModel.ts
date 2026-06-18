@@ -32,17 +32,19 @@ const bookingSchema = new Schema<Booking>(
       type: Date,
       required: true,
     },
-    totalDays: {
-      type: Number,
-      required: true,
-    },
     dayRate: {
       type: Number,
       required: true,
     },
-    totalAmount: {
+    adminAdvance: {
       type: Number,
       required: true,
+      default: 0,
+    },
+    auditoriumAdvance: {
+      type: Number,
+      required: true,
+      default: 0,
     },
     bookingStatus: {
       type: String,
@@ -53,6 +55,11 @@ const bookingSchema = new Schema<Booking>(
     guestCount: {
       type: Number,
       required: true,
+    },
+    isActive: {
+      type: Boolean,
+      required: true,
+      default: true,
     },
   },
   { timestamps: true },

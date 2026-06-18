@@ -8,4 +8,5 @@ export interface IAuditoriumRepository {
   listPublic(): Promise<Auditorium[]>;
   findById(id: string): Promise<Auditorium | null>;
   update(id: string, data: Partial<Auditorium>): Promise<Auditorium>;
+  listAll(): Promise<Auditorium[]>;
 }

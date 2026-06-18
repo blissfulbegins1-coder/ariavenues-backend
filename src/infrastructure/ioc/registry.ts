@@ -26,6 +26,8 @@ import { BookingUseCase } from "../../useCases/booking/BookingUseCase";
 import { PaymentUseCase } from "../../useCases/payment/PaymentUseCase";
 import { BookingController } from "../../controllers/BookingController";
 import { PaymentController } from "../../controllers/PaymentController";
+import { AdminUseCase } from "../../useCases/admin/AdminUseCase";
+import { AdminController } from "../../controllers/AdminController";
 
 // Type-safe container registry
 export interface IContainer {
@@ -50,6 +52,8 @@ export interface IContainer {
   paymentUseCase: PaymentUseCase;
   bookingController: BookingController;
   paymentController: PaymentController;
+  adminUseCase: AdminUseCase;
+  adminController: AdminController;
 }
 
 // Setup Awilix DI Container
@@ -84,12 +88,14 @@ export const setupContainer = (): AwilixContainer<IContainer> => {
     auditoriumUseCase: asClass(AuditoriumUseCase).singleton(),
     bookingUseCase: asClass(BookingUseCase).singleton(),
     paymentUseCase: asClass(PaymentUseCase).singleton(),
+    adminUseCase: asClass(AdminUseCase).singleton(),
 
     // Controllers
     userController: asClass(UserController).singleton(),
     auditoriumController: asClass(AuditoriumController).singleton(),
     bookingController: asClass(BookingController).singleton(),
     paymentController: asClass(PaymentController).singleton(),
+    adminController: asClass(AdminController).singleton(),
   });
 
   return container;

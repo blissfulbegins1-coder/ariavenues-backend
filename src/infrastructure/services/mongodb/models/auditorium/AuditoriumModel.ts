@@ -55,9 +55,22 @@ const auditoriumSchema = new Schema<Auditorium>(
     },
     status: {
       type: String,
-      enum: ["draft", "maintenance", "active"],
+      enum: ["pending", "draft", "maintenance", "active", "rejected"],
       required: true,
-      default: "draft",
+      default: "pending",
+    },
+    approved: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    adminAdvance: {
+      type: Number,
+      default: 0,
+    },
+    auditoriumAdvance: {
+      type: Number,
+      default: 0,
     },
     isActive: {
       type: Boolean,

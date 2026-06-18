@@ -12,6 +12,7 @@ export interface Payment {
   paymentMethod?: string;
   paymentStatus: PaymentStatus;
   paidAt?: Date;
+  isActive?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

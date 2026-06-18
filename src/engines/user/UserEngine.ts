@@ -24,4 +24,8 @@ export class UserEngine implements IUserEngine {
   async updateUser(id: string, data: Partial<User>): Promise<User | null> {
     return await this.userRepository.update(id, data);
   }
+
+  async getAllUsers(role?: string): Promise<User[]> {
+    return await this.userRepository.findAll(role);
+  }
 }

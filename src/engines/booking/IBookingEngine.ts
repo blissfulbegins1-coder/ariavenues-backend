@@ -22,4 +22,5 @@ export interface IBookingEngine {
     excludeBookingId?: string,
   ): Promise<boolean>;
   deleteBooking(id: string): Promise<void>;
+  getAllBookings(): Promise<Booking[]>;
 }

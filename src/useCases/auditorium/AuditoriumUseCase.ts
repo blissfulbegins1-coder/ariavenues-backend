@@ -57,6 +57,9 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
     if (venue.ownerId !== user.id) {
       throw new Error("Unauthorized to update this auditorium");
     }
+    if (venue.status === "pending") {
+      throw new Error("Cannot edit a venue that is pending approval");
+    }
 
     const { existingImages, newImages, ...rest } = data;
     let finalImages = venue.images;

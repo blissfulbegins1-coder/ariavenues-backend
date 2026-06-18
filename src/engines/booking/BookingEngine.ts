@@ -64,5 +64,9 @@ export class BookingEngine implements IBookingEngine {
   async deleteBooking(id: string): Promise<void> {
     await this.bookingRepository.deleteById(id);
   }
+
+  async getAllBookings(): Promise<Booking[]> {
+    return await this.bookingRepository.listAll();
+  }
 }
 

@@ -99,7 +99,8 @@ export class BookingUseCase implements IBookingUseCase {
     const totalDays =
       Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     const dayRate = auditorium.dayRate;
-    const totalAmount = dayRate * totalDays;
+    const adminAdvance = auditorium.adminAdvance || 0;
+    const auditoriumAdvance = auditorium.auditoriumAdvance || 0;
 
     // Generate Booking Number: BOOK[random-4-digits][YYYYMMDD]
     const year = today.getFullYear();
@@ -116,9 +117,9 @@ export class BookingUseCase implements IBookingUseCase {
       ownerId: auditorium.ownerId,
       startDate: start,
       endDate: end,
-      totalDays,
       dayRate,
-      totalAmount,
+      adminAdvance,
+      auditoriumAdvance,
       bookingStatus: "PENDING_PAYMENT",
       guestCount: data.guestCount,
     });

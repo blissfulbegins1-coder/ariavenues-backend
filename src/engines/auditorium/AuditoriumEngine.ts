@@ -37,4 +37,8 @@ export class AuditoriumEngine implements IAuditoriumEngine {
   ): Promise<Auditorium> {
     return await this.auditoriumRepository.update(id, data);
   }
+
+  async getAllAuditoriums(): Promise<Auditorium[]> {
+    return await this.auditoriumRepository.listAll();
+  }
 }

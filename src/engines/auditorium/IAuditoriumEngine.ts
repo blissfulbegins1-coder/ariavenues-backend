@@ -8,4 +8,5 @@ export interface IAuditoriumEngine {
   getPublicAuditoriums(): Promise<Auditorium[]>;
   getAuditoriumById(id: string): Promise<Auditorium | null>;
   updateAuditorium(id: string, data: Partial<Auditorium>): Promise<Auditorium>;
+  getAllAuditoriums(): Promise<Auditorium[]>;
 }

@@ -33,6 +33,11 @@ const userSchema = new Schema<User>(
       required: true,
       default: "active",
     },
+    isActive: {
+      type: Boolean,
+      required: true,
+      default: true,
+    },
   },
   { timestamps: true },
 );

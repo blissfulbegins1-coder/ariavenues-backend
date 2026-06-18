@@ -6,4 +6,5 @@ export interface IUserRepository {
   create(data: CreateUserDTO): Promise<User>;
   findByMobile(mobile: string): Promise<User | null>;
   update(id: string, data: Partial<User>): Promise<User | null>;
+  findAll(role?: string): Promise<User[]>;
 }

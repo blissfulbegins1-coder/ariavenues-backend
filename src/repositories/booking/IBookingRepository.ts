@@ -19,4 +19,5 @@ export interface IBookingRepository {
     endDate: Date,
     excludeBookingId?: string,
   ): Promise<boolean>;
+  listAll(): Promise<Booking[]>;
 }

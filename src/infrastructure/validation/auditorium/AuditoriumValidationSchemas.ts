@@ -58,7 +58,7 @@ export const createAuditoriumSchema = yup.object().shape({
   status: yup
     .string()
     .optional()
-    .oneOf(["draft", "maintenance", "active"], "Invalid status value")
+    .oneOf(["pending", "draft", "maintenance", "active", "rejected"], "Invalid status value")
     .default("draft"),
 });
 
@@ -132,7 +132,7 @@ export const updateAuditoriumSchema = yup
     status: yup
       .string()
       .optional()
-      .oneOf(["draft", "maintenance", "active"], "Invalid status value")
+      .oneOf(["pending", "draft", "maintenance", "active", "rejected"], "Invalid status value")
       .default("draft"),
   })
   .test(

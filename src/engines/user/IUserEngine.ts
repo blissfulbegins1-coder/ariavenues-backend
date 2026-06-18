@@ -5,4 +5,5 @@ export interface IUserEngine {
   createUser(data: CreateUserDTO): Promise<User>;
   getUserByMobile(mobile: string): Promise<User | null>;
   updateUser(id: string, data: Partial<User>): Promise<User | null>;
+  getAllUsers(role?: string): Promise<User[]>;
 }
