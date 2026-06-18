@@ -9,5 +9,4 @@ export const secret = process.env.SECRET!;
 export const REDIRECT_PATHS = {
   customer: "/",
   owner: "/owner/dashboard",
-  admin: "/admin/dashboard",
 } as const;

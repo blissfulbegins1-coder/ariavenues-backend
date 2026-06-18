@@ -86,7 +86,6 @@ export class UserUseCase implements IUserUseCase {
       updatedUser = result;
     }
 
-    // 4. Calculate redirectUrl based on role from constants
     const redirectUrl = REDIRECT_PATHS[updatedUser.role];
 
     // 5. Generate JWT

@@ -3,5 +3,5 @@ export interface CreateUserDTO {
   name: string;
   email?: string;
   mobile: string;
-  role: "customer" | "owner" | "admin";
+  role: "customer" | "owner";
 }
