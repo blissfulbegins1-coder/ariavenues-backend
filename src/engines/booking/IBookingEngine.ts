@@ -1,4 +1,4 @@
-import { ClientSession } from "mongoose";
+import { ClientSession, QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
 
 export interface IBookingEngine {
@@ -6,8 +6,8 @@ export interface IBookingEngine {
     data: Partial<Booking>,
     session?: ClientSession,
   ): Promise<Booking>;
-  getBookingById(id: string): Promise<Booking | null>;
-  getBookingByBookingNumber(bookingNumber: string): Promise<Booking | null>;
+  getBookingById(id: string, session?: ClientSession): Promise<Booking | null>;
+  getBookingByBookingNumber(bookingNumber: string, session?: ClientSession): Promise<Booking | null>;
   updateBooking(
     id: string,
     data: Partial<Booking>,
@@ -22,5 +22,5 @@ export interface IBookingEngine {
     excludeBookingId?: string,
   ): Promise<boolean>;
   deleteBooking(id: string): Promise<void>;
-  getAllBookings(): Promise<Booking[]>;
+  getAllBookings(filter?: QueryFilter<Booking>): Promise<Booking[]>;
 }

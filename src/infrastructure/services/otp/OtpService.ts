@@ -1,10 +1,13 @@
+import axios, { AxiosInstance } from "axios";
 import {
   auth_Key,
   baseUrl,
   templateId,
   otpTimeout,
+  Environment,
+  otpMockValue,
 } from "../../../domain/constants/constants";
-import { InvalidUserDataError } from "../../../domain/errors/UserErrors";
+import { ApiError } from "../../../domain/errors/ApiError";
 
 interface Msg91Response {
   type: "success" | "error";
@@ -12,76 +15,90 @@ interface Msg91Response {
 }
 
 export class OtpService {
+  private readonly client: AxiosInstance;
+
+  constructor() {
+    this.client = axios.create({
+      baseURL: baseUrl,
+      timeout: 10000,
+      headers: {
+        authkey: auth_Key,
+        "Content-Type": "application/json",
+      },
+    });
+  }
+
   async sendOtp(mobile: string): Promise<boolean> {
-    if (auth_Key === "mock" || !auth_Key) {
-      console.log(
-        `[MOCK OTP SERVICE] OTP sent to ${mobile} (Template ID: ${templateId})`,
-      );
+    if (Environment !== "production") {
+      console.log(`[MOCK OTP] Sent OTP to ${mobile}`);
       return true;
     }
 
-    const url = `${baseUrl}?template_id=${encodeURIComponent(templateId || "")}&mobile=${encodeURIComponent(mobile)}&otp_expiry=${encodeURIComponent(otpTimeout)}`;
-
     try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          authkey: auth_Key,
-          "content-type": "application/json",
-        },
-      });
+      const { data } = await this.client.post<Msg91Response>(
+        "",
+        {},
+        {
+          params: {
+            template_id: templateId,
+            mobile,
+            otp_expiry: otpTimeout,
+          },
+        }
+      );
 
-      const result = (await response.json()) as Msg91Response;
-      if (result.type === "success") {
-        return true;
-      }
-      throw new Error(result.message || "Failed to send OTP via MSG91");
+      this.ensureSuccess(data);
+
+      return true;
     } catch (error) {
-      console.error("Error sending OTP:", error);
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`OTP send failed: ${message}`);
+      this.handleAxiosError(error, "Failed to send OTP");
     }
   }
 
   async verifyOtp(mobile: string, otp: string): Promise<boolean> {
-    if (auth_Key === "mock" || !auth_Key) {
-      if (otp === "123456") {
-        console.log(
-          `[MOCK OTP SERVICE] OTP verified successfully for ${mobile}`,
-        );
+    if (Environment !== "production") {
+      if (otp === otpMockValue) {
         return true;
       }
-      throw new InvalidUserDataError("Invalid mock OTP. Use 123456");
-    }
 
-    let verifyUrl = baseUrl;
-    if (baseUrl.endsWith("/otp")) {
-      verifyUrl = baseUrl.replace(/\/otp$/, "/otp/verify");
-    } else if (baseUrl.endsWith("/otp/")) {
-      verifyUrl = baseUrl.replace(/\/otp\/$/, "/otp/verify");
-    } else {
-      verifyUrl = `${baseUrl}/verify`;
+      throw new ApiError("Invalid OTP");
     }
-
-    const url = `${verifyUrl}?otp=${encodeURIComponent(otp)}&mobile=${encodeURIComponent(mobile)}`;
 
     try {
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          authkey: auth_Key,
+      const { data } = await this.client.get<Msg91Response>("/verify", {
+        params: {
+          mobile,
+          otp,
         },
       });
 
-      const result = (await response.json()) as Msg91Response;
-      if (result.type === "success") {
-        return true;
-      }
-      throw new InvalidUserDataError(result.message || "Invalid OTP");
+      this.ensureSuccess(data);
+
+      return true;
     } catch (error) {
-      console.error("Error verifying OTP:", error);
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`OTP verification failed: ${message}`);
+      this.handleAxiosError(error, "OTP verification failed");
     }
+  }
+
+  private ensureSuccess(response: Msg91Response): void {
+    if (response.type !== "success") {
+      throw new ApiError(response.message);
+    }
+  }
+
+  private handleAxiosError(error: unknown, defaultMessage: string): never {
+    if (axios.isAxiosError(error)) {
+      const message =
+        (error.response?.data as { message?: string } | undefined)?.message ??
+        error.message;
+
+      throw new ApiError(message);
+    }
+
+    if (error instanceof Error) {
+      throw new ApiError(error.message);
+    }
+
+    throw new ApiError(defaultMessage);
   }
 }

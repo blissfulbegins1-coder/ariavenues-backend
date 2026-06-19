@@ -5,6 +5,7 @@ import { IAuditoriumEngine } from "../../engines/auditorium/IAuditoriumEngine";
 import { IAuditoriumUseCase } from "./IAuditoriumUseCase";
 import { CloudinaryService } from "../../infrastructure/services/cloudinary/CloudinaryService";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
+import { ApiError } from "../../domain/errors/ApiError";
 
 type AuditoriumUseCaseConstructorParams = {
   auditoriumEngine: IAuditoriumEngine;
@@ -23,7 +24,7 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
     this.cloudinaryService = cloudinaryService;
   }
 
-  async createAuditorium(data: CreateAuditoriumDTO): Promise<Auditorium> {
+  async createAuditorium(data: CreateAuditoriumDTO): Promise<boolean> {
     const files = data.images as Express.Multer.File[];
     const imageUrls = await this.cloudinaryService.uploadMultiple(files);
 
@@ -52,13 +53,13 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
   ): Promise<Auditorium> {
     const venue = await this.auditoriumEngine.getAuditoriumById(id);
     if (!venue) {
-      throw new Error("Auditorium not found");
+      throw new ApiError("Auditorium not found");
     }
     if (venue.ownerId !== user.id) {
-      throw new Error("Unauthorized to update this auditorium");
+      throw new ApiError("Unauthorized to update this auditorium");
     }
     if (venue.status === "pending") {
-      throw new Error("Cannot edit a venue that is pending approval");
+      throw new ApiError("Cannot edit a venue that is pending approval");
     }
 
     const { existingImages, newImages, ...rest } = data;

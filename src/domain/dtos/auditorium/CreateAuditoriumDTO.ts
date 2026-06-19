@@ -1,3 +1,4 @@
+import { AuditoriumStatus } from "../../enums/AuditoriumStatus";
 import UserTokenDto from "../user/UserTokenDto";
 
 export interface CreateAuditoriumDTO {
@@ -6,8 +7,8 @@ export interface CreateAuditoriumDTO {
   description: string;
   address: string;
   capacity: number;
-  dayRate: number; // INR
+  dayRate: number;
   amenities: string[];
   images: Express.Multer.File[] | string[];
-  status?: "pending" | "draft" | "maintenance" | "active" | "rejected";
+  status?: AuditoriumStatus;
 }

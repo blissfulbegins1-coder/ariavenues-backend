@@ -1,14 +1,10 @@
-import { CreateUserDTO } from "../../domain/dtos/user/CreateUserDTO";
+import { UserDTO, UserSuccessResponse, UserVerificationResponse, VerifyOtpDTO } from "../../domain/dtos/user/UserDto";
 import { IUserEngine } from "../../engines/user/IUserEngine";
 import { IJwtManagementEngine } from "../../engines/jwt/IJwtManagementEngine";
 import { IUserUseCase } from "./IUserUseCase";
 import { OtpService } from "../../infrastructure/services/otp/OtpService";
 import { REDIRECT_PATHS } from "../../domain/constants/constants";
-import {
-  UserNotFoundError,
-  UserAlreadyExistsError,
-  InvalidUserDataError,
-} from "../../domain/errors/UserErrors";
+import { ApiError } from "../../domain/errors/ApiError";
 
 type UserUseCaseConstructorParams = {
   userEngine: IUserEngine;
@@ -20,7 +16,6 @@ export class UserUseCase implements IUserUseCase {
   private userEngine: IUserEngine;
   private otpService: OtpService;
   private jwtManagementEngine: IJwtManagementEngine;
-
   constructor({
     userEngine,
     otpService,
@@ -31,13 +26,11 @@ export class UserUseCase implements IUserUseCase {
     this.jwtManagementEngine = jwtManagementEngine;
   }
 
-  async signUp(
-    input: CreateUserDTO,
-  ): Promise<{ success: boolean; message: string }> {
+  async signUp(input: UserDTO): Promise<UserSuccessResponse> {
     const existingUser = await this.userEngine.getUserByMobile(input.mobile);
     if (existingUser) {
       if (existingUser.mobileVerified) {
-        throw new UserAlreadyExistsError(input.mobile);
+        throw new ApiError("User with this mobile number already exists");
       }
 
       await this.userEngine.updateUser(existingUser.id, {
@@ -58,37 +51,30 @@ export class UserUseCase implements IUserUseCase {
   }
 
   async verifyOtp(
-    mobile: string,
-    otp: string,
-  ): Promise<{
-    user: { id: string; name: string };
-    token: string;
-    redirectUrl: string;
-  }> {
-    // 1. Find the pending/existing user
-    const user = await this.userEngine.getUserByMobile(mobile);
+    input: VerifyOtpDTO,
+  ): Promise<UserVerificationResponse> {
+    const user = await this.userEngine.getUserByMobile(input.mobile);
     if (!user) {
-      throw new UserNotFoundError(mobile);
+      throw new ApiError(
+        "User not found"
+      );
     }
 
-    // 2. Verify OTP via service
-    await this.otpService.verifyOtp(mobile, otp);
+    await this.otpService.verifyOtp(input.mobile, input.otp);
 
-    // 3. Mark user as verified (if not already verified)
     let updatedUser = user;
     if (!user.mobileVerified) {
       const result = await this.userEngine.updateUser(user.id, {
         mobileVerified: true,
       });
       if (!result) {
-        throw new Error("Failed to update user verification status");
+        throw new ApiError("Failed to update user verification status");
       }
       updatedUser = result;
     }
 
     const redirectUrl = REDIRECT_PATHS[updatedUser.role];
 
-    // 5. Generate JWT
     const token = this.jwtManagementEngine.generateToken({
       id: updatedUser.id,
       role: updatedUser.role,
@@ -107,10 +93,10 @@ export class UserUseCase implements IUserUseCase {
 
   async resendOtp(
     mobile: string,
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<UserSuccessResponse> {
     const user = await this.userEngine.getUserByMobile(mobile);
     if (!user) {
-      throw new UserNotFoundError(mobile);
+      throw new ApiError("User not found");
     }
 
     await this.otpService.sendOtp(mobile);
@@ -121,15 +107,15 @@ export class UserUseCase implements IUserUseCase {
     };
   }
 
-  async signIn(mobile: string): Promise<{ success: boolean; message: string }> {
+  async signIn(mobile: string): Promise<UserSuccessResponse> {
     const user = await this.userEngine.getUserByMobile(mobile);
     if (!user) {
-      throw new UserNotFoundError(mobile);
+      throw new ApiError("User not found");
     }
 
     if (!user.mobileVerified) {
-      throw new InvalidUserDataError(
-        "User mobile is not verified. Please complete verification via signup",
+      throw new ApiError(
+        "User mobile is not verified",
       );
     }
 

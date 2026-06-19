@@ -1,5 +1,6 @@
-export type BookingStatus =
-  | "PENDING_PAYMENT"
-  | "CONFIRMED"
-  | "COMPLETED"
-  | "CANCELLED";
+export enum BookingStatus {
+  PENDING_PAYMENT = "pending_payment",
+  CONFIRMED = "confirmed",
+  COMPLETED = "completed",
+  CANCELLED = "cancelled",
+}

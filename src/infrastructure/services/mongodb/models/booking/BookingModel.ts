@@ -1,5 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { Booking } from "../../../../../domain/entities/Booking";
+import { BookingStatus } from "../../../../../domain/enums/BookingStatus";
 
 const bookingSchema = new Schema<Booking>(
   {
@@ -48,9 +49,9 @@ const bookingSchema = new Schema<Booking>(
     },
     bookingStatus: {
       type: String,
-      enum: ["PENDING_PAYMENT", "CONFIRMED", "COMPLETED", "CANCELLED"],
+      enum: [BookingStatus.PENDING_PAYMENT, BookingStatus.CONFIRMED, BookingStatus.COMPLETED, BookingStatus.CANCELLED],
       required: true,
-      default: "PENDING_PAYMENT",
+      default: BookingStatus.PENDING_PAYMENT,
     },
     guestCount: {
       type: Number,

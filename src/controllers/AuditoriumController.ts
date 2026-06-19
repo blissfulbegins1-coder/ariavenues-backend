@@ -6,7 +6,7 @@ import {
   createAuditoriumSchema,
   updateAuditoriumSchema,
   auditoriumIdParamSchema,
-} from "../infrastructure/validation/auditorium/AuditoriumValidationSchemas";
+} from "../infrastructure/validation/auditorium/AuditoriumSchemaValidation";
 import UserTokenDto from "../domain/dtos/user/UserTokenDto";
 
 type AuditoriumControllerConstructorParams = {

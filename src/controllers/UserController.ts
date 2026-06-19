@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
 import { IUserUseCase } from "../useCases/user/IUserUseCase";
-import { CreateUserDTO } from "../domain/dtos/user/CreateUserDTO";
 import {
   signUpSchema,
   verifyOtpSchema,
@@ -25,14 +24,15 @@ export class UserController {
     next: NextFunction,
   ): Promise<Response | void> {
     try {
-      const validatedData = await signUpSchema.validate(req.body, {
+      const validatedUserData = await signUpSchema.validate(req.body, {
         abortEarly: false,
       });
 
-      const result = await this.userUseCase.signUp(
-        validatedData as CreateUserDTO,
-      );
-      return res.status(200).json(result);
+      await this.userUseCase.signUp(validatedUserData);
+      return res.status(200).json({
+        success: true,
+        message: "User created successfully",
+      });
     } catch (error) {
       next(error);
     }
@@ -44,13 +44,12 @@ export class UserController {
     next: NextFunction,
   ): Promise<Response | void> {
     try {
-      const validatedData = await verifyOtpSchema.validate(req.body, {
+      const validatedUserData = await verifyOtpSchema.validate(req.body, {
         abortEarly: false,
       });
 
       const result = await this.userUseCase.verifyOtp(
-        validatedData.mobile,
-        validatedData.otp,
+        validatedUserData
       );
       return res.status(200).json({
         success: true,

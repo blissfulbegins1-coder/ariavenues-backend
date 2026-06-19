@@ -6,8 +6,8 @@ export interface IPaymentEngine {
     data: Partial<Payment>,
     session?: ClientSession,
   ): Promise<Payment>;
-  getPaymentByOrderId(orderId: string): Promise<Payment | null>;
-  getPaymentByBookingId(bookingId: string): Promise<Payment | null>;
+  getPaymentByOrderId(orderId: string, session?: ClientSession): Promise<Payment | null>;
+  getPaymentByBookingId(bookingId: string, session?: ClientSession): Promise<Payment | null>;
   updatePayment(
     id: string,
     data: Partial<Payment>,

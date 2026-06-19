@@ -4,7 +4,7 @@ import { UpdateAuditoriumDTO } from "../../domain/dtos/auditorium/UpdateAuditori
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 
 export interface IAuditoriumUseCase {
-  createAuditorium(data: CreateAuditoriumDTO): Promise<Auditorium>;
+  createAuditorium(data: CreateAuditoriumDTO): Promise<boolean>;
   getOwnerAuditoriums(user: UserTokenDto): Promise<Auditorium[]>;
   getPublicAuditoriums(): Promise<Auditorium[]>;
   getAuditoriumById(id: string): Promise<Auditorium | null>;

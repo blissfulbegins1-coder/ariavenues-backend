@@ -3,7 +3,7 @@ import { CreateAuditoriumDTO } from "../../domain/dtos/auditorium/CreateAuditori
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 
 export interface IAuditoriumRepository {
-  create(data: CreateAuditoriumDTO): Promise<Auditorium>;
+  create(data: CreateAuditoriumDTO): Promise<boolean>;
   listByOwner(user: UserTokenDto): Promise<Auditorium[]>;
   listPublic(): Promise<Auditorium[]>;
   findById(id: string): Promise<Auditorium | null>;

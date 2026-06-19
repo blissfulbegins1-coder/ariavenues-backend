@@ -1,5 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import { User } from "../../../../../domain/entities/User";
+import UserStatus from "../../../../../domain/enums/UserStatus";
+import UserRoles from "../../../../../domain/enums/UserRole";
 
 const userSchema = new Schema<User>(
   {
@@ -24,14 +26,14 @@ const userSchema = new Schema<User>(
     },
     role: {
       type: String,
-      enum: ["customer", "owner", "admin"],
+      enum: [UserRoles.CUSTOMER, UserRoles.OWNER],
       required: true,
     },
     status: {
       type: String,
-      enum: ["active", "blocked", "deleted"],
+      enum: [UserStatus.ACTIVE, UserStatus.BLOCKED, UserStatus.DELETED],
       required: true,
-      default: "active",
+      default: UserStatus.ACTIVE,
     },
     isActive: {
       type: Boolean,

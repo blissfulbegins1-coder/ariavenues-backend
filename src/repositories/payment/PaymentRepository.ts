@@ -33,14 +33,14 @@ export class PaymentRepository implements IPaymentRepository {
     return this.toEntity(payment);
   }
 
-  async findByOrderId(orderId: string): Promise<Payment | null> {
-    const payment = await PaymentModel.findOne({ orderId, isActive: true });
+  async findByOrderId(orderId: string, session?: ClientSession): Promise<Payment | null> {
+    const payment = await PaymentModel.findOne({ orderId, isActive: true }).session(session ?? null);
     if (!payment) return null;
     return this.toEntity(payment);
   }
 
-  async findByBookingId(bookingId: string): Promise<Payment | null> {
-    const payment = await PaymentModel.findOne({ bookingId, isActive: true });
+  async findByBookingId(bookingId: string, session?: ClientSession): Promise<Payment | null> {
+    const payment = await PaymentModel.findOne({ bookingId, isActive: true }).session(session ?? null);
     if (!payment) return null;
     return this.toEntity(payment);
   }

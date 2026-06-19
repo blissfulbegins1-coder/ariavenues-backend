@@ -1,16 +1,13 @@
-import { User } from "../../domain/entities/User";
-import { CreateUserDTO } from "../../domain/dtos/user/CreateUserDTO";
+import {
+  VerifyOtpDTO,
+  UserDTO,
+  UserSuccessResponse,
+  UserVerificationResponse,
+} from "../../domain/dtos/user/UserDto";
 
 export interface IUserUseCase {
-  signUp(input: CreateUserDTO): Promise<{ success: boolean; message: string }>;
-  verifyOtp(
-    mobile: string,
-    otp: string,
-  ): Promise<{
-    user: { id: string; name: string };
-    token: string;
-    redirectUrl: string;
-  }>;
-  resendOtp(mobile: string): Promise<{ success: boolean; message: string }>;
-  signIn(mobile: string): Promise<{ success: boolean; message: string }>;
+  signUp(input: UserDTO): Promise<UserSuccessResponse>;
+  verifyOtp(input: VerifyOtpDTO): Promise<UserVerificationResponse>;
+  resendOtp(mobile: string): Promise<UserSuccessResponse>;
+  signIn(mobile: string): Promise<UserSuccessResponse>;
 }

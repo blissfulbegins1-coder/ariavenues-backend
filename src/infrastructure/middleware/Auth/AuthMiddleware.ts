@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { JwtManagementEngine } from "../../../engines/jwt/JwtManagementEngine";
+import UserRoles from "../../../domain/enums/UserRole";
 
 declare global {
   namespace Express {
@@ -21,7 +22,7 @@ export const requireRole = (allowedRoles: string[]) => {
         res.status(401).json({
           success: false,
           message:
-            "Authorization header missing or invalid format (Bearer token required)",
+            "Authorization header missing or invalid format (token required)",
         });
         return;
       }
@@ -32,7 +33,7 @@ export const requireRole = (allowedRoles: string[]) => {
       );
       const decoded = jwtEngine.verifyToken(token) as {
         id: string;
-        role: "customer" | "owner" | "admin";
+        role: UserRoles.ADMIN | UserRoles.CUSTOMER | UserRoles.OWNER;
         mobile: string;
       } | null;
 

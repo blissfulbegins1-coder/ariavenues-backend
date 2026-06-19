@@ -1,4 +1,5 @@
 import * as yup from "yup";
+import { BookingStatus } from "../../../domain/enums/BookingStatus";
 
 export const createBookingSchema = yup.object().shape({
   auditoriumId: yup.string().required("Auditorium ID is required").trim(),
@@ -17,4 +18,11 @@ export const bookingIdParamSchema = yup.object().shape({
     .required("Booking ID is required")
     .trim()
     .matches(/^[a-f\d]{24}$/i, "Booking ID must be a valid MongoDB ObjectId"),
+});
+
+export const updateBookingStatusSchema = yup.object().shape({
+  status: yup
+    .string()
+    .required("Status is required")
+    .oneOf([BookingStatus.CONFIRMED, BookingStatus.CANCELLED], "Invalid status"),
 });

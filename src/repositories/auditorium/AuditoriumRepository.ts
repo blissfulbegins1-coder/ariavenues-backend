@@ -3,6 +3,8 @@ import { CreateAuditoriumDTO } from "../../domain/dtos/auditorium/CreateAuditori
 import { AuditoriumModel } from "../../infrastructure/services/mongodb/models/auditorium/AuditoriumModel";
 import { IAuditoriumRepository } from "./IAuditoriumRepository";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
+import { ApiError } from "../../domain/errors/ApiError";
+import { AuditoriumStatus } from "../../domain/enums/AuditoriumStatus";
 
 export class AuditoriumRepository implements IAuditoriumRepository {
   private mapToEntity(doc: any): Auditorium {
@@ -21,16 +23,13 @@ export class AuditoriumRepository implements IAuditoriumRepository {
       totalReviews: obj.totalReviews,
       totalBookings: obj.totalBookings,
       status: obj.status,
-      approved: obj.approved ?? false,
-      adminAdvance: obj.adminAdvance ?? 0,
-      auditoriumAdvance: obj.auditoriumAdvance ?? 0,
-      isActive: obj.isActive,
-      createdAt: obj.createdAt,
-      updatedAt: obj.updatedAt,
+      approved: obj.approved,
+      adminAdvance: obj.adminAdvance,
+      auditoriumAdvance: obj.auditoriumAdvance
     } as Auditorium;
   }
 
-  async create(data: CreateAuditoriumDTO): Promise<Auditorium> {
+  async create(data: CreateAuditoriumDTO): Promise<boolean> {
     const { user, ...rest } = data;
     const auditorium = new AuditoriumModel({
       ...rest,
@@ -44,7 +43,7 @@ export class AuditoriumRepository implements IAuditoriumRepository {
       isActive: true,
     });
     await auditorium.save();
-    return this.mapToEntity(auditorium);
+    return true;
   }
 
   async listByOwner(user: UserTokenDto): Promise<Auditorium[]> {
@@ -53,7 +52,7 @@ export class AuditoriumRepository implements IAuditoriumRepository {
   }
 
   async listPublic(): Promise<Auditorium[]> {
-    const items = await AuditoriumModel.find({ status: "active", isActive: true });
+    const items = await AuditoriumModel.find({ status: AuditoriumStatus.ACTIVE, isActive: true, approved: true });
     return items.map((item) => this.mapToEntity(item));
   }
 
@@ -70,7 +69,7 @@ export class AuditoriumRepository implements IAuditoriumRepository {
       { returnDocument: "after" },
     );
     if (!item) {
-      throw new Error("Auditorium not found");
+      throw new ApiError("Auditorium not found");
     }
     return this.mapToEntity(item);
   }

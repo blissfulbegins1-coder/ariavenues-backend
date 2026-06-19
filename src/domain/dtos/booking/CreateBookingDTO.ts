@@ -1,6 +1,6 @@
 export interface CreateBookingDTO {
   auditoriumId: string;
-  startDate: string; // YYYY-MM-DD
-  endDate: string; // YYYY-MM-DD
+  startDate: string;
+  endDate: string;
   guestCount: number;
 }

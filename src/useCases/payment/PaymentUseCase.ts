@@ -5,11 +5,10 @@ import { IPaymentEngine } from "../../engines/payment/IPaymentEngine";
 import { IBookingEngine } from "../../engines/booking/IBookingEngine";
 import { IRazorpayService } from "../../infrastructure/services/razorpay/IRazorpayService";
 import { IPaymentUseCase, RazorpayOrderResult } from "./IPaymentUseCase";
-import { AppError } from "../../domain/errors/AppError";
+import { ApiError } from "../../domain/errors/ApiError";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
-import { PaymentModel } from "../../infrastructure/services/mongodb/models/payment/PaymentModel";
-import { BookingModel } from "../../infrastructure/services/mongodb/models/booking/BookingModel";
 import { PaymentStatus } from "../../domain/enums/PaymentStatus";
+import { BookingStatus } from "../../domain/enums/BookingStatus";
 
 type PaymentUseCaseConstructorParams = {
   paymentEngine: IPaymentEngine;
@@ -38,28 +37,26 @@ export class PaymentUseCase implements IPaymentUseCase {
   ): Promise<RazorpayOrderResult> {
     const booking = await this.bookingEngine.getBookingById(bookingId);
     if (!booking) {
-      throw new AppError("Booking details not found", 404);
+      throw new ApiError("Booking details not found");
     }
 
     if (booking.userId !== user.id) {
-      throw new AppError("Access denied. Unauthorized reservation owner", 403);
+      throw new ApiError("Access denied. Unauthorized reservation owner");
     }
 
-    if (booking.bookingStatus === "CANCELLED") {
-      throw new AppError(
+    if (booking.bookingStatus === BookingStatus.CANCELLED) {
+      throw new ApiError(
         "Cannot initiate payment for a cancelled booking",
-        400,
       );
     }
 
     if (
-      booking.bookingStatus === "CONFIRMED" ||
-      booking.bookingStatus === "COMPLETED"
+      booking.bookingStatus === BookingStatus.CONFIRMED ||
+      booking.bookingStatus === BookingStatus.COMPLETED
     ) {
-      throw new AppError("This booking is already paid and confirmed", 400);
+      throw new ApiError("This booking is already paid and confirmed");
     }
 
-    // Availability Lock Check - double check if dates are still available
     const isAvailable = await this.bookingEngine.checkAvailability(
       booking.auditoriumId,
       booking.startDate,
@@ -67,35 +64,31 @@ export class PaymentUseCase implements IPaymentUseCase {
       booking.id,
     );
     if (!isAvailable) {
-      throw new AppError(
+      throw new ApiError(
         "The selected dates are no longer available for booking",
-        409,
       );
     }
 
-    // Check for duplicate payments
     const existingPayment = await this.paymentEngine.getPaymentByBookingId(
       booking.id,
     );
-    if (existingPayment && existingPayment.paymentStatus === "SUCCESS") {
-      throw new AppError(
+
+    if (existingPayment && existingPayment.paymentStatus === PaymentStatus.SUCCESS) {
+      throw new ApiError(
         "Payment already completed successfully for this booking",
-        400,
       );
     }
 
-    // Create Razorpay Order (amount must be in paise)
     const amountInPaise = Math.round(booking.totalAmount * 100);
     const order = await this.razorpayService.createOrder(
       amountInPaise,
       booking.bookingNumber,
     );
 
-    // Save/Update Payment Record
     if (existingPayment) {
       await this.paymentEngine.updatePayment(existingPayment.id, {
         orderId: order.id,
-        paymentStatus: "CREATED",
+        paymentStatus: PaymentStatus.CREATED,
       });
     } else {
       await this.paymentEngine.createPayment({
@@ -104,7 +97,7 @@ export class PaymentUseCase implements IPaymentUseCase {
         currency: "INR",
         gateway: "Razorpay",
         orderId: order.id,
-        paymentStatus: "CREATED",
+        paymentStatus: PaymentStatus.CREATED,
       });
     }
 
@@ -125,42 +118,35 @@ export class PaymentUseCase implements IPaymentUseCase {
     session.startTransaction();
 
     try {
-      const paymentDoc = await PaymentModel.findOne({
-        orderId: data.orderId,
-      }).session(session);
+      const paymentDoc = await this.paymentEngine.getPaymentByOrderId(data.orderId, session);
+
       if (!paymentDoc) {
-        throw new AppError("Payment record not found for this order ID", 404);
+        throw new ApiError("Payment record not found for this order ID");
       }
 
-      if (paymentDoc.paymentStatus === "SUCCESS") {
-        throw new AppError(
+      if (paymentDoc.paymentStatus === PaymentStatus.SUCCESS) {
+        throw new ApiError(
           "Payment signature verification has already succeeded",
-          400,
         );
       }
 
-      const bookingDoc = await BookingModel.findById(
-        paymentDoc.bookingId,
-      ).session(session);
+      const bookingDoc = await this.bookingEngine.getBookingById(paymentDoc.bookingId, session);
       if (!bookingDoc) {
-        throw new AppError("Associated booking details not found", 404);
+        throw new ApiError("Associated booking details not found");
       }
 
       if (bookingDoc.userId.toString() !== user.id) {
-        throw new AppError(
+        throw new ApiError(
           "Access denied. Unauthorized transaction owner",
-          403,
         );
       }
 
-      if (bookingDoc.bookingStatus === "CANCELLED") {
-        throw new AppError(
+      if (bookingDoc.bookingStatus === BookingStatus.CANCELLED) {
+        throw new ApiError(
           "Cannot complete payment for a cancelled booking",
-          400,
         );
       }
 
-      // Verify Signature using Razorpay Key Secret
       const isSignatureValid = this.razorpayService.verifySignature(
         data.orderId,
         data.paymentId,
@@ -168,46 +154,40 @@ export class PaymentUseCase implements IPaymentUseCase {
       );
 
       if (!isSignatureValid) {
-        // Outside the transaction, record the failure so it persists
-        await PaymentModel.findByIdAndUpdate(paymentDoc._id, {
-          paymentStatus: "FAILED",
-        });
-        throw new AppError("Razorpay signature validation failed", 400);
+        await this.paymentEngine.updatePayment(paymentDoc.id, {
+          paymentStatus: PaymentStatus.FAILED,
+        }, session);
+        throw new ApiError("Razorpay signature validation failed");
       }
 
-      // Update payment record inside transaction
-      paymentDoc.paymentStatus = "SUCCESS";
-      paymentDoc.paymentId = data.paymentId;
-      paymentDoc.signature = data.signature;
-      if (data.paymentMethod) {
-        paymentDoc.paymentMethod = data.paymentMethod;
+      const updatedPayment = await this.paymentEngine.updatePayment(
+        paymentDoc.id,
+        {
+          paymentStatus: PaymentStatus.SUCCESS,
+          paymentId: data.paymentId,
+          signature: data.signature,
+          paymentMethod: data.paymentMethod,
+          paidAt: new Date(),
+        },
+        session,
+      );
+
+      if (!updatedPayment) {
+        throw new ApiError("Failed to update payment record");
       }
-      paymentDoc.paidAt = new Date();
-      await paymentDoc.save({ session });
 
-      // Update booking status inside transaction
-      bookingDoc.bookingStatus = "CONFIRMED";
-      await bookingDoc.save({ session });
+      await this.bookingEngine.updateBooking(
+        bookingDoc.id,
+        {
+          bookingStatus: BookingStatus.CONFIRMED,
+        },
+        session,
+      );
 
-      // Commit transaction
       await session.commitTransaction();
       session.endSession();
 
-      return {
-        id: paymentDoc._id.toString(),
-        bookingId: paymentDoc.bookingId.toString(),
-        amount: paymentDoc.amount,
-        currency: paymentDoc.currency as "INR",
-        gateway: paymentDoc.gateway as "Razorpay",
-        orderId: paymentDoc.orderId,
-        paymentId: paymentDoc.paymentId,
-        signature: paymentDoc.signature,
-        paymentMethod: paymentDoc.paymentMethod,
-        paymentStatus: paymentDoc.paymentStatus as PaymentStatus,
-        paidAt: paymentDoc.paidAt,
-        createdAt: paymentDoc.createdAt,
-        updatedAt: paymentDoc.updatedAt,
-      };
+      return updatedPayment;
     } catch (error) {
       await session.abortTransaction();
       session.endSession();

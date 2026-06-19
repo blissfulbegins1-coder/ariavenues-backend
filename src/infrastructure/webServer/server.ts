@@ -20,20 +20,15 @@ export class Server {
   }
 
   private setupMiddleware(): void {
-    // Body parser middleware
     this.app.use(express.json({ limit: "100mb" }));
     this.app.use(express.urlencoded({ limit: "100mb", extended: false }));
 
-    // Global Multer middleware for parsing multipart/form-data
     this.app.use(uploadMiddleware);
-
-    // Attach Awilix DI container to requests
     this.app.use((req, res, next) => {
       req.container = this.container;
       next();
     });
 
-    // CORS middleware
     this.app.use(
       cors({
         origin: corsOrigins,
@@ -42,7 +37,6 @@ export class Server {
       }),
     );
 
-    // Health check endpoint
     this.app.get("/health", async (req, res) => {
       const isHealthy = await this.databaseService.healthCheck();
       res.json({
@@ -54,21 +48,16 @@ export class Server {
   }
 
   private setupRoutes(): void {
-    // Main API Routes
     this.app.use("/api/", setupApiRoutes(this.container));
-
-    // Global Error Handler (must be last)
     this.app.use(errorHandler);
   }
 
   async start(port: number = 3001): Promise<void> {
     try {
-      // Start Express server
       this.app.listen(port, () => {
-        console.log(`✓ Server running on http://localhost:${port}`);
+        console.log(`Server running on http://localhost:${port}`);
       });
     } catch (error) {
-      console.error("Failed to start server:", error);
       process.exit(1);
     }
   }

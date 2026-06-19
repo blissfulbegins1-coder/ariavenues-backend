@@ -1,5 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { Payment } from "../../../../../domain/entities/Payment";
+import { PaymentStatus } from "../../../../../domain/enums/PaymentStatus";
 
 const paymentSchema = new Schema<Payment>(
   {
@@ -44,9 +45,9 @@ const paymentSchema = new Schema<Payment>(
     },
     paymentStatus: {
       type: String,
-      enum: ["CREATED", "SUCCESS", "FAILED"],
+      enum: [PaymentStatus.CREATED, PaymentStatus.SUCCESS, PaymentStatus.FAILED],
       required: true,
-      default: "CREATED",
+      default: PaymentStatus.CREATED,
     },
     paidAt: {
       type: Date,

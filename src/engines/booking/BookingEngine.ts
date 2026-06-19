@@ -1,4 +1,4 @@
-import { ClientSession } from "mongoose";
+import { ClientSession, QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
 import { IBookingRepository } from "../../repositories/booking/IBookingRepository";
 import { IBookingEngine } from "./IBookingEngine";
@@ -21,14 +21,15 @@ export class BookingEngine implements IBookingEngine {
     return await this.bookingRepository.create(data, session);
   }
 
-  async getBookingById(id: string): Promise<Booking | null> {
-    return await this.bookingRepository.findById(id);
+  async getBookingById(id: string, session?: ClientSession): Promise<Booking | null> {
+    return await this.bookingRepository.findById(id, session);
   }
 
   async getBookingByBookingNumber(
     bookingNumber: string,
+    session?: ClientSession,
   ): Promise<Booking | null> {
-    return await this.bookingRepository.findByBookingNumber(bookingNumber);
+    return await this.bookingRepository.findByBookingNumber(bookingNumber, session);
   }
 
   async updateBooking(
@@ -65,8 +66,8 @@ export class BookingEngine implements IBookingEngine {
     await this.bookingRepository.deleteById(id);
   }
 
-  async getAllBookings(): Promise<Booking[]> {
-    return await this.bookingRepository.listAll();
+  async getAllBookings(filter: QueryFilter<Booking>): Promise<Booking[]> {
+    return await this.bookingRepository.listAll(filter);
   }
 }
 

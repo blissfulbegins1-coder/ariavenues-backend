@@ -15,6 +15,7 @@ export class CloudinaryService {
         {
           folder: "auditoriums",
           public_id: originalname.split(".")[0] + "-" + Date.now(),
+          format: "webp",
         },
         (error, result) => {
           if (error) {

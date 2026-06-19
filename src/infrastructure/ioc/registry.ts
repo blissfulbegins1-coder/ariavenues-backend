@@ -29,7 +29,6 @@ import { PaymentController } from "../../controllers/PaymentController";
 import { AdminUseCase } from "../../useCases/admin/AdminUseCase";
 import { AdminController } from "../../controllers/AdminController";
 
-// Type-safe container registry
 export interface IContainer {
   databaseService: DatabaseService;
   otpService: OtpService;
@@ -56,13 +55,11 @@ export interface IContainer {
   adminController: AdminController;
 }
 
-// Setup Awilix DI Container
 export const setupContainer = (): AwilixContainer<IContainer> => {
   const container = createContainer<IContainer>({
     injectionMode: InjectionMode.PROXY,
   });
 
-  // Register all dependencies in one place
   container.register({
     // Services
     databaseService: asClass(DatabaseService).singleton(),
@@ -101,7 +98,6 @@ export const setupContainer = (): AwilixContainer<IContainer> => {
   return container;
 };
 
-// Type for accessing container in Express
 declare global {
   namespace Express {
     interface Request {

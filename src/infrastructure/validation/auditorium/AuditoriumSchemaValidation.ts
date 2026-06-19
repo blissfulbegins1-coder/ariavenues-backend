@@ -1,4 +1,5 @@
 import * as yup from "yup";
+import { AuditoriumStatus } from "../../../domain/enums/AuditoriumStatus";
 
 export const createAuditoriumSchema = yup.object().shape({
   name: yup
@@ -150,10 +151,40 @@ export const updateAuditoriumSchema = yup
   );
 
 export const auditoriumIdParamSchema = yup.object().shape({
-  id: yup
-    .string()
-    .required("Auditorium ID is required")
-    .trim()
-    .matches(/^[a-f\d]{24}$/i, "Auditorium ID must be a valid MongoDB ObjectId"),
+    id: yup
+        .string()
+        .required("Auditorium ID is required")
+        .trim()
+        .matches(/^[a-f\d]{24}$/i, "Auditorium ID must be a valid MongoDB ObjectId"),
 });
 
+export const updateAuditoriumStatusSchema = yup.object().shape({
+    status: yup
+        .string()
+        .required("Status is required")
+        .oneOf([AuditoriumStatus.ACTIVE, AuditoriumStatus.REJECTED], "Invalid status"),
+
+    adminAdvance: yup
+        .number()
+        .transform((value) => (isNaN(value) ? undefined : value))
+        .when("status", {
+            is: AuditoriumStatus.ACTIVE,
+            then: (schema) =>
+                schema
+                    .required("Admin advance is required")
+                    .min(0, "Admin advance must be a non-negative number"),
+            otherwise: (schema) => schema.notRequired(),
+        }),
+
+    auditoriumAdvance: yup
+        .number()
+        .transform((value) => (isNaN(value) ? undefined : value))
+        .when("status", {
+            is: AuditoriumStatus.ACTIVE,
+            then: (schema) =>
+                schema
+                    .required("Auditorium advance is required")
+                    .min(0, "Auditorium advance must be a non-negative number"),
+            otherwise: (schema) => schema.notRequired(),
+        }),
+});

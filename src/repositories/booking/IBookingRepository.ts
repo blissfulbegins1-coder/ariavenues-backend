@@ -1,10 +1,10 @@
-import { ClientSession } from "mongoose";
+import { ClientSession, QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
 
 export interface IBookingRepository {
   create(data: Partial<Booking>, session?: ClientSession): Promise<Booking>;
-  findById(id: string): Promise<Booking | null>;
-  findByBookingNumber(bookingNumber: string): Promise<Booking | null>;
+  findById(id: string, session?: ClientSession): Promise<Booking | null>;
+  findByBookingNumber(bookingNumber: string, session?: ClientSession): Promise<Booking | null>;
   update(
     id: string,
     data: Partial<Booking>,
@@ -19,5 +19,5 @@ export interface IBookingRepository {
     endDate: Date,
     excludeBookingId?: string,
   ): Promise<boolean>;
-  listAll(): Promise<Booking[]>;
+  listAll(filter: QueryFilter <Booking>): Promise<Booking[]>;
 }

@@ -1,7 +1,8 @@
-import mongoose, { ClientSession } from "mongoose";
+import mongoose, { ClientSession, QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
 import { BookingModel } from "../../infrastructure/services/mongodb/models/booking/BookingModel";
 import { IBookingRepository } from "./IBookingRepository";
+import { BookingStatus } from "../../domain/enums/BookingStatus";
 
 interface BookingAggregationDoc {
   _id: mongoose.Types.ObjectId;
@@ -32,7 +33,9 @@ const auditoriumLookup = [
       from: "auditoriums",
       localField: "auditoriumId",
       foreignField: "_id",
-      pipeline: [{ $project: { name: 1, address: 1, images: 1 } }],
+      pipeline: [
+        { $project: { name: 1, address: 1, images: { $slice: ["$images", 1] } } }
+      ],
       as: "auditoriumData",
     },
   },
@@ -103,20 +106,23 @@ export class BookingRepository implements IBookingRepository {
     return this.toEntity(results[0]);
   }
 
-  async findById(id: string): Promise<Booking | null> {
+  async findById(id: string, session?: ClientSession): Promise<Booking | null> {
     const results = await BookingModel.aggregate<BookingAggregationDoc>([
       { $match: { _id: new mongoose.Types.ObjectId(id), isActive: true } },
       ...auditoriumLookup,
-    ]);
+    ]).session(session ?? null);
     if (!results.length) return null;
     return this.toEntity(results[0]);
   }
 
-  async findByBookingNumber(bookingNumber: string): Promise<Booking | null> {
+  async findByBookingNumber(
+    bookingNumber: string,
+    session?: ClientSession,
+  ): Promise<Booking | null> {
     const results = await BookingModel.aggregate<BookingAggregationDoc>([
       { $match: { bookingNumber, isActive: true } },
       ...auditoriumLookup,
-    ]);
+    ]).session(session ?? null);
     if (!results.length) return null;
     return this.toEntity(results[0]);
   }
@@ -171,7 +177,7 @@ export class BookingRepository implements IBookingRepository {
   ): Promise<boolean> {
     const overlapping = await BookingModel.findOne({
       auditoriumId,
-      bookingStatus: { $in: ["PENDING_PAYMENT", "CONFIRMED", "COMPLETED"] },
+      bookingStatus: { $in: [BookingStatus.PENDING_PAYMENT, BookingStatus.CONFIRMED, BookingStatus.COMPLETED] },
       startDate: { $lte: endDate },
       endDate: { $gte: startDate },
       isActive: true,
@@ -182,9 +188,9 @@ export class BookingRepository implements IBookingRepository {
     return !overlapping;
   }
 
-  async listAll(): Promise<Booking[]> {
+  async listAll(filter: QueryFilter<Booking>): Promise<Booking[]> {
     const results = await BookingModel.aggregate<BookingAggregationDoc>([
-      { $match: { isActive: true } },
+      { $match: { ...filter, isActive: true } },
       ...auditoriumLookup,
       { $sort: { createdAt: -1 } },
     ]);

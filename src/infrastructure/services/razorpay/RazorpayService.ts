@@ -42,9 +42,7 @@ export class RazorpayService implements IRazorpayService {
       });
       return order as RazorpayOrderResponse;
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Razorpay API order creation failed";
-      throw new Error(message);
+      throw error
     }
   }
 

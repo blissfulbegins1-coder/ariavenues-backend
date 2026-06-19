@@ -7,7 +7,6 @@ import { setupBookingRoutes } from "./booking/bookingRoutes";
 import { setupPaymentRoutes } from "./payment/paymentRoutes";
 import { setupAdminRoutes } from "./admin/adminRoutes";
 
-// Main API Router - centralizes all API routes
 export const setupApiRoutes = (
   container: AwilixContainer<IContainer>,
 ): Router => {

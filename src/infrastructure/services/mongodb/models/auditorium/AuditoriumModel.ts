@@ -1,5 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { Auditorium } from "../../../../../domain/entities/Auditorium";
+import { AuditoriumStatus } from "../../../../../domain/enums/AuditoriumStatus";
 
 const auditoriumSchema = new Schema<Auditorium>(
   {
@@ -55,9 +56,9 @@ const auditoriumSchema = new Schema<Auditorium>(
     },
     status: {
       type: String,
-      enum: ["pending", "draft", "maintenance", "active", "rejected"],
+      enum: [AuditoriumStatus.PENDING, AuditoriumStatus.DRAFT, AuditoriumStatus.MAINTENANCE, AuditoriumStatus.ACTIVE, AuditoriumStatus.REJECTED],
       required: true,
-      default: "pending",
+      default: AuditoriumStatus.PENDING,
     },
     approved: {
       type: Boolean,

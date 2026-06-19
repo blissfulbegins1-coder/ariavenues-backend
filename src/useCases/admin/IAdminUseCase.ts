@@ -1,6 +1,9 @@
 import { User } from "../../domain/entities/User";
 import { Auditorium } from "../../domain/entities/Auditorium";
 import { Booking } from "../../domain/entities/Booking";
+import { AuditoriumStatus } from "../../domain/enums/AuditoriumStatus";
+import UserStatus from "../../domain/enums/UserStatus";
+import { BookingStatus } from "../../domain/enums/BookingStatus";
 
 export interface DashboardStats {
   totalUsers: number;
@@ -36,16 +39,16 @@ export interface IAdminUseCase {
   getBookings(): Promise<Booking[]>;
   updateAuditoriumStatus(
     id: string,
-    status: "pending" | "draft" | "maintenance" | "active" | "rejected",
+    status: AuditoriumStatus,
     adminAdvance?: number,
     auditoriumAdvance?: number
   ): Promise<Auditorium>;
   updateUserStatus(
     id: string,
-    status: "active" | "blocked"
+    status: UserStatus
   ): Promise<User>;
   updateBookingStatus(
     id: string,
-    status: "CONFIRMED" | "CANCELLED"
+    status: BookingStatus
   ): Promise<Booking>;
 }

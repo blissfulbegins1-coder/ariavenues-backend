@@ -4,7 +4,11 @@ import {
   signInSchema,
   verifyOtpSchema,
   resendOtpSchema,
+  userIdParamSchema,
+  updateUserStatusSchema,
 } from "../infrastructure/validation/user/UserValidationSchemas";
+import { auditoriumIdParamSchema, updateAuditoriumStatusSchema } from "../infrastructure/validation/auditorium/AuditoriumSchemaValidation";
+import { bookingIdParamSchema, updateBookingStatusSchema } from "../infrastructure/validation/booking/BookingValidationSchemas";
 
 type AdminControllerConstructorParams = {
   adminUseCase: IAdminUseCase;
@@ -161,24 +165,17 @@ export class AdminController {
     next: NextFunction
   ): Promise<Response | void> {
     try {
-      const { id } = req.params;
-      const { status, adminAdvance, auditoriumAdvance } = req.body;
-
-      if (
-        !["pending", "draft", "maintenance", "active", "rejected"].includes(
-          status
-        )
-      ) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid status value" });
-      }
-
+      const { id } = await auditoriumIdParamSchema.validate(req.params, {
+        abortEarly: false,
+      });
+      const validatedData = await updateAuditoriumStatusSchema.validate(req.body, {
+        abortEarly: false,
+      })
       const result = await this.adminUseCase.updateAuditoriumStatus(
-        id as string,
-        status as any,
-        adminAdvance !== undefined ? Number(adminAdvance) : undefined,
-        auditoriumAdvance !== undefined ? Number(auditoriumAdvance) : undefined
+        id,
+        validatedData.status,
+        validatedData.adminAdvance,
+        validatedData.auditoriumAdvance
       );
       return res.status(200).json({
         success: true,
@@ -196,20 +193,18 @@ export class AdminController {
     next: NextFunction
   ): Promise<Response | void> {
     try {
-      const id = req.params.id as string;
-      const { status } = req.body;
+      const { id } = await userIdParamSchema.validate(req.params, {
+        abortEarly: false,
+      });
+      const validatedData = await updateUserStatusSchema.validate(req.body, {
+        abortEarly: false,
+      })
 
-      if (!["active", "blocked"].includes(status)) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid status value. Must be 'active' or 'blocked'." });
-      }
-
-      const result = await this.adminUseCase.updateUserStatus(id, status as "active" | "blocked");
+      const result = await this.adminUseCase.updateUserStatus(id, validatedData.status);
       return res.status(200).json({
         success: true,
         data: result,
-        message: `User status updated to ${status} successfully`,
+        message: "User status updated successfully",
       });
     } catch (error) {
       next(error);
@@ -222,20 +217,18 @@ export class AdminController {
     next: NextFunction
   ): Promise<Response | void> {
     try {
-      const id = req.params.id as string;
-      const { status } = req.body;
+      const validatedData = await bookingIdParamSchema.validate(req.params, {
+        abortEarly: false,
+      });
+      const validatedData2 = await updateBookingStatusSchema.validate(req.body, {
+        abortEarly: false,
+      });
 
-      if (!["CONFIRMED", "CANCELLED"].includes(status)) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid booking status. Must be 'CONFIRMED' or 'CANCELLED'." });
-      }
-
-      const result = await this.adminUseCase.updateBookingStatus(id, status as "CONFIRMED" | "CANCELLED");
+      const result = await this.adminUseCase.updateBookingStatus(validatedData.id, validatedData2.status);
       return res.status(200).json({
         success: true,
         data: result,
-        message: `Booking status updated to ${status} successfully`,
+        message: `Booking status updated successfully`,
       });
     } catch (error) {
       next(error);

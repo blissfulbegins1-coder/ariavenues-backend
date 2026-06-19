@@ -21,12 +21,12 @@ export class PaymentEngine implements IPaymentEngine {
     return await this.paymentRepository.create(data, session);
   }
 
-  async getPaymentByOrderId(orderId: string): Promise<Payment | null> {
-    return await this.paymentRepository.findByOrderId(orderId);
+  async getPaymentByOrderId(orderId: string, session?: ClientSession): Promise<Payment | null> {
+    return await this.paymentRepository.findByOrderId(orderId, session);
   }
 
-  async getPaymentByBookingId(bookingId: string): Promise<Payment | null> {
-    return await this.paymentRepository.findByBookingId(bookingId);
+  async getPaymentByBookingId(bookingId: string, session?: ClientSession): Promise<Payment | null> {
+    return await this.paymentRepository.findByBookingId(bookingId, session);
   }
 
   async updatePayment(

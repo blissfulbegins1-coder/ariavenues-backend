@@ -1,1 +1,5 @@
-export type PaymentStatus = "CREATED" | "SUCCESS" | "FAILED";
+export enum PaymentStatus {
+    CREATED = "created",
+    SUCCESS = "success",
+    FAILED = "failed",
+}

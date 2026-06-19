@@ -1,4 +1,6 @@
 import * as yup from "yup";
+import UserRoles from "../../../domain/enums/UserRole";
+import UserStatus from "../../../domain/enums/UserStatus";
 
 const mobileValidation = yup
   .string()
@@ -26,7 +28,7 @@ export const signUpSchema = yup.object().shape({
   role: yup
     .string()
     .required("Role is required")
-    .oneOf(["customer", "owner", "admin"], "Invalid role"),
+    .oneOf([UserRoles.OWNER, UserRoles.CUSTOMER], "Invalid role"),
 });
 
 // Validation Schema for verifying OTP
@@ -35,7 +37,7 @@ export const verifyOtpSchema = yup.object().shape({
   otp: yup
     .string()
     .required("OTP is required")
-    .matches(/^\d{4,6}$/, "OTP must be 4 to 6 digits"),
+    .matches(/^\d{6}$/, "OTP must be 6 digits"),
 });
 
 // Validation Schema for resending OTP
@@ -44,11 +46,19 @@ export const resendOtpSchema = yup.object().shape({
 });
 
 // Validation Schema for ID parameter
-export const idParamSchema = yup.object().shape({
-  id: yup.string().required("ID is required").trim(),
+export const userIdParamSchema = yup.object().shape({
+  id: yup.string().required("User ID is required").trim().matches(/^[a-f\d]{24}$/i, "User ID must be a valid MongoDB ObjectId"),
 });
 
 // Validation Schema for signing in a user
 export const signInSchema = yup.object().shape({
   mobile: mobileValidation,
+});
+
+
+export const updateUserStatusSchema = yup.object().shape({
+  status: yup
+    .string()
+    .required("Status is required")
+    .oneOf([UserStatus.ACTIVE, UserStatus.BLOCKED], "Invalid status")
 });
