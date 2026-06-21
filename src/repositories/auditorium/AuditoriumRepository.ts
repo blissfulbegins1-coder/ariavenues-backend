@@ -5,6 +5,7 @@ import { IAuditoriumRepository } from "./IAuditoriumRepository";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 import { ApiError } from "../../domain/errors/ApiError";
 import { AuditoriumStatus } from "../../domain/enums/AuditoriumStatus";
+import { QueryFilter } from "mongoose";
 
 export class AuditoriumRepository implements IAuditoriumRepository {
   private mapToEntity(doc: any): Auditorium {
@@ -54,8 +55,15 @@ export class AuditoriumRepository implements IAuditoriumRepository {
     return items.map((item) => this.mapToEntity(item));
   }
 
-  async listPublic(): Promise<Auditorium[]> {
-    const items = await AuditoriumModel.find({ status: AuditoriumStatus.ACTIVE, isActive: true, approved: true });
+  async listPublic(filter?: QueryFilter<Auditorium>): Promise<Auditorium[]> {
+    const query: QueryFilter<Auditorium> = {
+      status: AuditoriumStatus.ACTIVE,
+      isActive: true,
+      approved: true,
+      ...filter,
+    };
+
+    const items = await AuditoriumModel.find(query);
     return items.map((item) => this.mapToEntity(item));
   }
 

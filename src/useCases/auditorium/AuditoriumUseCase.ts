@@ -1,26 +1,35 @@
 import { Auditorium } from "../../domain/entities/Auditorium";
 import { CreateAuditoriumDTO } from "../../domain/dtos/auditorium/CreateAuditoriumDTO";
 import { UpdateAuditoriumDTO } from "../../domain/dtos/auditorium/UpdateAuditoriumDTO";
+import { GetPublicAuditoriumsDTO } from "../../domain/dtos/auditorium/GetPublicAuditoriumsDTO";
 import { IAuditoriumEngine } from "../../engines/auditorium/IAuditoriumEngine";
+import { IBookingEngine } from "../../engines/booking/IBookingEngine";
+import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { IAuditoriumUseCase } from "./IAuditoriumUseCase";
 import { CloudinaryService } from "../../infrastructure/services/cloudinary/CloudinaryService";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 import { ApiError } from "../../domain/errors/ApiError";
+import { QueryFilter } from "mongoose";
+import { Booking } from "../../domain/entities/Booking";
 
 type AuditoriumUseCaseConstructorParams = {
   auditoriumEngine: IAuditoriumEngine;
+  bookingEngine: IBookingEngine;
   cloudinaryService: CloudinaryService;
 };
 
 export class AuditoriumUseCase implements IAuditoriumUseCase {
   private auditoriumEngine: IAuditoriumEngine;
+  private bookingEngine: IBookingEngine;
   private cloudinaryService: CloudinaryService;
 
   constructor({
     auditoriumEngine,
+    bookingEngine,
     cloudinaryService,
   }: AuditoriumUseCaseConstructorParams) {
     this.auditoriumEngine = auditoriumEngine;
+    this.bookingEngine = bookingEngine;
     this.cloudinaryService = cloudinaryService;
   }
 
@@ -38,8 +47,67 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
     return await this.auditoriumEngine.getAuditoriumsByOwner(user);
   }
 
-  async getPublicAuditoriums(): Promise<Auditorium[]> {
-    return await this.auditoriumEngine.getPublicAuditoriums();
+  async getPublicAuditoriums(filters?: GetPublicAuditoriumsDTO): Promise<Auditorium[]> {
+    const query: QueryFilter<Auditorium> = {};
+
+    if (filters) {
+      if (filters.destination) {
+        const terms = filters.destination
+          .split(/[\s,]+/)
+          .map((t) => t.trim())
+          .filter(Boolean);
+
+        if (terms.length > 0) {
+          query.$and = terms.map((term) => {
+            const termRegex = new RegExp(term, "i");
+            return {
+              $or: [
+                { city: termRegex },
+                { district: termRegex },
+                { state: termRegex },
+              ],
+            };
+          });
+        }
+      }
+
+      if (filters.capacity !== undefined && filters.capacity !== null) {
+        query.capacity = { $gte: filters.capacity };
+      }
+
+      if (
+        (filters.minPrice !== undefined && filters.minPrice !== null) ||
+        (filters.maxPrice !== undefined && filters.maxPrice !== null)
+      ) {
+        query.dayRate = {};
+        if (filters.minPrice !== undefined && filters.minPrice !== null) {
+          query.dayRate.$gte = filters.minPrice;
+        }
+        if (filters.maxPrice !== undefined && filters.maxPrice !== null) {
+          query.dayRate.$lte = filters.maxPrice;
+        }
+      }
+
+      let excludeIds: string[] = [];
+      if (filters.startDate && filters.endDate) {
+        const overlappingBookings = await this.bookingEngine.getAllBookings({
+          bookingStatus: { $ne: BookingStatus.CANCELLED },
+          startDate: { $lte: filters.endDate },
+          endDate: { $gte: filters.startDate }
+        } as QueryFilter<Booking>);
+        excludeIds = overlappingBookings.map((b) => b.auditoriumId.toString());
+      }
+
+      if (filters.excludeIds && filters.excludeIds.length > 0) {
+        excludeIds = [...excludeIds, ...filters.excludeIds];
+      }
+
+      if (excludeIds.length > 0) {
+        query._id = { $nin: excludeIds };
+      }
+    }
+
+    return await this.auditoriumEngine.getPublicAuditoriums(query);
   }
 
   async getAuditoriumById(id: string): Promise<Auditorium | null> {

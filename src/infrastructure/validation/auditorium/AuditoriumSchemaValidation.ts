@@ -194,3 +194,65 @@ export const updateAuditoriumStatusSchema = yup.object().shape({
             otherwise: (schema) => schema.notRequired(),
         }),
 });
+
+export const publicAuditoriumFilterSchema = yup.object().shape({
+  destination: yup.string().optional().trim(),
+  startDate: yup
+    .date()
+    .optional()
+    .transform((curr, orig) => (orig === "" ? null : curr)),
+  endDate: yup
+    .date()
+    .optional()
+    .transform((curr, orig) => (orig === "" ? null : curr)),
+  capacity: yup
+    .number()
+    .optional()
+    .transform((value, originalValue) => {
+      if (originalValue === "" || originalValue === undefined || originalValue === null) return null;
+      const num = Number(originalValue);
+      return isNaN(num) ? undefined : num;
+    })
+    .integer("Capacity must be an integer")
+    .positive("Capacity must be positive"),
+  minPrice: yup
+    .number()
+    .optional()
+    .transform((value, originalValue) => {
+      if (originalValue === "" || originalValue === undefined || originalValue === null) return null;
+      const num = Number(originalValue);
+      return isNaN(num) ? undefined : num;
+    })
+    .min(0, "Min price cannot be negative"),
+  maxPrice: yup
+    .number()
+    .optional()
+    .transform((value, originalValue) => {
+      if (originalValue === "" || originalValue === undefined || originalValue === null) return null;
+      const num = Number(originalValue);
+      return isNaN(num) ? undefined : num;
+    })
+    .min(0, "Max price cannot be negative"),
+}).test(
+  "date-range-valid",
+  "Both startDate and endDate must be provided together, and startDate must be before or equal to endDate",
+  function (value) {
+    const { startDate, endDate } = value;
+    if (startDate && !endDate) return false;
+    if (!startDate && endDate) return false;
+    if (startDate && endDate) {
+      return new Date(startDate) <= new Date(endDate);
+    }
+    return true;
+  }
+).test(
+  "price-range-valid",
+  "minPrice must be less than or equal to maxPrice",
+  function (value) {
+    const { minPrice, maxPrice } = value;
+    if (minPrice !== undefined && minPrice !== null && maxPrice !== undefined && maxPrice !== null) {
+      return minPrice <= maxPrice;
+    }
+    return true;
+  }
+);
