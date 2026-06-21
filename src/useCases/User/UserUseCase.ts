@@ -1,6 +1,7 @@
 import { UserDTO, UserSuccessResponse, UserVerificationResponse, VerifyOtpDTO } from "../../domain/dtos/user/UserDto";
 import { IUserEngine } from "../../engines/user/IUserEngine";
 import { IJwtManagementEngine } from "../../engines/jwt/IJwtManagementEngine";
+import { User } from "../../domain/entities/User";
 import { IUserUseCase } from "./IUserUseCase";
 import { OtpService } from "../../infrastructure/services/otp/OtpService";
 import { REDIRECT_PATHS } from "../../domain/constants/constants";
@@ -125,5 +126,9 @@ export class UserUseCase implements IUserUseCase {
       success: true,
       message: "OTP sent successfully",
     };
+  }
+
+  async getUserByMobile(mobile: string): Promise<User | null> {
+    return await this.userEngine.getUserByMobile(mobile);
   }
 }

@@ -94,4 +94,39 @@ export class UserController {
       next(error);
     }
   }
+
+  async checkAuth(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<Response | void> {
+    try {
+      if (!req.user || !req.user.mobile) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized token payload",
+        });
+      }
+
+      const user = await this.userUseCase.getUserByMobile(req.user.mobile);
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: "Authenticated user not found in database",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          id: user.id,
+          name: user.name,
+          role: user.role,
+          mobile: user.mobile,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
