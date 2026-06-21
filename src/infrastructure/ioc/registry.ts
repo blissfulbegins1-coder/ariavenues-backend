@@ -28,6 +28,10 @@ import { BookingController } from "../../controllers/BookingController";
 import { PaymentController } from "../../controllers/PaymentController";
 import { AdminUseCase } from "../../useCases/admin/AdminUseCase";
 import { AdminController } from "../../controllers/AdminController";
+import { LocationRepository } from "../../repositories/location/LocationRepository";
+import { LocationEngine } from "../../engines/location/LocationEngine";
+import { LocationUseCase } from "../../useCases/location/LocationUseCase";
+import { LocationController } from "../../controllers/LocationController";
 
 export interface IContainer {
   databaseService: DatabaseService;
@@ -53,6 +57,10 @@ export interface IContainer {
   paymentController: PaymentController;
   adminUseCase: AdminUseCase;
   adminController: AdminController;
+  locationRepository: LocationRepository;
+  locationEngine: LocationEngine;
+  locationUseCase: LocationUseCase;
+  locationController: LocationController;
 }
 
 export const setupContainer = (): AwilixContainer<IContainer> => {
@@ -93,6 +101,11 @@ export const setupContainer = (): AwilixContainer<IContainer> => {
     bookingController: asClass(BookingController).singleton(),
     paymentController: asClass(PaymentController).singleton(),
     adminController: asClass(AdminController).singleton(),
+
+    locationRepository: asClass(LocationRepository).singleton(),
+    locationEngine: asClass(LocationEngine).singleton(),
+    locationUseCase: asClass(LocationUseCase).singleton(),
+    locationController: asClass(LocationController).singleton(),
   });
 
   return container;

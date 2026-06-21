@@ -21,6 +21,18 @@ const auditoriumSchema = new Schema<Auditorium>(
       type: String,
       trim: true,
     },
+    state: {
+      type: String,
+      trim: true,
+    },
+    city: {
+      type: String,
+      trim: true,
+    },
+    district: {
+      type: String,
+      trim: true,
+    },
     capacity: {
       type: Number,
     },

@@ -14,6 +14,9 @@ export const createAuditoriumSchema = yup.object().shape({
     .trim()
     .min(10, "Description must be at least 10 characters"),
   address: yup.string().required("Address is required").trim(),
+  state: yup.string().required("State is required").trim(),
+  city: yup.string().required("City is required").trim(),
+  district: yup.string().required("District is required").trim(),
   capacity: yup
     .number()
     .transform((value, originalValue) => {
@@ -78,6 +81,9 @@ export const updateAuditoriumSchema = yup
       .trim()
       .min(10, "Description must be at least 10 characters"),
     address: yup.string().required("Address is required").trim(),
+    state: yup.string().required("State is required").trim(),
+    city: yup.string().required("City is required").trim(),
+    district: yup.string().required("District is required").trim(),
     capacity: yup
       .number()
       .transform((value, originalValue) => {
