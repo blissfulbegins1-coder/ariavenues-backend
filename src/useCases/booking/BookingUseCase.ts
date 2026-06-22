@@ -182,5 +182,27 @@ export class BookingUseCase implements IBookingUseCase {
 
     await this.bookingEngine.deleteBooking(id);
   }
+
+  async getPublicBookingsForAuditorium(
+    auditoriumId: string,
+    startDate: string,
+    endDate: string,
+  ): Promise<Booking[]> {
+    const filter: any = {
+      auditoriumId,
+      bookingStatus: {
+        $in: [
+          BookingStatus.PENDING_PAYMENT,
+          BookingStatus.CONFIRMED,
+          BookingStatus.COMPLETED,
+        ],
+      },
+      isActive: true,
+      startDate: { $lte: new Date(endDate) },
+      endDate: { $gte: new Date(startDate) },
+    };
+
+    return await this.bookingEngine.getAllBookings(filter);
+  }
 }
 

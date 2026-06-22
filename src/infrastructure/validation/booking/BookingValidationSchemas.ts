@@ -26,3 +26,25 @@ export const updateBookingStatusSchema = yup.object().shape({
     .required("Status is required")
     .oneOf([BookingStatus.CONFIRMED, BookingStatus.CANCELLED], "Invalid status"),
 });
+
+export const getPublicBookingsSchema = yup.object().shape({
+  auditoriumId: yup
+    .string()
+    .required("Auditorium ID is required")
+    .trim()
+    .matches(/^[a-f\d]{24}$/i, "Auditorium ID must be a valid MongoDB ObjectId"),
+  startDate: yup
+    .string()
+    .required("Start date is required")
+    .trim()
+    .matches(/^\d{2}-\d{2}-\d{4}$/, {
+      message: "Start date must be in DD-MM-YYYY format",
+    }),
+  endDate: yup
+    .string()
+    .required("End date is required")
+    .trim()
+    .matches(/^\d{2}-\d{2}-\d{4}$/, {
+      message: "End date must be in DD-MM-YYYY format",
+    }),
+});

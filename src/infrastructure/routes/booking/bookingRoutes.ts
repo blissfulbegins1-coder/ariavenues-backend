@@ -44,5 +44,11 @@ export const setupBookingRoutes = (
       bookingController.cancelBooking(req, res, next),
   );
 
+  router.get(
+    "/public/auditorium/:auditoriumId",
+    async (req: Request, res: Response, next: NextFunction) =>
+      bookingController.getPublicBookingsForAuditorium(req, res, next),
+  );
+
   return router;
 };

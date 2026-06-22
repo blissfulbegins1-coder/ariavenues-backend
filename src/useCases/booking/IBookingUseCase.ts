@@ -8,4 +8,9 @@ export interface IBookingUseCase {
   getOwnerBookings(user: UserTokenDto): Promise<Booking[]>;
   getBookingDetails(id: string, user: UserTokenDto): Promise<Booking>;
   cancelPendingBooking(id: string, user: UserTokenDto): Promise<void>;
+  getPublicBookingsForAuditorium(
+    auditoriumId: string,
+    startDate: string,
+    endDate: string,
+  ): Promise<Booking[]>;
 }
