@@ -1,5 +1,6 @@
 import * as yup from "yup";
 import { AuditoriumStatus } from "../../../domain/enums/AuditoriumStatus";
+import { parseDDMMYYYY } from "../../../utils/dateUtils";
 
 export const createAuditoriumSchema = yup.object().shape({
   name: yup
@@ -200,11 +201,23 @@ export const publicAuditoriumFilterSchema = yup.object().shape({
   startDate: yup
     .date()
     .optional()
-    .transform((curr, orig) => (orig === "" ? null : curr)),
+    .transform((value, originalValue) => {
+      if (!originalValue) return null;
+      if (typeof originalValue === "string") {
+        return parseDDMMYYYY(originalValue);
+      }
+      return value;
+    }),
   endDate: yup
     .date()
     .optional()
-    .transform((curr, orig) => (orig === "" ? null : curr)),
+    .transform((value, originalValue) => {
+      if (!originalValue) return null;
+      if (typeof originalValue === "string") {
+        return parseDDMMYYYY(originalValue);
+      }
+      return value;
+    }),
   capacity: yup
     .number()
     .optional()

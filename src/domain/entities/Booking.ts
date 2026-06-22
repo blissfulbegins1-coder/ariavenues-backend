@@ -6,8 +6,8 @@ export interface Booking {
   auditoriumId: string;
   userId: string;
   ownerId: string;
-  startDate: Date;
-  endDate: Date;
+  startDate: string;
+  endDate: string;
   totalDays: number;
   dayRate: number;
   totalAmount: number;

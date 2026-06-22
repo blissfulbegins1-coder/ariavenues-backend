@@ -1,4 +1,5 @@
-import mongoose from "mongoose";
+import mongoose, { QueryFilter } from "mongoose";
+import { Booking } from "../../domain/entities/Booking";
 import { Payment } from "../../domain/entities/Payment";
 import { VerifyPaymentDTO } from "../../domain/dtos/payment/VerifyPaymentDTO";
 import { IPaymentEngine } from "../../engines/payment/IPaymentEngine";
@@ -9,6 +10,7 @@ import { ApiError } from "../../domain/errors/ApiError";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 import { PaymentStatus } from "../../domain/enums/PaymentStatus";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
+import { parseDDMMYYYY } from "../../utils/dateUtils";
 
 type PaymentUseCaseConstructorParams = {
   paymentEngine: IPaymentEngine;
@@ -57,12 +59,35 @@ export class PaymentUseCase implements IPaymentUseCase {
       throw new ApiError("This booking is already paid and confirmed");
     }
 
-    const isAvailable = await this.bookingEngine.checkAvailability(
-      booking.auditoriumId,
-      booking.startDate,
-      booking.endDate,
-      booking.id,
-    );
+    const availabilityFilter: QueryFilter<Booking> = {
+      auditoriumId: new mongoose.Types.ObjectId(booking.auditoriumId) as any,
+      bookingStatus: {
+        $in: [
+          BookingStatus.PENDING_PAYMENT,
+          BookingStatus.CONFIRMED,
+          BookingStatus.COMPLETED,
+        ],
+      },
+      $expr: {
+        $and: [
+          {
+            $lte: [
+              { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
+              parseDDMMYYYY(booking.endDate),
+            ],
+          },
+          {
+            $gte: [
+              { $dateFromString: { dateString: "$endDate", format: "%d-%m-%Y" } },
+              parseDDMMYYYY(booking.startDate),
+            ],
+          },
+        ],
+      },
+      _id: { $ne: new mongoose.Types.ObjectId(booking.id) } as any,
+    };
+
+    const isAvailable = await this.bookingEngine.checkAvailability(availabilityFilter);
     if (!isAvailable) {
       throw new ApiError(
         "The selected dates are no longer available for booking",

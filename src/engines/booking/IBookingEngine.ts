@@ -15,12 +15,7 @@ export interface IBookingEngine {
   ): Promise<Booking | null>;
   listBookingsByCustomer(userId: string): Promise<Booking[]>;
   listBookingsByOwner(ownerId: string): Promise<Booking[]>;
-  checkAvailability(
-    auditoriumId: string,
-    startDate: Date,
-    endDate: Date,
-    excludeBookingId?: string,
-  ): Promise<boolean>;
+  checkAvailability(filter: QueryFilter<Booking>): Promise<boolean>;
   deleteBooking(id: string): Promise<void>;
   getAllBookings(filter?: QueryFilter<Booking>): Promise<Booking[]>;
 }

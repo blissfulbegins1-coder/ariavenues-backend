@@ -8,6 +8,8 @@ import { BookingModel } from "../../infrastructure/services/mongodb/models/booki
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { ApiError } from "../../domain/errors/ApiError";
 import UserRoles from "../../domain/enums/UserRole";
+import { parseDDMMYYYY } from "../../utils/dateUtils";
+import mongoose, { QueryFilter } from "mongoose";
 
 type BookingUseCaseConstructorParams = {
   bookingEngine: IBookingEngine;
@@ -33,7 +35,12 @@ export class BookingUseCase implements IBookingUseCase {
       await BookingModel.updateMany(
         {
           bookingStatus: BookingStatus.CONFIRMED,
-          endDate: { $lt: now },
+          $expr: {
+            $lt: [
+              { $dateFromString: { dateString: "$endDate", format: "%d-%m-%Y" } },
+              now,
+            ],
+          },
         },
         {
           $set: { bookingStatus: BookingStatus.COMPLETED },
@@ -73,11 +80,8 @@ export class BookingUseCase implements IBookingUseCase {
       );
     }
 
-    const start = new Date(data.startDate);
-    start.setHours(0, 0, 0, 0);
-
-    const end = new Date(data.endDate);
-    end.setHours(0, 0, 0, 0);
+    const start = parseDDMMYYYY(data.startDate);
+    const end = parseDDMMYYYY(data.endDate);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -95,11 +99,34 @@ export class BookingUseCase implements IBookingUseCase {
     }
 
     // Check overlaps
-    const isAvailable = await this.bookingEngine.checkAvailability(
-      data.auditoriumId,
-      start,
-      end,
-    );
+    const availabilityFilter: QueryFilter<Booking> = {
+      auditoriumId: new mongoose.Types.ObjectId(data.auditoriumId) as any,
+      bookingStatus: {
+        $in: [
+          BookingStatus.PENDING_PAYMENT,
+          BookingStatus.CONFIRMED,
+          BookingStatus.COMPLETED,
+        ],
+      },
+      $expr: {
+        $and: [
+          {
+            $lte: [
+              { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
+              end,
+            ],
+          },
+          {
+            $gte: [
+              { $dateFromString: { dateString: "$endDate", format: "%d-%m-%Y" } },
+              start,
+            ],
+          },
+        ],
+      },
+    };
+
+    const isAvailable = await this.bookingEngine.checkAvailability(availabilityFilter);
     if (!isAvailable) {
       throw new ApiError(
         "Auditorium is already reserved or booked for these dates",
@@ -122,8 +149,8 @@ export class BookingUseCase implements IBookingUseCase {
       auditoriumId: data.auditoriumId,
       userId: user.id,
       ownerId: auditorium.ownerId,
-      startDate: start,
-      endDate: end,
+      startDate: data.startDate,
+      endDate: data.endDate,
       dayRate,
       adminAdvance,
       auditoriumAdvance,
@@ -188,8 +215,11 @@ export class BookingUseCase implements IBookingUseCase {
     startDate: string,
     endDate: string,
   ): Promise<Booking[]> {
-    const filter: any = {
-      auditoriumId,
+    const parsedStart = parseDDMMYYYY(startDate);
+    const parsedEnd = parseDDMMYYYY(endDate);
+
+    const filter: QueryFilter<Booking> = {
+      auditoriumId: new mongoose.Types.ObjectId(auditoriumId) as any,
       bookingStatus: {
         $in: [
           BookingStatus.PENDING_PAYMENT,
@@ -197,9 +227,22 @@ export class BookingUseCase implements IBookingUseCase {
           BookingStatus.COMPLETED,
         ],
       },
-      isActive: true,
-      startDate: { $lte: new Date(endDate) },
-      endDate: { $gte: new Date(startDate) },
+      $expr: {
+        $and: [
+          {
+            $lte: [
+              { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
+              parsedEnd,
+            ],
+          },
+          {
+            $gte: [
+              { $dateFromString: { dateString: "$endDate", format: "%d-%m-%Y" } },
+              parsedStart,
+            ],
+          },
+        ],
+      },
     };
 
     return await this.bookingEngine.getAllBookings(filter);

@@ -2,7 +2,7 @@ import mongoose, { ClientSession, QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
 import { BookingModel } from "../../infrastructure/services/mongodb/models/booking/BookingModel";
 import { IBookingRepository } from "./IBookingRepository";
-import { BookingStatus } from "../../domain/enums/BookingStatus";
+import { parseDDMMYYYY } from "../../utils/dateUtils";
 
 interface BookingAggregationDoc {
   _id: mongoose.Types.ObjectId;
@@ -10,8 +10,8 @@ interface BookingAggregationDoc {
   auditoriumId: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   ownerId: mongoose.Types.ObjectId;
-  startDate: Date;
-  endDate: Date;
+  startDate: string;
+  endDate: string;
   dayRate: number;
   adminAdvance?: number;
   auditoriumAdvance?: number;
@@ -49,8 +49,8 @@ const auditoriumLookup = [
 
 export class BookingRepository implements IBookingRepository {
   private toEntity(doc: BookingAggregationDoc): Booking {
-    const start = new Date(doc.startDate);
-    const end = new Date(doc.endDate);
+    const start = parseDDMMYYYY(doc.startDate);
+    const end = parseDDMMYYYY(doc.endDate);
     const totalDays = Math.max(
       1,
       Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
@@ -170,21 +170,9 @@ export class BookingRepository implements IBookingRepository {
   }
 
   async checkAvailability(
-    auditoriumId: string,
-    startDate: Date,
-    endDate: Date,
-    excludeBookingId?: string,
+    filter: QueryFilter<Booking>,
   ): Promise<boolean> {
-    const overlapping = await BookingModel.findOne({
-      auditoriumId,
-      bookingStatus: { $in: [BookingStatus.PENDING_PAYMENT, BookingStatus.CONFIRMED, BookingStatus.COMPLETED] },
-      startDate: { $lte: endDate },
-      endDate: { $gte: startDate },
-      isActive: true,
-      ...(excludeBookingId && {
-        _id: { $ne: new mongoose.Types.ObjectId(excludeBookingId) },
-      }),
-    });
+    const overlapping = await BookingModel.findOne({ ...filter, isActive: true });
     return !overlapping;
   }
 

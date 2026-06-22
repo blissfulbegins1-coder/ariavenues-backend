@@ -90,10 +90,27 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
 
       let excludeIds: string[] = [];
       if (filters.startDate && filters.endDate) {
+        const parsedStart = filters.startDate;
+        const parsedEnd = filters.endDate;
+
         const overlappingBookings = await this.bookingEngine.getAllBookings({
           bookingStatus: { $ne: BookingStatus.CANCELLED },
-          startDate: { $lte: filters.endDate },
-          endDate: { $gte: filters.startDate }
+          $expr: {
+            $and: [
+              {
+                $lte: [
+                  { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
+                  parsedEnd,
+                ],
+              },
+              {
+                $gte: [
+                  { $dateFromString: { dateString: "$endDate", format: "%d-%m-%Y" } },
+                  parsedStart,
+                ],
+              },
+            ],
+          },
         } as QueryFilter<Booking>);
         excludeIds = overlappingBookings.map((b) => b.auditoriumId.toString());
       }

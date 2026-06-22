@@ -13,11 +13,6 @@ export interface IBookingRepository {
   deleteById(id: string): Promise<void>;
   listByCustomer(userId: string): Promise<Booking[]>;
   listByOwner(ownerId: string): Promise<Booking[]>;
-  checkAvailability(
-    auditoriumId: string,
-    startDate: Date,
-    endDate: Date,
-    excludeBookingId?: string,
-  ): Promise<boolean>;
+  checkAvailability(filter: QueryFilter<Booking>): Promise<boolean>;
   listAll(filter: QueryFilter <Booking>): Promise<Booking[]>;
 }

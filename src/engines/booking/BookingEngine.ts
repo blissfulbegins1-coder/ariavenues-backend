@@ -48,18 +48,8 @@ export class BookingEngine implements IBookingEngine {
     return await this.bookingRepository.listByOwner(ownerId);
   }
 
-  async checkAvailability(
-    auditoriumId: string,
-    startDate: Date,
-    endDate: Date,
-    excludeBookingId?: string,
-  ): Promise<boolean> {
-    return await this.bookingRepository.checkAvailability(
-      auditoriumId,
-      startDate,
-      endDate,
-      excludeBookingId,
-    );
+  async checkAvailability(filter: QueryFilter<Booking>): Promise<boolean> {
+    return await this.bookingRepository.checkAvailability(filter);
   }
 
   async deleteBooking(id: string): Promise<void> {
