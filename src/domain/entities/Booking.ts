@@ -23,4 +23,8 @@ export interface Booking {
     address: string;
     images: string[];
   };
+  user?: {
+    name: string;
+    email?: string;
+  };
 }

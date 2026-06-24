@@ -36,7 +36,7 @@ export interface IAdminUseCase {
   getUsers(): Promise<User[]>;
   getOwners(): Promise<User[]>;
   getAuditoriums(): Promise<Auditorium[]>;
-  getBookings(): Promise<Booking[]>;
+  getBookings(startDate?: string, endDate?: string): Promise<Booking[]>;
   updateAuditoriumStatus(
     id: string,
     status: AuditoriumStatus,

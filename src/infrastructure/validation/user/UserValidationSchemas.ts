@@ -112,3 +112,53 @@ export const dashboardStatsQuerySchema = yup.object().shape({
     endDate,
   };
 });
+
+export const adminBookingsQuerySchema = yup.object().shape({
+  year: yup
+    .number()
+    .optional()
+    .nullable()
+    .transform((value, originalValue) => originalValue === "" ? null : value)
+    .integer("Year must be an integer")
+    .min(2000, "Year must be 2000 or later"),
+  month: yup
+    .number()
+    .optional()
+    .nullable()
+    .transform((value, originalValue) => originalValue === "" ? null : value)
+    .integer("Month must be an integer")
+    .min(1, "Month must be between 1 and 12")
+    .max(12, "Month must be between 1 and 12"),
+  startDate: yup.string().optional(),
+  endDate: yup.string().optional(),
+}).test("month-requires-year", "Year is required if Month is specified", (value) => {
+  if (value.month && !value.year) {
+    return false;
+  }
+  return true;
+}).transform((value) => {
+  if (!value) return value;
+  let startDate: string | undefined;
+  let endDate: string | undefined;
+
+  if (value.year) {
+    const year = value.year;
+    if (value.month) {
+      const month = value.month;
+      const monthStr = String(month).padStart(2, "0");
+      const lastDay = new Date(year, month, 0).getDate();
+      const lastDayStr = String(lastDay).padStart(2, "0");
+      startDate = `01-${monthStr}-${year}`;
+      endDate = `${lastDayStr}-${monthStr}-${year}`;
+    } else {
+      startDate = `01-01-${year}`;
+      endDate = `31-12-${year}`;
+    }
+  }
+
+  return {
+    ...value,
+    startDate,
+    endDate,
+  };
+});

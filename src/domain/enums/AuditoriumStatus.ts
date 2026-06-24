@@ -4,4 +4,5 @@ export enum AuditoriumStatus {
     MAINTENANCE = "maintenance",
     ACTIVE = "active",
     REJECTED = "rejected",
+    BLOCKED = "blocked",
 }

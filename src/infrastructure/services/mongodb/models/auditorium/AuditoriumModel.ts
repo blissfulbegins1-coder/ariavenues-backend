@@ -68,7 +68,7 @@ const auditoriumSchema = new Schema<Auditorium>(
     },
     status: {
       type: String,
-      enum: [AuditoriumStatus.PENDING, AuditoriumStatus.DRAFT, AuditoriumStatus.MAINTENANCE, AuditoriumStatus.ACTIVE, AuditoriumStatus.REJECTED],
+      enum: [AuditoriumStatus.PENDING, AuditoriumStatus.DRAFT, AuditoriumStatus.MAINTENANCE, AuditoriumStatus.ACTIVE, AuditoriumStatus.REJECTED, AuditoriumStatus.BLOCKED],
       required: true,
       default: AuditoriumStatus.PENDING,
     },

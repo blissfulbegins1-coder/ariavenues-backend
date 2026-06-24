@@ -7,6 +7,7 @@ import {
   userIdParamSchema,
   updateUserStatusSchema,
   dashboardStatsQuerySchema,
+  adminBookingsQuerySchema,
 } from "../infrastructure/validation/user/UserValidationSchemas";
 import { auditoriumIdParamSchema, updateAuditoriumStatusSchema } from "../infrastructure/validation/auditorium/AuditoriumSchemaValidation";
 import { bookingIdParamSchema, updateBookingStatusSchema } from "../infrastructure/validation/booking/BookingValidationSchemas";
@@ -154,7 +155,10 @@ export class AdminController {
     next: NextFunction
   ): Promise<Response | void> {
     try {
-      const bookings = await this.adminUseCase.getBookings();
+      const validatedQuery = await adminBookingsQuerySchema.validate(req.query, {
+        abortEarly: false,
+      });
+      const bookings = await this.adminUseCase.getBookings(validatedQuery.startDate, validatedQuery.endDate);
       return res.status(200).json({
         success: true,
         data: bookings,

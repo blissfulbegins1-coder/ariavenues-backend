@@ -25,9 +25,13 @@ interface BookingAggregationDoc {
     address: string;
     images: string[];
   };
+  user?: {
+    name: string;
+    email?: string;
+  };
 }
 
-const auditoriumLookup = [
+const bookingDetailsLookup = [
   {
     $lookup: {
       from: "auditoriums",
@@ -45,6 +49,23 @@ const auditoriumLookup = [
     },
   },
   { $project: { auditoriumData: 0 } },
+  {
+    $lookup: {
+      from: "users",
+      localField: "userId",
+      foreignField: "_id",
+      pipeline: [
+        { $project: { name: 1, email: 1 } }
+      ],
+      as: "userData",
+    },
+  },
+  {
+    $addFields: {
+      user: { $arrayElemAt: ["$userData", 0] },
+    },
+  },
+  { $project: { userData: 0 } },
 ];
 
 export class BookingRepository implements IBookingRepository {
@@ -87,6 +108,13 @@ export class BookingRepository implements IBookingRepository {
       };
     }
 
+    if (doc.user && doc.user.name) {
+      booking.user = {
+        name: doc.user.name,
+        email: doc.user.email,
+      };
+    }
+
     return booking;
   }
 
@@ -100,7 +128,7 @@ export class BookingRepository implements IBookingRepository {
     // Use $lookup aggregation after save to retrieve with auditorium details
     const results = await BookingModel.aggregate<BookingAggregationDoc>([
       { $match: { _id: booking._id } },
-      ...auditoriumLookup,
+      ...bookingDetailsLookup,
     ]).session(session ?? null);
 
     return this.toEntity(results[0]);
@@ -109,7 +137,7 @@ export class BookingRepository implements IBookingRepository {
   async findById(id: string, session?: ClientSession): Promise<Booking | null> {
     const results = await BookingModel.aggregate<BookingAggregationDoc>([
       { $match: { _id: new mongoose.Types.ObjectId(id), isActive: true } },
-      ...auditoriumLookup,
+      ...bookingDetailsLookup,
     ]).session(session ?? null);
     if (!results.length) return null;
     return this.toEntity(results[0]);
@@ -121,7 +149,7 @@ export class BookingRepository implements IBookingRepository {
   ): Promise<Booking | null> {
     const results = await BookingModel.aggregate<BookingAggregationDoc>([
       { $match: { bookingNumber, isActive: true } },
-      ...auditoriumLookup,
+      ...bookingDetailsLookup,
     ]).session(session ?? null);
     if (!results.length) return null;
     return this.toEntity(results[0]);
@@ -140,7 +168,7 @@ export class BookingRepository implements IBookingRepository {
 
     const results = await BookingModel.aggregate<BookingAggregationDoc>([
       { $match: { _id: new mongoose.Types.ObjectId(id), isActive: true } },
-      ...auditoriumLookup,
+      ...bookingDetailsLookup,
     ]).session(session ?? null);
 
     if (!results.length) return null;
@@ -154,7 +182,7 @@ export class BookingRepository implements IBookingRepository {
   async listByCustomer(userId: string): Promise<Booking[]> {
     const results = await BookingModel.aggregate<BookingAggregationDoc>([
       { $match: { userId: new mongoose.Types.ObjectId(userId), isActive: true } },
-      ...auditoriumLookup,
+      ...bookingDetailsLookup,
       { $sort: { createdAt: -1 } },
     ]);
     return results.map((doc) => this.toEntity(doc));
@@ -163,7 +191,7 @@ export class BookingRepository implements IBookingRepository {
   async listByOwner(ownerId: string): Promise<Booking[]> {
     const results = await BookingModel.aggregate<BookingAggregationDoc>([
       { $match: { ownerId: new mongoose.Types.ObjectId(ownerId), isActive: true } },
-      ...auditoriumLookup,
+      ...bookingDetailsLookup,
       { $sort: { createdAt: -1 } },
     ]);
     return results.map((doc) => this.toEntity(doc));
@@ -179,7 +207,7 @@ export class BookingRepository implements IBookingRepository {
   async listAll(filter: QueryFilter<Booking>): Promise<Booking[]> {
     const results = await BookingModel.aggregate<BookingAggregationDoc>([
       { $match: { ...filter, isActive: true } },
-      ...auditoriumLookup,
+      ...bookingDetailsLookup,
       { $sort: { createdAt: -1 } },
     ]);
     return results.map((doc) => this.toEntity(doc));

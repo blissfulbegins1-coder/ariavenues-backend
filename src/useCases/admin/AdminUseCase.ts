@@ -276,8 +276,29 @@ export class AdminUseCase implements IAdminUseCase {
     return await this.auditoriumEngine.getAllAuditoriums();
   }
 
-  async getBookings(): Promise<Booking[]> {
-    return await this.bookingEngine.getAllBookings();
+  async getBookings(startDate?: string, endDate?: string): Promise<Booking[]> {
+    let bookingFilter: QueryFilter<Booking> = {};
+    if (startDate && endDate) {
+      const start = parseDDMMYYYY(startDate);
+      const end = parseDDMMYYYY(endDate);
+      bookingFilter.$expr = {
+        $and: [
+          {
+            $gte: [
+              { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
+              start,
+            ],
+          },
+          {
+            $lte: [
+              { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
+              end,
+            ],
+          },
+        ],
+      };
+    }
+    return await this.bookingEngine.getAllBookings(bookingFilter);
   }
 
   async updateAuditoriumStatus(

@@ -63,7 +63,7 @@ export const createAuditoriumSchema = yup.object().shape({
   status: yup
     .string()
     .optional()
-    .oneOf(["pending", "draft", "maintenance", "active", "rejected"], "Invalid status value")
+    .oneOf(["pending", "draft", "maintenance", "active", "rejected", "blocked"], "Invalid status value")
     .default("draft"),
 });
 
@@ -140,7 +140,7 @@ export const updateAuditoriumSchema = yup
     status: yup
       .string()
       .optional()
-      .oneOf(["pending", "draft", "maintenance", "active", "rejected"], "Invalid status value")
+      .oneOf(["pending", "draft", "maintenance", "active", "rejected", "blocked"], "Invalid status value")
       .default("draft"),
   })
   .test(
@@ -158,42 +158,30 @@ export const updateAuditoriumSchema = yup
   );
 
 export const auditoriumIdParamSchema = yup.object().shape({
-    id: yup
-        .string()
-        .required("Auditorium ID is required")
-        .trim()
-        .matches(/^[a-f\d]{24}$/i, "Auditorium ID must be a valid MongoDB ObjectId"),
+  id: yup
+    .string()
+    .required("Auditorium ID is required")
+    .trim()
+    .matches(/^[a-f\d]{24}$/i, "Auditorium ID must be a valid MongoDB ObjectId"),
 });
 
 export const updateAuditoriumStatusSchema = yup.object().shape({
-    status: yup
-        .string()
-        .required("Status is required")
-        .oneOf([AuditoriumStatus.ACTIVE, AuditoriumStatus.REJECTED], "Invalid status"),
+  status: yup
+    .string()
+    .required("Status is required")
+    .oneOf([AuditoriumStatus.ACTIVE, AuditoriumStatus.REJECTED, AuditoriumStatus.BLOCKED], "Invalid status"),
 
-    adminAdvance: yup
-        .number()
-        .transform((value) => (isNaN(value) ? undefined : value))
-        .when("status", {
-            is: AuditoriumStatus.ACTIVE,
-            then: (schema) =>
-                schema
-                    .required("Admin advance is required")
-                    .min(0, "Admin advance must be a non-negative number"),
-            otherwise: (schema) => schema.notRequired(),
-        }),
+  adminAdvance: yup
+    .number()
+    .transform((value) => (isNaN(value) ? undefined : value))
+    .optional()
+    .min(0, "Admin advance must be a non-negative number"),
 
-    auditoriumAdvance: yup
-        .number()
-        .transform((value) => (isNaN(value) ? undefined : value))
-        .when("status", {
-            is: AuditoriumStatus.ACTIVE,
-            then: (schema) =>
-                schema
-                    .required("Auditorium advance is required")
-                    .min(0, "Auditorium advance must be a non-negative number"),
-            otherwise: (schema) => schema.notRequired(),
-        }),
+  auditoriumAdvance: yup
+    .number()
+    .transform((value) => (isNaN(value) ? undefined : value))
+    .optional()
+    .min(0, "Auditorium advance must be a non-negative number"),
 });
 
 export const publicAuditoriumFilterSchema = yup.object().shape({
