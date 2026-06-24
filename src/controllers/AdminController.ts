@@ -8,6 +8,7 @@ import {
   updateUserStatusSchema,
   dashboardStatsQuerySchema,
   adminBookingsQuerySchema,
+  getActivitiesQuerySchema,
 } from "../infrastructure/validation/user/UserValidationSchemas";
 import { auditoriumIdParamSchema, updateAuditoriumStatusSchema } from "../infrastructure/validation/auditorium/AuditoriumSchemaValidation";
 import { bookingIdParamSchema, updateBookingStatusSchema } from "../infrastructure/validation/booking/BookingValidationSchemas";
@@ -238,6 +239,30 @@ export class AdminController {
         success: true,
         data: result,
         message: `Booking status updated successfully`,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getActivities(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
+    try {
+      const validatedQuery = await getActivitiesQuerySchema.validate(req.query, {
+        abortEarly: false,
+      });
+
+      const result = await this.adminUseCase.getActivities(
+        validatedQuery.page,
+        validatedQuery.limit
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: result,
       });
     } catch (error) {
       next(error);

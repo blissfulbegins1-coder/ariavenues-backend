@@ -85,5 +85,12 @@ export const setupAdminRoutes = (
       adminController.updateBookingStatus(req, res, next)
   );
 
+  router.get(
+    "/activities",
+    requireRole(["admin"]),
+    async (req: Request, res: Response, next: NextFunction) =>
+      adminController.getActivities(req, res, next)
+  );
+
   return router;
 };

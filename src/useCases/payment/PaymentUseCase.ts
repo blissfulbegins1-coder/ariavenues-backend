@@ -8,6 +8,7 @@ import { IRazorpayService } from "../../infrastructure/services/razorpay/IRazorp
 import { IPaymentUseCase, RazorpayOrderResult } from "./IPaymentUseCase";
 import { ApiError } from "../../domain/errors/ApiError";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
+import { IActivityEngine } from "../../engines/activity/IActivityEngine";
 import { PaymentStatus } from "../../domain/enums/PaymentStatus";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { parseDDMMYYYY } from "../../utils/dateUtils";
@@ -16,21 +17,25 @@ type PaymentUseCaseConstructorParams = {
   paymentEngine: IPaymentEngine;
   bookingEngine: IBookingEngine;
   razorpayService: IRazorpayService;
+  activityEngine: IActivityEngine;
 };
 
 export class PaymentUseCase implements IPaymentUseCase {
   private paymentEngine: IPaymentEngine;
   private bookingEngine: IBookingEngine;
   private razorpayService: IRazorpayService;
+  private activityEngine: IActivityEngine;
 
   constructor({
     paymentEngine,
     bookingEngine,
-    razorpayService
+    razorpayService,
+    activityEngine,
   }: PaymentUseCaseConstructorParams) {
     this.paymentEngine = paymentEngine;
     this.bookingEngine = bookingEngine;
     this.razorpayService = razorpayService;
+    this.activityEngine = activityEngine;
   }
 
   async createRazorpayOrder(
@@ -208,6 +213,25 @@ export class PaymentUseCase implements IPaymentUseCase {
         },
         session,
       );
+
+      // Log activities under the verification transaction session
+      await this.activityEngine.createActivity({
+        type: "BOOKING_CONFIRMED",
+        title: "New Booking Confirmed",
+        description: `Booking #${bookingDoc.bookingNumber} confirmed`,
+        referenceId: bookingDoc.id,
+        referenceType: "BOOKING",
+        performedBy: user.id,
+      }, session).catch((err) => console.error("Failed to log booking confirmed activity:", err));
+
+      await this.activityEngine.createActivity({
+        type: "PAYMENT_RECEIVED",
+        title: "Payment Received",
+        description: `Payment of ₹${bookingDoc.adminAdvance.toLocaleString()} received for Booking #${bookingDoc.bookingNumber}`,
+        referenceId: updatedPayment.id,
+        referenceType: "PAYMENT",
+        performedBy: user.id,
+      }, session).catch((err) => console.error("Failed to log payment received activity:", err));
 
       await session.commitTransaction();
       session.endSession();

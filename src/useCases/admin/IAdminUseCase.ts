@@ -51,4 +51,14 @@ export interface IAdminUseCase {
     id: string,
     status: BookingStatus
   ): Promise<Booking>;
+  getActivities(
+    page: number,
+    limit: number
+  ): Promise<{
+    id: string;
+    type: "booking" | "payment" | "registration" | "auditorium" | "system";
+    title: string;
+    message: string;
+    time: string;
+  }[]>;
 }

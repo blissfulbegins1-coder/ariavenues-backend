@@ -11,19 +11,19 @@ export interface Booking {
   totalDays: number;
   dayRate: number;
   totalAmount: number;
-  adminAdvance?: number;
-  auditoriumAdvance?: number;
+  adminAdvance: number;
+  auditoriumAdvance: number;
   bookingStatus: BookingStatus;
   guestCount: number;
-  isActive?: boolean;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
-  auditorium?: {
+  auditorium: {
     name: string;
     address: string;
     images: string[];
   };
-  user?: {
+  user: {
     name: string;
     email?: string;
   };

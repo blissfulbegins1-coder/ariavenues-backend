@@ -15,6 +15,9 @@ import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { AuditoriumStatus } from "../../domain/enums/AuditoriumStatus";
 import UserStatus from "../../domain/enums/UserStatus";
 import { parseDDMMYYYY } from "../../utils/dateUtils";
+import { IActivityEngine } from "../../engines/activity/IActivityEngine";
+import { getRelativeTime } from "../../domain/functions/getRaltiveTime";
+
 
 type AdminUseCaseConstructorParams = {
   userEngine: IUserEngine;
@@ -22,6 +25,7 @@ type AdminUseCaseConstructorParams = {
   bookingEngine: IBookingEngine;
   jwtManagementEngine: IJwtManagementEngine;
   otpService: OtpService;
+  activityEngine: IActivityEngine;
 };
 
 export class AdminUseCase implements IAdminUseCase {
@@ -30,6 +34,7 @@ export class AdminUseCase implements IAdminUseCase {
   private bookingEngine: IBookingEngine;
   private jwtManagementEngine: IJwtManagementEngine;
   private otpService: OtpService;
+  private activityEngine: IActivityEngine;
 
   constructor({
     userEngine,
@@ -37,12 +42,15 @@ export class AdminUseCase implements IAdminUseCase {
     bookingEngine,
     jwtManagementEngine,
     otpService,
+    activityEngine,
   }: AdminUseCaseConstructorParams) {
     this.userEngine = userEngine;
     this.auditoriumEngine = auditoriumEngine;
     this.bookingEngine = bookingEngine;
     this.jwtManagementEngine = jwtManagementEngine;
     this.otpService = otpService;
+    this.activityEngine = activityEngine;
+
   }
 
   async signIn(mobile: string): Promise<{ success: boolean; message: string }> {
@@ -179,7 +187,7 @@ export class AdminUseCase implements IAdminUseCase {
         const commission = bk.adminAdvance || 0;
         actualCommission += commission;
 
-        const monthIndex = parseDDMMYYYY(bk.startDate).getMonth();
+        const monthIndex = new Date(bk.createdAt).getMonth();
 
         if (monthIndex >= 0 && monthIndex <= 11) {
           commissionsByMonth[monthIndex] += commission;
@@ -194,55 +202,28 @@ export class AdminUseCase implements IAdminUseCase {
         };
       });
 
-      const dynamicActivities: DashboardStats["recentActivities"] = [];
+      const recentDbActivities = await this.activityEngine.getRecentActivities(4);
+      const recentActivities = recentDbActivities.map((act) => {
+        let type: "booking" | "payment" | "registration" | "auditorium" | "system" = "system";
+        if (act.type === "USER_REGISTERED" || act.type === "OWNER_REGISTERED") {
+          type = "registration";
+        } else if (act.type === "AUDITORIUM_SUBMITTED") {
+          type = "auditorium";
+        } else if (act.type === "BOOKING_CONFIRMED") {
+          type = "booking";
+        } else if (act.type === "PAYMENT_RECEIVED") {
+          type = "payment";
+        }
 
-      // Add recent user registrations
-      customers.slice(0, 3).forEach((c) => {
-        dynamicActivities.push({
-          id: `reg-${c.id}`,
-          type: "registration",
-          title: "New User Registration",
-          message: `${c.name} registered.`,
-          time: "Just now",
-        });
+        return {
+          id: act.id,
+          type,
+          title: act.title,
+          message: act.description,
+          time: getRelativeTime(act.createdAt),
+        };
       });
 
-      // Baseline fallback activities from screenshot
-      const baselineActivities: DashboardStats["recentActivities"] = [
-        {
-          id: "act-1",
-          type: "auditorium",
-          title: "New Auditorium Submission",
-          message: "The Grand Loft (Pending)",
-          time: "2 mins ago",
-        },
-        {
-          id: "act-2",
-          type: "registration",
-          title: "New User Registration",
-          message: "Sarah J.",
-          time: "15 mins ago",
-        },
-        {
-          id: "act-3",
-          type: "payment",
-          title: "Payment Received",
-          message: "#BK-9921",
-          time: "1 hour ago",
-        },
-        {
-          id: "act-4",
-          type: "booking",
-          title: "New Booking",
-          message: "Grand Symphony Hall",
-          time: "3 hours ago",
-        },
-      ];
-
-      const recentActivities =
-        dynamicActivities.length > 0
-          ? [...dynamicActivities, ...baselineActivities].slice(0, 4)
-          : baselineActivities;
 
       return {
         totalUsers: customers.length,
@@ -338,5 +319,38 @@ export class AdminUseCase implements IAdminUseCase {
       throw new ApiError("Booking Not Found!");
     }
     return updated;
+  }
+
+  async getActivities(
+    page: number,
+    limit: number
+  ): Promise<{
+    id: string;
+    type: "booking" | "payment" | "registration" | "auditorium" | "system";
+    title: string;
+    message: string;
+    time: string;
+  }[]> {
+    const recentDbActivities = await this.activityEngine.getPaginatedActivities(page, limit);
+    return recentDbActivities.map((act) => {
+      let type: "booking" | "payment" | "registration" | "auditorium" | "system" = "system";
+      if (act.type === "USER_REGISTERED" || act.type === "OWNER_REGISTERED") {
+        type = "registration";
+      } else if (act.type === "AUDITORIUM_SUBMITTED") {
+        type = "auditorium";
+      } else if (act.type === "BOOKING_CONFIRMED") {
+        type = "booking";
+      } else if (act.type === "PAYMENT_RECEIVED") {
+        type = "payment";
+      }
+
+      return {
+        id: act.id,
+        type,
+        title: act.title,
+        message: act.description,
+        time: getRelativeTime(act.createdAt),
+      };
+    });
   }
 }

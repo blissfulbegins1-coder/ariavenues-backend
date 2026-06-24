@@ -33,7 +33,7 @@ export class AuditoriumRepository implements IAuditoriumRepository {
     } as Auditorium;
   }
 
-  async create(data: CreateAuditoriumDTO): Promise<boolean> {
+  async create(data: CreateAuditoriumDTO): Promise<Auditorium> {
     const { user, ...rest } = data;
     const auditorium = new AuditoriumModel({
       ...rest,
@@ -46,8 +46,8 @@ export class AuditoriumRepository implements IAuditoriumRepository {
       auditoriumAdvance: 0,
       isActive: true,
     });
-    await auditorium.save();
-    return true;
+    const saved = await auditorium.save();
+    return this.mapToEntity(saved);
   }
 
   async listByOwner(user: UserTokenDto): Promise<Auditorium[]> {

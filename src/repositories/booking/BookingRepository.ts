@@ -80,7 +80,7 @@ export class BookingRepository implements IBookingRepository {
     const auditoriumAdvance = doc.auditoriumAdvance ?? 0;
     const totalAmount = adminAdvance + auditoriumAdvance;
 
-    const booking: Booking = {
+    const booking = {
       id: doc._id.toString(),
       bookingNumber: doc.bookingNumber,
       auditoriumId: doc.auditoriumId.toString(),
@@ -98,7 +98,7 @@ export class BookingRepository implements IBookingRepository {
       isActive: doc.isActive ?? true,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
-    };
+    } as Booking;
 
     if (doc.auditorium && doc.auditorium.name) {
       booking.auditorium = {

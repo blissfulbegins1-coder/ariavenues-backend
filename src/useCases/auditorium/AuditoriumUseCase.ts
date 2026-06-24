@@ -11,37 +11,54 @@ import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 import { ApiError } from "../../domain/errors/ApiError";
 import { QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
+import { IActivityEngine } from "../../engines/activity/IActivityEngine";
 
 type AuditoriumUseCaseConstructorParams = {
   auditoriumEngine: IAuditoriumEngine;
   bookingEngine: IBookingEngine;
   cloudinaryService: CloudinaryService;
+  activityEngine: IActivityEngine;
 };
 
 export class AuditoriumUseCase implements IAuditoriumUseCase {
   private auditoriumEngine: IAuditoriumEngine;
   private bookingEngine: IBookingEngine;
   private cloudinaryService: CloudinaryService;
+  private activityEngine: IActivityEngine;
 
   constructor({
     auditoriumEngine,
     bookingEngine,
     cloudinaryService,
+    activityEngine,
   }: AuditoriumUseCaseConstructorParams) {
     this.auditoriumEngine = auditoriumEngine;
     this.bookingEngine = bookingEngine;
     this.cloudinaryService = cloudinaryService;
+    this.activityEngine = activityEngine;
   }
 
   async createAuditorium(data: CreateAuditoriumDTO): Promise<boolean> {
     const files = data.images as Express.Multer.File[];
     const imageUrls = await this.cloudinaryService.uploadMultiple(files);
 
-    return await this.auditoriumEngine.createAuditorium({
+    const auditorium = await this.auditoriumEngine.createAuditorium({
       ...data,
       images: imageUrls,
     });
+
+    await this.activityEngine.createActivity({
+      type: "AUDITORIUM_SUBMITTED",
+      title: "New Auditorium Submission",
+      description: `${auditorium.name} (Pending Approval)`,
+      referenceId: auditorium.id,
+      referenceType: "AUDITORIUM",
+      performedBy: data.user.id,
+    }).catch((err) => console.error("Failed to log auditorium submission activity:", err));
+
+    return true;
   }
+
 
   async getOwnerAuditoriums(user: UserTokenDto): Promise<Auditorium[]> {
     return await this.auditoriumEngine.getAuditoriumsByOwner(user);

@@ -16,7 +16,7 @@ export class AuditoriumEngine implements IAuditoriumEngine {
     this.auditoriumRepository = auditoriumRepository;
   }
 
-  async createAuditorium(data: CreateAuditoriumDTO): Promise<boolean> {
+  async createAuditorium(data: CreateAuditoriumDTO): Promise<Auditorium> {
     return await this.auditoriumRepository.create(data);
   }
 

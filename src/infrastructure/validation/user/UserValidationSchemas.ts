@@ -162,3 +162,18 @@ export const adminBookingsQuerySchema = yup.object().shape({
     endDate,
   };
 });
+
+export const getActivitiesQuerySchema = yup.object().shape({
+  page: yup
+    .number()
+    .optional()
+    .default(1)
+    .integer("Page must be an integer")
+    .min(1, "Page must be at least 1"),
+  limit: yup
+    .number()
+    .optional()
+    .default(10)
+    .integer("Limit must be an integer")
+    .min(1, "Limit must be at least 1"),
+});

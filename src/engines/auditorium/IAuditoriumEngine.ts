@@ -4,7 +4,7 @@ import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 import { QueryFilter } from "mongoose";
 
 export interface IAuditoriumEngine {
-  createAuditorium(data: CreateAuditoriumDTO): Promise<boolean>;
+  createAuditorium(data: CreateAuditoriumDTO): Promise<Auditorium>;
   getAuditoriumsByOwner(user: UserTokenDto): Promise<Auditorium[]>;
   getPublicAuditoriums(filter?: QueryFilter<Auditorium>): Promise<Auditorium[]>;
   getAuditoriumById(id: string): Promise<Auditorium | null>;

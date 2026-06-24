@@ -6,25 +6,31 @@ import { IUserUseCase } from "./IUserUseCase";
 import { OtpService } from "../../infrastructure/services/otp/OtpService";
 import { REDIRECT_PATHS } from "../../domain/constants/constants";
 import { ApiError } from "../../domain/errors/ApiError";
+import { IActivityEngine } from "../../engines/activity/IActivityEngine";
 
 type UserUseCaseConstructorParams = {
   userEngine: IUserEngine;
   otpService: OtpService;
   jwtManagementEngine: IJwtManagementEngine;
+  activityEngine: IActivityEngine;
 };
 
 export class UserUseCase implements IUserUseCase {
   private userEngine: IUserEngine;
   private otpService: OtpService;
   private jwtManagementEngine: IJwtManagementEngine;
+  private activityEngine: IActivityEngine;
+
   constructor({
     userEngine,
     otpService,
     jwtManagementEngine,
+    activityEngine,
   }: UserUseCaseConstructorParams) {
     this.userEngine = userEngine;
     this.otpService = otpService;
     this.jwtManagementEngine = jwtManagementEngine;
+    this.activityEngine = activityEngine;
   }
 
   async signUp(input: UserDTO): Promise<UserSuccessResponse> {
@@ -72,6 +78,16 @@ export class UserUseCase implements IUserUseCase {
         throw new ApiError("Failed to update user verification status");
       }
       updatedUser = result;
+
+      // Log registration activity
+      await this.activityEngine.createActivity({
+        type: updatedUser.role === "owner" ? "OWNER_REGISTERED" : "USER_REGISTERED",
+        title: updatedUser.role === "owner" ? "New Owner Registration" : "New User Registration",
+        description: `${updatedUser.name} Registered`,
+        referenceId: updatedUser.id,
+        referenceType: updatedUser.role === "owner" ? "ONWER" : "USER",
+        performedBy: updatedUser.id,
+      }).catch((err) => console.error("Failed to log registration activity:", err));
     }
 
     const redirectUrl = REDIRECT_PATHS[updatedUser.role];

@@ -32,6 +32,8 @@ import { LocationRepository } from "../../repositories/location/LocationReposito
 import { LocationEngine } from "../../engines/location/LocationEngine";
 import { LocationUseCase } from "../../useCases/location/LocationUseCase";
 import { LocationController } from "../../controllers/LocationController";
+import { ActivityRepository } from "../../repositories/activity/ActivityRepository";
+import { ActivityEngine } from "../../engines/activity/ActivityEngine";
 
 export interface IContainer {
   databaseService: DatabaseService;
@@ -61,6 +63,8 @@ export interface IContainer {
   locationEngine: LocationEngine;
   locationUseCase: LocationUseCase;
   locationController: LocationController;
+  activityRepository: ActivityRepository;
+  activityEngine: ActivityEngine;
 }
 
 export const setupContainer = (): AwilixContainer<IContainer> => {
@@ -80,6 +84,7 @@ export const setupContainer = (): AwilixContainer<IContainer> => {
     auditoriumRepository: asClass(AuditoriumRepository).singleton(),
     bookingRepository: asClass(BookingRepository).singleton(),
     paymentRepository: asClass(PaymentRepository).singleton(),
+    activityRepository: asClass(ActivityRepository).singleton(),
 
     // Engines
     userEngine: asClass(UserEngine).singleton(),
@@ -87,6 +92,7 @@ export const setupContainer = (): AwilixContainer<IContainer> => {
     bookingEngine: asClass(BookingEngine).singleton(),
     paymentEngine: asClass(PaymentEngine).singleton(),
     jwtManagementEngine: asClass(JwtManagementEngine).singleton(),
+    activityEngine: asClass(ActivityEngine).singleton(),
 
     // Use Cases
     userUseCase: asClass(UserUseCase).singleton(),
