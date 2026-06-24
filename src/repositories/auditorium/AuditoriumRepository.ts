@@ -29,7 +29,8 @@ export class AuditoriumRepository implements IAuditoriumRepository {
       status: obj.status,
       approved: obj.approved,
       adminAdvance: obj.adminAdvance,
-      auditoriumAdvance: obj.auditoriumAdvance
+      auditoriumAdvance: obj.auditoriumAdvance,
+      createdAt: obj.createdAt,
     } as Auditorium;
   }
 
