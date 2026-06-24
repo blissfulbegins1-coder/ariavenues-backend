@@ -85,8 +85,12 @@ export class AuditoriumRepository implements IAuditoriumRepository {
     return this.mapToEntity(item);
   }
 
-  async listAll(): Promise<Auditorium[]> {
-    const items = await AuditoriumModel.find({ isActive: true }).sort({ createdAt: -1 });
+  async listAll(filter?: QueryFilter<Auditorium>): Promise<Auditorium[]> {
+    const query: QueryFilter<Auditorium> = {
+      isActive: true,
+      ...filter,
+    };
+    const items = await AuditoriumModel.find(query).sort({ createdAt: -1 });
     return items.map((item) => this.mapToEntity(item));
   }
 }

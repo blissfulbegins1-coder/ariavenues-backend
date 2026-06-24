@@ -32,7 +32,7 @@ export interface IAdminUseCase {
     redirectUrl: string;
   }>;
   resendOtp(mobile: string): Promise<{ success: boolean; message: string }>;
-  getDashboardStats(): Promise<DashboardStats>;
+  getDashboardStats(startDate?: string, endDate?: string): Promise<DashboardStats>;
   getUsers(): Promise<User[]>;
   getOwners(): Promise<User[]>;
   getAuditoriums(): Promise<Auditorium[]>;

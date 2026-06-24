@@ -9,5 +9,5 @@ export interface IAuditoriumEngine {
   getPublicAuditoriums(filter?: QueryFilter<Auditorium>): Promise<Auditorium[]>;
   getAuditoriumById(id: string): Promise<Auditorium | null>;
   updateAuditorium(id: string, data: Partial<Auditorium>): Promise<Auditorium>;
-  getAllAuditoriums(): Promise<Auditorium[]>;
+  getAllAuditoriums(filter?: QueryFilter<Auditorium>): Promise<Auditorium[]>;
 }

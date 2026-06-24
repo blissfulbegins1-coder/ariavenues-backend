@@ -14,6 +14,7 @@ import { QueryFilter } from "mongoose";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { AuditoriumStatus } from "../../domain/enums/AuditoriumStatus";
 import UserStatus from "../../domain/enums/UserStatus";
+import { parseDDMMYYYY } from "../../utils/dateUtils";
 
 type AdminUseCaseConstructorParams = {
   userEngine: IUserEngine;
@@ -111,20 +112,62 @@ export class AdminUseCase implements IAdminUseCase {
     };
   }
 
-  async getDashboardStats(): Promise<DashboardStats> {
+  async getDashboardStats(startDate?: string, endDate?: string): Promise<DashboardStats> {
     try {
 
       let userFilter: QueryFilter<User> = {
         role: { $in: [UserRole.CUSTOMER, UserRole.OWNER] },
       };
+      if (startDate && endDate) {
+        const start = parseDDMMYYYY(startDate);
+        const end = parseDDMMYYYY(endDate);
+        end.setHours(23, 59, 59, 999);
+        userFilter.createdAt = {
+          $gte: start,
+          $lte: end,
+        };
+      }
       const users = await this.userEngine.getAllUsers(userFilter);
       const customers = users.filter((u) => u.role.includes(UserRole.CUSTOMER));
       const owners = users.filter((u) => u.role.includes(UserRole.OWNER));
 
-      const auditoriums = await this.auditoriumEngine.getAllAuditoriums();
+      let auditoriumFilter: QueryFilter<Auditorium> = {
+        status: AuditoriumStatus.ACTIVE,
+        approved: true,
+      };
+      if (startDate && endDate) {
+        const start = parseDDMMYYYY(startDate);
+        const end = parseDDMMYYYY(endDate);
+        end.setHours(23, 59, 59, 999);
+        auditoriumFilter.createdAt = {
+          $gte: start,
+          $lte: end,
+        };
+      }
+      const auditoriums = await this.auditoriumEngine.getAllAuditoriums(auditoriumFilter);
 
       let bookingFilter: QueryFilter<Booking> = {
-        bookingStatus: { $in: [BookingStatus.CONFIRMED, BookingStatus.PENDING_PAYMENT] },
+        bookingStatus: { $in: [BookingStatus.CONFIRMED] },
+      };
+      if (startDate && endDate) {
+        const start = parseDDMMYYYY(startDate);
+        const end = parseDDMMYYYY(endDate);
+        bookingFilter.$expr = {
+          $and: [
+            {
+              $gte: [
+                { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
+                start,
+              ],
+            },
+            {
+              $lte: [
+                { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
+                end,
+              ],
+            },
+          ],
+        };
       }
       const bookings = await this.bookingEngine.getAllBookings(bookingFilter);
 
@@ -133,27 +176,24 @@ export class AdminUseCase implements IAdminUseCase {
       const commissionsByMonth = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
       bookings.forEach((bk) => {
-        if (bk.bookingStatus === BookingStatus.CONFIRMED || bk.bookingStatus === BookingStatus.COMPLETED) {
-          const commission = bk.adminAdvance || 0;
-          actualCommission += commission;
+        const commission = bk.adminAdvance || 0;
+        actualCommission += commission;
 
-          const date = new Date(bk.startDate);
-          const monthIndex = date.getMonth(); // 0 = Jan, 11 = Dec
-          if (monthIndex >= 0 && monthIndex < 11) {
-            commissionsByMonth[monthIndex] += commission;
-          }
+        const monthIndex = parseDDMMYYYY(bk.startDate).getMonth();
+
+        if (monthIndex >= 0 && monthIndex <= 11) {
+          commissionsByMonth[monthIndex] += commission;
         }
       });
 
-      const monthlyCommission = months.map((month, idx) => {
+      const monthlyCommission = months.map((m, idx) => {
         const dbComm = commissionsByMonth[idx];
         return {
-          name: month,
+          name: m,
           commission: dbComm > 0 ? dbComm : 0,
         };
       });
 
-      // Compile dynamic activities with standard mock baselines as fallback
       const dynamicActivities: DashboardStats["recentActivities"] = [];
 
       // Add recent user registrations
@@ -214,7 +254,7 @@ export class AdminUseCase implements IAdminUseCase {
         recentActivities,
       };
     } catch (error) {
-      throw error
+      throw error;
     }
   }
 
