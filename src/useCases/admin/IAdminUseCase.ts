@@ -4,6 +4,7 @@ import { Booking } from "../../domain/entities/Booking";
 import { AuditoriumStatus } from "../../domain/enums/AuditoriumStatus";
 import UserStatus from "../../domain/enums/UserStatus";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
+import { UserFilters, PaginatedUsersResponse } from "../../domain/dtos/user/UserDto";
 
 export interface DashboardStats {
   totalUsers: number;
@@ -33,7 +34,7 @@ export interface IAdminUseCase {
   }>;
   resendOtp(mobile: string): Promise<{ success: boolean; message: string }>;
   getDashboardStats(startDate?: string, endDate?: string): Promise<DashboardStats>;
-  getUsers(): Promise<User[]>;
+  getUsers(filters: UserFilters): Promise<PaginatedUsersResponse>;
   getOwners(): Promise<User[]>;
   getAuditoriums(): Promise<Auditorium[]>;
   getBookings(startDate?: string, endDate?: string): Promise<Booking[]>;

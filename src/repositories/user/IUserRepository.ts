@@ -1,5 +1,5 @@
 import { User } from "../../domain/entities/User";
-import { UserDTO } from "../../domain/dtos/user/UserDto";
+import { UserDTO, UserDbQuery, PaginatedUsersResponse } from "../../domain/dtos/user/UserDto";
 import { QueryFilter } from "mongoose";
 
 // Repository Interface - contract for data access
@@ -8,4 +8,5 @@ export interface IUserRepository {
   findByMobile(mobile: string): Promise<User | null>;
   update(id: string, data: Partial<User>): Promise<User | null>;
   findAll(filter?: QueryFilter<User>): Promise<User[]>;
+  getUsers(dbQuery: UserDbQuery): Promise<PaginatedUsersResponse>;
 }

@@ -9,6 +9,7 @@ import {
   dashboardStatsQuerySchema,
   adminBookingsQuerySchema,
   getActivitiesQuerySchema,
+  adminUsersQuerySchema,
 } from "../infrastructure/validation/user/UserValidationSchemas";
 import { auditoriumIdParamSchema, updateAuditoriumStatusSchema } from "../infrastructure/validation/auditorium/AuditoriumSchemaValidation";
 import { bookingIdParamSchema, updateBookingStatusSchema } from "../infrastructure/validation/booking/BookingValidationSchemas";
@@ -108,10 +109,14 @@ export class AdminController {
     next: NextFunction
   ): Promise<Response | void> {
     try {
-      const users = await this.adminUseCase.getUsers();
+      const validatedQuery = await adminUsersQuerySchema.validate(req.query, {
+        abortEarly: false,
+        stripUnknown: true,
+      });
+      const result = await this.adminUseCase.getUsers(validatedQuery);
       return res.status(200).json({
         success: true,
-        data: users,
+        data: result,
       });
     } catch (error) {
       next(error);

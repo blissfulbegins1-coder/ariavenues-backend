@@ -1,5 +1,5 @@
 import { User } from "../../domain/entities/User";
-import { UserDTO } from "../../domain/dtos/user/UserDto";
+import { UserDTO, UserDbQuery, PaginatedUsersResponse } from "../../domain/dtos/user/UserDto";
 import { IUserRepository } from "../../repositories/user/IUserRepository";
 import { IUserEngine } from "./IUserEngine";
 import { QueryFilter } from "mongoose";
@@ -32,5 +32,10 @@ export class UserEngine implements IUserEngine {
   // get all users
   async getAllUsers(filter?: QueryFilter<User>): Promise<User[]> {
     return await this.userRepository.findAll(filter);
+  }
+
+  // get users with filters and pagination
+  async getUsers(dbQuery: UserDbQuery): Promise<PaginatedUsersResponse> {
+    return await this.userRepository.getUsers(dbQuery);
   }
 }

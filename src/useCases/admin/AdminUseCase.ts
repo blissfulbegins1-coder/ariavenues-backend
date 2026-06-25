@@ -3,6 +3,7 @@ import { IUserEngine } from "../../engines/user/IUserEngine";
 import { IAuditoriumEngine } from "../../engines/auditorium/IAuditoriumEngine";
 import { IBookingEngine } from "../../engines/booking/IBookingEngine";
 import { IJwtManagementEngine } from "../../engines/jwt/IJwtManagementEngine";
+import { UserFilters, PaginatedUsersResponse } from "../../domain/dtos/user/UserDto";
 import { OtpService } from "../../infrastructure/services/otp/OtpService";
 import { User } from "../../domain/entities/User";
 import { Auditorium } from "../../domain/entities/Auditorium";
@@ -239,11 +240,35 @@ export class AdminUseCase implements IAdminUseCase {
     }
   }
 
-  async getUsers(): Promise<User[]> {
-    let filter: QueryFilter<User> = {
-      role: UserRole.CUSTOMER,
+  async getUsers(filters: UserFilters): Promise<PaginatedUsersResponse> {
+    const query: any = { isActive: true, role: UserRole.CUSTOMER };
+
+    if (filters.search) {
+      const searchRegex = new RegExp(filters.search, "i");
+      query.$or = [
+        { name: searchRegex },
+        { mobile: searchRegex },
+      ];
     }
-    return await this.userEngine.getAllUsers(filter);
+
+    if (filters.status && filters.status !== "all") {
+      query.status = filters.status;
+    }
+
+    let sortObj: any = { createdAt: -1 };
+    if (filters.sortBy === "name") {
+      sortObj = { name: 1 };
+    }
+
+    const skip = (filters.page && filters.limit) ? (filters.page - 1) * filters.limit : null;
+    const limit = (filters.page && filters.limit) ? filters.limit : null;
+
+    return await this.userEngine.getUsers({
+      query,
+      sort: sortObj,
+      skip,
+      limit,
+    });
   }
 
   async getOwners(): Promise<User[]> {
