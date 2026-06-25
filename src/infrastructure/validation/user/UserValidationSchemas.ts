@@ -197,3 +197,23 @@ export const adminUsersQuerySchema = yup.object().shape({
   status: yup.string().oneOf(["all", "active", "blocked"]).optional().default("all"),
   sortBy: yup.string().oneOf(["recent", "name"]).optional().default("recent"),
 });
+
+export const adminOwnersQuerySchema = yup.object().shape({
+  page: yup
+    .number()
+    .transform((value, originalValue) => (originalValue === "" || originalValue === undefined || originalValue === null) ? null : Number(originalValue))
+    .optional()
+    .nullable()
+    .integer("Page must be an integer")
+    .min(1, "Page must be at least 1"),
+  limit: yup
+    .number()
+    .transform((value, originalValue) => (originalValue === "" || originalValue === undefined || originalValue === null) ? null : Number(originalValue))
+    .optional()
+    .nullable()
+    .integer("Limit must be an integer")
+    .min(1, "Limit must be at least 1"),
+  search: yup.string().optional().default(""),
+  status: yup.string().oneOf(["all", "active", "blocked"]).optional().default("all"),
+  sortBy: yup.string().oneOf(["recent", "name"]).optional().default("recent"),
+});

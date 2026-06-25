@@ -10,6 +10,7 @@ import {
   adminBookingsQuerySchema,
   getActivitiesQuerySchema,
   adminUsersQuerySchema,
+  adminOwnersQuerySchema,
 } from "../infrastructure/validation/user/UserValidationSchemas";
 import { auditoriumIdParamSchema, updateAuditoriumStatusSchema } from "../infrastructure/validation/auditorium/AuditoriumSchemaValidation";
 import { bookingIdParamSchema, updateBookingStatusSchema } from "../infrastructure/validation/booking/BookingValidationSchemas";
@@ -129,10 +130,14 @@ export class AdminController {
     next: NextFunction
   ): Promise<Response | void> {
     try {
-      const owners = await this.adminUseCase.getOwners();
+      const validatedQuery = await adminOwnersQuerySchema.validate(req.query, {
+        abortEarly: false,
+        stripUnknown: true,
+      });
+      const result = await this.adminUseCase.getOwners(validatedQuery);
       return res.status(200).json({
         success: true,
-        data: owners,
+        data: result,
       });
     } catch (error) {
       next(error);

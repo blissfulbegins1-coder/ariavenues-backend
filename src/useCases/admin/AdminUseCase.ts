@@ -271,11 +271,35 @@ export class AdminUseCase implements IAdminUseCase {
     });
   }
 
-  async getOwners(): Promise<User[]> {
-    let filter: QueryFilter<User> = {
-      role: UserRole.OWNER,
+  async getOwners(filters: UserFilters): Promise<PaginatedUsersResponse> {
+    const query: any = { isActive: true, role: UserRole.OWNER };
+
+    if (filters.search) {
+      const searchRegex = new RegExp(filters.search, "i");
+      query.$or = [
+        { name: searchRegex },
+        { mobile: searchRegex },
+      ];
     }
-    return await this.userEngine.getAllUsers(filter);
+
+    if (filters.status && filters.status !== "all") {
+      query.status = filters.status;
+    }
+
+    let sortObj: any = { createdAt: -1 };
+    if (filters.sortBy === "name") {
+      sortObj = { name: 1 };
+    }
+
+    const skip = (filters.page && filters.limit) ? (filters.page - 1) * filters.limit : null;
+    const limit = (filters.page && filters.limit) ? filters.limit : null;
+
+    return await this.userEngine.getUsers({
+      query,
+      sort: sortObj,
+      skip,
+      limit,
+    });
   }
 
   async getAuditoriums(): Promise<Auditorium[]> {

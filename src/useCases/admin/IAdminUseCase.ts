@@ -35,7 +35,7 @@ export interface IAdminUseCase {
   resendOtp(mobile: string): Promise<{ success: boolean; message: string }>;
   getDashboardStats(startDate?: string, endDate?: string): Promise<DashboardStats>;
   getUsers(filters: UserFilters): Promise<PaginatedUsersResponse>;
-  getOwners(): Promise<User[]>;
+  getOwners(filters: UserFilters): Promise<PaginatedUsersResponse>;
   getAuditoriums(): Promise<Auditorium[]>;
   getBookings(startDate?: string, endDate?: string): Promise<Booking[]>;
   updateAuditoriumStatus(
