@@ -2,6 +2,7 @@ import mongoose, { ClientSession, QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
 import { BookingModel } from "../../infrastructure/services/mongodb/models/booking/BookingModel";
 import { IBookingRepository } from "./IBookingRepository";
+import { BookingDbQuery, PaginatedBookingsResponse } from "../../domain/dtos/booking/BookingDto";
 import { parseDDMMYYYY } from "../../utils/dateUtils";
 
 interface BookingAggregationDoc {
@@ -211,5 +212,48 @@ export class BookingRepository implements IBookingRepository {
       { $sort: { createdAt: -1 } },
     ]);
     return results.map((doc) => this.toEntity(doc));
+  }
+
+  async getBookings(dbQuery: BookingDbQuery): Promise<PaginatedBookingsResponse> {
+    const { query, sort, skip, limit } = dbQuery;
+
+    const pipeline: any[] = [
+      { $match: { ...query, isActive: true } },
+      ...bookingDetailsLookup,
+    ];
+
+    if (sort) {
+      pipeline.push({ $sort: sort });
+    }
+
+    if (skip != null && limit != null) {
+      pipeline.push({ $skip: skip });
+      pipeline.push({ $limit: limit });
+    }
+
+    const statsQuery: any = { isActive: true };
+    if (query && query.$expr) {
+      statsQuery.$expr = query.$expr;
+    }
+
+    const [docs, total, totalCount, confirmedCount, completedCount, cancelledCount] = await Promise.all([
+      BookingModel.aggregate<BookingAggregationDoc>(pipeline),
+      BookingModel.countDocuments({ ...query, isActive: true }).exec(),
+      BookingModel.countDocuments(statsQuery).exec(),
+      BookingModel.countDocuments({ ...statsQuery, bookingStatus: "confirmed" }).exec(),
+      BookingModel.countDocuments({ ...statsQuery, bookingStatus: "completed" }).exec(),
+      BookingModel.countDocuments({ ...statsQuery, bookingStatus: "cancelled" }).exec(),
+    ]);
+
+    const bookings = docs.map((doc) => this.toEntity(doc));
+
+    return {
+      bookings,
+      total,
+      totalCount,
+      confirmedCount,
+      completedCount,
+      cancelledCount,
+    };
   }
 }

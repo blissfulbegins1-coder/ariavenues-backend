@@ -2,6 +2,7 @@ import { ClientSession, QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
 import { IBookingRepository } from "../../repositories/booking/IBookingRepository";
 import { IBookingEngine } from "./IBookingEngine";
+import { BookingDbQuery, PaginatedBookingsResponse } from "../../domain/dtos/booking/BookingDto";
 
 type BookingEngineConstructorParams = {
   bookingRepository: IBookingRepository;
@@ -58,6 +59,10 @@ export class BookingEngine implements IBookingEngine {
 
   async getAllBookings(filter: QueryFilter<Booking>): Promise<Booking[]> {
     return await this.bookingRepository.listAll(filter);
+  }
+
+  async getBookings(dbQuery: BookingDbQuery): Promise<PaginatedBookingsResponse> {
+    return await this.bookingRepository.getBookings(dbQuery);
   }
 }
 

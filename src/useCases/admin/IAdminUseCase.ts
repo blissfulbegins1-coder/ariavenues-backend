@@ -6,6 +6,7 @@ import UserStatus from "../../domain/enums/UserStatus";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { UserFilters, PaginatedUsersResponse } from "../../domain/dtos/user/UserDto";
 import { AuditoriumFilters, PaginatedAuditoriumsResponse } from "../../domain/dtos/auditorium/AuditoriumDto";
+import { BookingFilters, PaginatedBookingsResponse } from "../../domain/dtos/booking/BookingDto";
 
 export interface DashboardStats {
   totalUsers: number;
@@ -38,7 +39,7 @@ export interface IAdminUseCase {
   getUsers(filters: UserFilters): Promise<PaginatedUsersResponse>;
   getOwners(filters: UserFilters): Promise<PaginatedUsersResponse>;
   getAuditoriums(filters: AuditoriumFilters): Promise<PaginatedAuditoriumsResponse>;
-  getBookings(startDate?: string, endDate?: string): Promise<Booking[]>;
+  getBookings(filters: BookingFilters): Promise<PaginatedBookingsResponse>;
   updateAuditoriumStatus(
     id: string,
     status: AuditoriumStatus,

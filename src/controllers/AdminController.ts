@@ -173,11 +173,12 @@ export class AdminController {
     try {
       const validatedQuery = await adminBookingsQuerySchema.validate(req.query, {
         abortEarly: false,
+        stripUnknown: true,
       });
-      const bookings = await this.adminUseCase.getBookings(validatedQuery.startDate, validatedQuery.endDate);
+      const result = await this.adminUseCase.getBookings(validatedQuery);
       return res.status(200).json({
         success: true,
-        data: bookings,
+        data: result,
       });
     } catch (error) {
       next(error);

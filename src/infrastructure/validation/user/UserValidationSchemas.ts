@@ -114,18 +114,35 @@ export const dashboardStatsQuerySchema = yup.object().shape({
 });
 
 export const adminBookingsQuerySchema = yup.object().shape({
+  page: yup
+    .number()
+    .transform((value, originalValue) => (originalValue === "" || originalValue === undefined || originalValue === null) ? null : Number(originalValue))
+    .optional()
+    .nullable()
+    .integer("Page must be an integer")
+    .min(1, "Page must be at least 1"),
+  limit: yup
+    .number()
+    .transform((value, originalValue) => (originalValue === "" || originalValue === undefined || originalValue === null) ? null : Number(originalValue))
+    .optional()
+    .nullable()
+    .integer("Limit must be an integer")
+    .min(1, "Limit must be at least 1"),
+  search: yup.string().optional().default(""),
+  status: yup.string().oneOf(["all", "confirmed", "completed", "cancelled", "pending_payment", "revenue"]).optional().default("all"),
+  sortBy: yup.string().oneOf(["recent", "oldest"]).optional().default("recent"),
   year: yup
     .number()
     .optional()
     .nullable()
-    .transform((value, originalValue) => originalValue === "" ? null : value)
+    .transform((value, originalValue) => (originalValue === "" || originalValue === undefined || originalValue === null) ? null : Number(originalValue))
     .integer("Year must be an integer")
     .min(2000, "Year must be 2000 or later"),
   month: yup
     .number()
     .optional()
     .nullable()
-    .transform((value, originalValue) => originalValue === "" ? null : value)
+    .transform((value, originalValue) => (originalValue === "" || originalValue === undefined || originalValue === null) ? null : Number(originalValue))
     .integer("Month must be an integer")
     .min(1, "Month must be between 1 and 12")
     .max(12, "Month must be between 1 and 12"),

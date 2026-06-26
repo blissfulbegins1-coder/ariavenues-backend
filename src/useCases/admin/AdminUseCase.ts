@@ -5,6 +5,7 @@ import { IBookingEngine } from "../../engines/booking/IBookingEngine";
 import { IJwtManagementEngine } from "../../engines/jwt/IJwtManagementEngine";
 import { UserFilters, PaginatedUsersResponse } from "../../domain/dtos/user/UserDto";
 import { AuditoriumFilters, PaginatedAuditoriumsResponse } from "../../domain/dtos/auditorium/AuditoriumDto";
+import { BookingFilters, PaginatedBookingsResponse } from "../../domain/dtos/booking/BookingDto";
 import { OtpService } from "../../infrastructure/services/otp/OtpService";
 import { User } from "../../domain/entities/User";
 import { Auditorium } from "../../domain/entities/Auditorium";
@@ -12,7 +13,7 @@ import { Booking } from "../../domain/entities/Booking";
 import UserRole from "../../domain/enums/UserRole";
 import { ApiError } from "../../domain/errors/ApiError";
 import { REDIRECT_PATHS } from "../../domain/constants/constants";
-import { QueryFilter } from "mongoose";
+import { QueryFilter, Types } from "mongoose";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { AuditoriumStatus } from "../../domain/enums/AuditoriumStatus";
 import UserStatus from "../../domain/enums/UserStatus";
@@ -162,21 +163,10 @@ export class AdminUseCase implements IAdminUseCase {
       if (startDate && endDate) {
         const start = parseDDMMYYYY(startDate);
         const end = parseDDMMYYYY(endDate);
-        bookingFilter.$expr = {
-          $and: [
-            {
-              $gte: [
-                { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
-                start,
-              ],
-            },
-            {
-              $lte: [
-                { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
-                end,
-              ],
-            },
-          ],
+        end.setHours(23, 59, 59, 999);
+        bookingFilter.createdAt = {
+          $gte: start,
+          $lte: end,
         };
       }
       const bookings = await this.bookingEngine.getAllBookings(bookingFilter);
@@ -334,29 +324,57 @@ export class AdminUseCase implements IAdminUseCase {
     });
   }
 
-  async getBookings(startDate?: string, endDate?: string): Promise<Booking[]> {
-    let bookingFilter: QueryFilter<Booking> = {};
-    if (startDate && endDate) {
-      const start = parseDDMMYYYY(startDate);
-      const end = parseDDMMYYYY(endDate);
-      bookingFilter.$expr = {
-        $and: [
-          {
-            $gte: [
-              { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
-              start,
-            ],
-          },
-          {
-            $lte: [
-              { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
-              end,
-            ],
-          },
-        ],
+  async getBookings(filters: BookingFilters): Promise<PaginatedBookingsResponse> {
+    const query: any = { isActive: true };
+
+    if (filters.startDate && filters.endDate) {
+      const start = parseDDMMYYYY(filters.startDate);
+      const end = parseDDMMYYYY(filters.endDate);
+      end.setHours(23, 59, 59, 999);
+      query.createdAt = {
+        $gte: start,
+        $lte: end,
       };
     }
-    return await this.bookingEngine.getAllBookings(bookingFilter);
+
+    if (filters.search) {
+      const searchRegex = new RegExp(filters.search, "i");
+      const [matchingUsers, matchingAuditoriums] = await Promise.all([
+        this.userEngine.getAllUsers({ name: searchRegex }),
+        this.auditoriumEngine.getAllAuditoriums({ name: searchRegex }),
+      ]);
+      const userIds = matchingUsers.map(u => new Types.ObjectId(u.id));
+      const auditoriumIds = matchingAuditoriums.map(a => new Types.ObjectId(a.id));
+
+      query.$or = [
+        { bookingNumber: searchRegex },
+        { userId: { $in: userIds } },
+        { auditoriumId: { $in: auditoriumIds } },
+      ];
+    }
+
+    if (filters.status && filters.status !== "all") {
+      if (filters.status === "revenue") {
+        query.bookingStatus = { $in: ["confirmed", "completed"] };
+      } else {
+        query.bookingStatus = filters.status;
+      }
+    }
+
+    let sortObj: any = { createdAt: -1 };
+    if (filters.sortBy === "oldest") {
+      sortObj = { createdAt: 1 };
+    }
+
+    const skip = (filters.page && filters.limit) ? (filters.page - 1) * filters.limit : null;
+    const limit = (filters.page && filters.limit) ? filters.limit : null;
+
+    return await this.bookingEngine.getBookings({
+      query,
+      sort: sortObj,
+      skip,
+      limit,
+    });
   }
 
   async updateAuditoriumStatus(

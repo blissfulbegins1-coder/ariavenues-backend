@@ -1,5 +1,6 @@
 import { ClientSession, QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
+import { BookingDbQuery, PaginatedBookingsResponse } from "../../domain/dtos/booking/BookingDto";
 
 export interface IBookingEngine {
   createBooking(
@@ -18,4 +19,5 @@ export interface IBookingEngine {
   checkAvailability(filter: QueryFilter<Booking>): Promise<boolean>;
   deleteBooking(id: string): Promise<void>;
   getAllBookings(filter?: QueryFilter<Booking>): Promise<Booking[]>;
+  getBookings(dbQuery: BookingDbQuery): Promise<PaginatedBookingsResponse>;
 }
