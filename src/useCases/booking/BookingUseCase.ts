@@ -4,6 +4,7 @@ import { IBookingEngine } from "../../engines/booking/IBookingEngine";
 import { IAuditoriumEngine } from "../../engines/auditorium/IAuditoriumEngine";
 import { IBookingUseCase } from "./IBookingUseCase";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
+import { BookingFilters, PaginatedBookingsResponse } from "../../domain/dtos/booking/BookingDto";
 import { BookingModel } from "../../infrastructure/services/mongodb/models/booking/BookingModel";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { ApiError } from "../../domain/errors/ApiError";
@@ -166,9 +167,57 @@ export class BookingUseCase implements IBookingUseCase {
     return await this.bookingEngine.listBookingsByCustomer(user.id);
   }
 
-  async getOwnerBookings(user: UserTokenDto): Promise<Booking[]> {
+  async getOwnerBookings(user: UserTokenDto, filters: BookingFilters): Promise<PaginatedBookingsResponse> {
     await this.autoCompletePastBookings();
-    return await this.bookingEngine.listBookingsByOwner(user.id);
+
+    const query: any = { isActive: true, ownerId: new mongoose.Types.ObjectId(user.id) };
+
+    if (filters.startDate && filters.endDate) {
+      const start = parseDDMMYYYY(filters.startDate);
+      const end = parseDDMMYYYY(filters.endDate);
+      end.setHours(23, 59, 59, 999);
+      query.createdAt = {
+        $gte: start,
+        $lte: end,
+      };
+    }
+
+    if (filters.search) {
+      const searchRegex = new RegExp(filters.search, "i");
+      const matchingAuditoriums = await this.auditoriumEngine.getAllAuditoriums({
+        ownerId: user.id,
+        name: searchRegex,
+      });
+      const auditoriumIds = matchingAuditoriums.map(a => new mongoose.Types.ObjectId(a.id));
+
+      query.$or = [
+        { bookingNumber: searchRegex },
+        { auditoriumId: { $in: auditoriumIds } },
+      ];
+    }
+
+    if (filters.status && filters.status !== "all") {
+      if (filters.status === "revenue") {
+        query.bookingStatus = { $in: ["confirmed", "completed"] };
+      } else {
+        query.bookingStatus = filters.status;
+      }
+    }
+
+    let sortObj: any = { createdAt: -1 };
+    if (filters.sortBy === "oldest") {
+      sortObj = { createdAt: 1 };
+    }
+
+    const skip = (filters.page && filters.limit) ? (filters.page - 1) * filters.limit : null;
+    const limit = (filters.page && filters.limit) ? filters.limit : null;
+
+    return await this.bookingEngine.getBookings({
+      query,
+      sort: sortObj,
+      skip,
+      limit,
+    });
   }
 
   async getBookingDetails(id: string, user: UserTokenDto): Promise<Booking> {

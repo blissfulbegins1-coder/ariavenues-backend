@@ -7,6 +7,7 @@ import {
   updateAuditoriumSchema,
   auditoriumIdParamSchema,
   publicAuditoriumFilterSchema,
+  ownerAuditoriumsQuerySchema,
 } from "../infrastructure/validation/auditorium/AuditoriumSchemaValidation";
 import UserTokenDto from "../domain/dtos/user/UserTokenDto";
 
@@ -60,7 +61,11 @@ export class AuditoriumController {
   ): Promise<Response | void> {
     try {
       const user = req.user as UserTokenDto;
-      const result = await this.auditoriumUseCase.getOwnerAuditoriums(user);
+      const filters = await ownerAuditoriumsQuerySchema.validate(req.query, {
+        abortEarly: false,
+        stripUnknown: true,
+      });
+      const result = await this.auditoriumUseCase.getOwnerAuditoriums(user, filters);
       return res.status(200).json({
         success: true,
         data: result,

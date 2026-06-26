@@ -12,6 +12,7 @@ import { ApiError } from "../../domain/errors/ApiError";
 import { QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
 import { IActivityEngine } from "../../engines/activity/IActivityEngine";
+import { AuditoriumFilters, PaginatedAuditoriumsResponse } from "../../domain/dtos/auditorium/AuditoriumDto";
 
 type AuditoriumUseCaseConstructorParams = {
   auditoriumEngine: IAuditoriumEngine;
@@ -60,8 +61,35 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
   }
 
 
-  async getOwnerAuditoriums(user: UserTokenDto): Promise<Auditorium[]> {
-    return await this.auditoriumEngine.getAuditoriumsByOwner(user);
+  async getOwnerAuditoriums(user: UserTokenDto, filters?: AuditoriumFilters): Promise<PaginatedAuditoriumsResponse> {
+    const query: any = { ownerId: user.id, isActive: true };
+
+    if (filters?.search) {
+      const searchRegex = new RegExp(filters.search, "i");
+      query.$or = [
+        { name: searchRegex },
+        { address: searchRegex },
+      ];
+    }
+
+    if (filters?.status && filters.status !== "all") {
+      query.status = filters.status;
+    }
+
+    let sortObj: any = { createdAt: -1 };
+    if (filters?.sortBy === "name") {
+      sortObj = { name: 1 };
+    }
+
+    const skip = (filters?.page && filters?.limit) ? (filters.page - 1) * filters.limit : null;
+    const limit = (filters?.page && filters?.limit) ? filters.limit : null;
+
+    return await this.auditoriumEngine.getAuditoriums({
+      query,
+      sort: sortObj,
+      skip,
+      limit,
+    });
   }
 
   async getPublicAuditoriums(filters?: GetPublicAuditoriumsDTO): Promise<Auditorium[]> {
