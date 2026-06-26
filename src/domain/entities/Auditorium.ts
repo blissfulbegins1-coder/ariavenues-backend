@@ -19,6 +19,7 @@ export interface Auditorium {
   adminAdvance?: number;
   auditoriumAdvance?: number;
   isActive: boolean;
+  ownerName?: string;
   createdAt: Date;
   updatedAt: Date;
 }

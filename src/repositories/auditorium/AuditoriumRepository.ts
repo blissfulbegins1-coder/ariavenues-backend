@@ -6,13 +6,21 @@ import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 import { ApiError } from "../../domain/errors/ApiError";
 import { AuditoriumStatus } from "../../domain/enums/AuditoriumStatus";
 import { QueryFilter } from "mongoose";
+import { AuditoriumDbQuery, PaginatedAuditoriumsResponse } from "../../domain/dtos/auditorium/AuditoriumDto";
 
 export class AuditoriumRepository implements IAuditoriumRepository {
   private mapToEntity(doc: any): Auditorium {
     const obj = doc.toObject();
+    const ownerIdStr = typeof obj.ownerId === "object" && obj.ownerId !== null && "_id" in obj.ownerId
+      ? obj.ownerId._id.toString()
+      : obj.ownerId?.toString() || "";
+    const ownerNameStr = typeof obj.ownerId === "object" && obj.ownerId !== null && "name" in obj.ownerId
+      ? obj.ownerId.name
+      : undefined;
+
     return {
       id: obj._id.toString(),
-      ownerId: obj.ownerId.toString(),
+      ownerId: ownerIdStr,
       name: obj.name,
       description: obj.description,
       address: obj.address,
@@ -31,6 +39,7 @@ export class AuditoriumRepository implements IAuditoriumRepository {
       adminAdvance: obj.adminAdvance,
       auditoriumAdvance: obj.auditoriumAdvance,
       createdAt: obj.createdAt,
+      ownerName: ownerNameStr,
     } as Auditorium;
   }
 
@@ -93,5 +102,39 @@ export class AuditoriumRepository implements IAuditoriumRepository {
     };
     const items = await AuditoriumModel.find(query).sort({ createdAt: -1 });
     return items.map((item) => this.mapToEntity(item));
+  }
+
+  async getAuditoriums(dbQuery: AuditoriumDbQuery): Promise<PaginatedAuditoriumsResponse> {
+    const { query, sort, skip, limit } = dbQuery;
+
+    const auditoriumQuery = AuditoriumModel.find(query)
+      .populate("ownerId")
+      .sort(sort);
+
+    if (skip != null && limit != null) {
+      auditoriumQuery.skip(skip).limit(limit);
+    }
+
+    const statsQuery = { isActive: true };
+
+    const [items, total, totalCount, pendingCount, activeCount, maintenanceCount] = await Promise.all([
+      auditoriumQuery.exec(),
+      AuditoriumModel.countDocuments(query).exec(),
+      AuditoriumModel.countDocuments(statsQuery).exec(),
+      AuditoriumModel.countDocuments({ ...statsQuery, status: "pending" }).exec(),
+      AuditoriumModel.countDocuments({ ...statsQuery, status: "active" }).exec(),
+      AuditoriumModel.countDocuments({ ...statsQuery, status: "maintenance" }).exec(),
+    ]);
+
+    const auditoriums = items.map((item) => this.mapToEntity(item));
+
+    return {
+      auditoriums,
+      total,
+      totalCount,
+      pendingCount,
+      activeCount,
+      maintenanceCount,
+    };
   }
 }

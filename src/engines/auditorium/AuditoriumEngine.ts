@@ -4,6 +4,7 @@ import { IAuditoriumRepository } from "../../repositories/auditorium/IAuditorium
 import { IAuditoriumEngine } from "./IAuditoriumEngine";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 import { QueryFilter } from "mongoose";
+import { AuditoriumDbQuery, PaginatedAuditoriumsResponse } from "../../domain/dtos/auditorium/AuditoriumDto";
 
 type AuditoriumEngineConstructorParams = {
   auditoriumRepository: IAuditoriumRepository;
@@ -41,5 +42,9 @@ export class AuditoriumEngine implements IAuditoriumEngine {
 
   async getAllAuditoriums(filter?: QueryFilter<Auditorium>): Promise<Auditorium[]> {
     return await this.auditoriumRepository.listAll(filter);
+  }
+
+  async getAuditoriums(dbQuery: AuditoriumDbQuery): Promise<PaginatedAuditoriumsResponse> {
+    return await this.auditoriumRepository.getAuditoriums(dbQuery);
   }
 }

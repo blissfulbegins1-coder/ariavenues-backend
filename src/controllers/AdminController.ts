@@ -11,6 +11,7 @@ import {
   getActivitiesQuerySchema,
   adminUsersQuerySchema,
   adminOwnersQuerySchema,
+  adminAuditoriumsQuerySchema,
 } from "../infrastructure/validation/user/UserValidationSchemas";
 import { auditoriumIdParamSchema, updateAuditoriumStatusSchema } from "../infrastructure/validation/auditorium/AuditoriumSchemaValidation";
 import { bookingIdParamSchema, updateBookingStatusSchema } from "../infrastructure/validation/booking/BookingValidationSchemas";
@@ -150,10 +151,14 @@ export class AdminController {
     next: NextFunction
   ): Promise<Response | void> {
     try {
-      const auditoriums = await this.adminUseCase.getAuditoriums();
+      const validatedQuery = await adminAuditoriumsQuerySchema.validate(req.query, {
+        abortEarly: false,
+        stripUnknown: true,
+      });
+      const result = await this.adminUseCase.getAuditoriums(validatedQuery);
       return res.status(200).json({
         success: true,
-        data: auditoriums,
+        data: result,
       });
     } catch (error) {
       next(error);

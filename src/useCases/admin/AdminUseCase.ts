@@ -4,6 +4,7 @@ import { IAuditoriumEngine } from "../../engines/auditorium/IAuditoriumEngine";
 import { IBookingEngine } from "../../engines/booking/IBookingEngine";
 import { IJwtManagementEngine } from "../../engines/jwt/IJwtManagementEngine";
 import { UserFilters, PaginatedUsersResponse } from "../../domain/dtos/user/UserDto";
+import { AuditoriumFilters, PaginatedAuditoriumsResponse } from "../../domain/dtos/auditorium/AuditoriumDto";
 import { OtpService } from "../../infrastructure/services/otp/OtpService";
 import { User } from "../../domain/entities/User";
 import { Auditorium } from "../../domain/entities/Auditorium";
@@ -302,8 +303,35 @@ export class AdminUseCase implements IAdminUseCase {
     });
   }
 
-  async getAuditoriums(): Promise<Auditorium[]> {
-    return await this.auditoriumEngine.getAllAuditoriums();
+  async getAuditoriums(filters: AuditoriumFilters): Promise<PaginatedAuditoriumsResponse> {
+    const query: any = { isActive: true };
+
+    if (filters.search) {
+      const searchRegex = new RegExp(filters.search, "i");
+      query.$or = [
+        { name: searchRegex },
+        { address: searchRegex },
+      ];
+    }
+
+    if (filters.status && filters.status !== "all") {
+      query.status = filters.status;
+    }
+
+    let sortObj: any = { createdAt: -1 };
+    if (filters.sortBy === "name") {
+      sortObj = { name: 1 };
+    }
+
+    const skip = (filters.page && filters.limit) ? (filters.page - 1) * filters.limit : null;
+    const limit = (filters.page && filters.limit) ? filters.limit : null;
+
+    return await this.auditoriumEngine.getAuditoriums({
+      query,
+      sort: sortObj,
+      skip,
+      limit,
+    });
   }
 
   async getBookings(startDate?: string, endDate?: string): Promise<Booking[]> {
