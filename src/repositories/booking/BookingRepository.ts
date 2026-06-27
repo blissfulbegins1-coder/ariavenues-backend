@@ -29,6 +29,7 @@ interface BookingAggregationDoc {
   user?: {
     name: string;
     email?: string;
+    mobile?: string;
   };
 }
 
@@ -56,7 +57,7 @@ const bookingDetailsLookup = [
       localField: "userId",
       foreignField: "_id",
       pipeline: [
-        { $project: { name: 1, email: 1 } }
+        { $project: { name: 1, email: 1, mobile: 1 } }
       ],
       as: "userData",
     },
@@ -113,6 +114,7 @@ export class BookingRepository implements IBookingRepository {
       booking.user = {
         name: doc.user.name,
         email: doc.user.email,
+        mobile: doc.user.mobile,
       };
     }
 

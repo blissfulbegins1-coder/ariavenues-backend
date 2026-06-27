@@ -176,9 +176,24 @@ export class BookingUseCase implements IBookingUseCase {
       const start = parseDDMMYYYY(filters.startDate);
       const end = parseDDMMYYYY(filters.endDate);
       end.setHours(23, 59, 59, 999);
-      query.createdAt = {
-        $gte: start,
-        $lte: end,
+
+      // Match bookings whose event period overlaps [start, end]:
+      //   booking.startDate <= end  AND  booking.endDate >= start
+      query.$expr = {
+        $and: [
+          {
+            $lte: [
+              { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
+              end,
+            ],
+          },
+          {
+            $gte: [
+              { $dateFromString: { dateString: "$endDate", format: "%d-%m-%Y" } },
+              start,
+            ],
+          },
+        ],
       };
     }
 
@@ -209,7 +224,7 @@ export class BookingUseCase implements IBookingUseCase {
       sortObj = { createdAt: 1 };
     }
 
-    const skip = (filters.page && filters.limit) ? (filters.page - 1) * filters.limit : null;
+    const skip  = (filters.page && filters.limit) ? (filters.page - 1) * filters.limit : null;
     const limit = (filters.page && filters.limit) ? filters.limit : null;
 
     return await this.bookingEngine.getBookings({

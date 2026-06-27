@@ -26,5 +26,6 @@ export interface Booking {
   user: {
     name: string;
     email?: string;
+    mobile?: string;
   };
 }
