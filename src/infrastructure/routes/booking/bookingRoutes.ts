@@ -24,6 +24,13 @@ export const setupBookingRoutes = (
   );
 
   router.get(
+    "/owner/dashboard",
+    requireRole(["owner"]),
+    async (req: Request, res: Response, next: NextFunction) =>
+      bookingController.getOwnerDashboardStats(req, res, next),
+  );
+
+  router.get(
     "/owner",
     requireRole(["owner"]),
     async (req: Request, res: Response, next: NextFunction) =>

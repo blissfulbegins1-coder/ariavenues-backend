@@ -2,8 +2,9 @@ import mongoose, { ClientSession, QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
 import { BookingModel } from "../../infrastructure/services/mongodb/models/booking/BookingModel";
 import { IBookingRepository } from "./IBookingRepository";
-import { BookingDbQuery, PaginatedBookingsResponse } from "../../domain/dtos/booking/BookingDto";
+import { BookingDbQuery, PaginatedBookingsResponse, GetOwnerDashboardStatsDataParams, GetOwnerDashboardStatsDataResponse, OwnerMonthlyRevenue, OwnerActivityItem } from "../../domain/dtos/booking/BookingDto";
 import { parseDDMMYYYY } from "../../utils/dateUtils";
+import { BookingStatus } from "../../domain/enums/BookingStatus";
 
 interface BookingAggregationDoc {
   _id: mongoose.Types.ObjectId;
@@ -256,6 +257,122 @@ export class BookingRepository implements IBookingRepository {
       confirmedCount,
       completedCount,
       cancelledCount,
+    };
+  }
+
+  async autoCompletePastBookings(): Promise<void> {
+    try {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      await BookingModel.updateMany(
+        {
+          bookingStatus: BookingStatus.CONFIRMED,
+          $expr: {
+            $lt: [
+              { $dateFromString: { dateString: "$endDate", format: "%d-%m-%Y" } },
+              now,
+            ],
+          },
+        },
+        {
+          $set: { bookingStatus: BookingStatus.COMPLETED },
+        },
+      );
+    } catch (error) {
+      // Log or swallow error per custom pattern
+      console.error("Error auto-completing past bookings:", error);
+    }
+  }
+
+  async getOwnerDashboardStatsData(
+    params: GetOwnerDashboardStatsDataParams,
+  ): Promise<GetOwnerDashboardStatsDataResponse> {
+    const ownerId = new mongoose.Types.ObjectId(params.ownerId);
+    const baseMatch: any = { ownerId, isActive: true, createdAt: { $gte: params.statsStart, $lte: params.statsEnd } };
+
+    const [totalBookings, confirmedCount, completedCount] = await Promise.all([
+      BookingModel.countDocuments(baseMatch),
+      BookingModel.countDocuments({ ...baseMatch, bookingStatus: BookingStatus.CONFIRMED }),
+      BookingModel.countDocuments({ ...baseMatch, bookingStatus: BookingStatus.COMPLETED }),
+    ]);
+
+    const MONTH_SHORT = ["Jan","Feb","Mar","Apr","May","Jun",
+                          "Jul","Aug","Sep","Oct","Nov","Dec"];
+
+    const revenueAgg = await BookingModel.aggregate([
+      {
+        $match: {
+          ownerId,
+          isActive: true,
+          bookingStatus: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] },
+          createdAt: {
+            $gte: new Date(params.targetYear, 0, 1),
+            $lte: new Date(params.targetYear, 11, 31, 23, 59, 59, 999),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          revenue: { $sum: { $add: ["$adminAdvance", "$auditoriumAdvance"] } },
+        },
+      },
+    ]);
+
+    const revenueMap: Record<number, number> = {};
+    for (const row of revenueAgg) revenueMap[row._id] = row.revenue;
+
+    const monthlyRevenue: OwnerMonthlyRevenue[] = MONTH_SHORT.map((name, i) => ({
+      month: name,
+      revenue: revenueMap[i + 1] ?? 0,
+    }));
+
+    const recentDocs = await BookingModel.aggregate([
+      {
+        $match: {
+          ownerId,
+          isActive: true,
+          bookingStatus: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] },
+        },
+      },
+      { $sort: { createdAt: -1 } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: "auditoriums",
+          localField: "auditoriumId",
+          foreignField: "_id",
+          pipeline: [{ $project: { name: 1 } }],
+          as: "audData",
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          pipeline: [{ $project: { name: 1 } }],
+          as: "userData",
+        },
+      },
+    ]);
+
+    const recentActivity: OwnerActivityItem[] = recentDocs.map((doc: any) => ({
+      id: doc._id.toString(),
+      type: doc.bookingStatus === BookingStatus.CONFIRMED ? "booking" : "payment",
+      bookingNumber: doc.bookingNumber,
+      auditoriumName: doc.audData?.[0]?.name ?? "Unknown Venue",
+      customerName: doc.userData?.[0]?.name ?? "Unknown Customer",
+      amount: (doc.adminAdvance ?? 0) + (doc.auditoriumAdvance ?? 0),
+      createdAt: doc.createdAt,
+    }));
+
+    return {
+      totalBookings,
+      confirmedCount,
+      completedCount,
+      monthlyRevenue,
+      recentActivity,
     };
   }
 }

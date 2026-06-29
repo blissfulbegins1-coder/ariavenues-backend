@@ -4,6 +4,7 @@ import {
   createBookingSchema,
   bookingIdParamSchema,
   getPublicBookingsSchema,
+  ownerDashboardStatsQuerySchema,
 } from "../infrastructure/validation/booking/BookingValidationSchemas";
 import { CreateBookingDTO } from "../domain/dtos/booking/CreateBookingDTO";
 import UserTokenDto from "../domain/dtos/user/UserTokenDto";
@@ -78,6 +79,28 @@ export class BookingController {
         success: true,
         data: result,
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getOwnerDashboardStats(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<Response | void> {
+    try {
+      const user = req.user as UserTokenDto;
+      const validatedQuery = (await ownerDashboardStatsQuerySchema.validate(req.query, {
+        abortEarly: false,
+      })) as any;
+      const result = await this.bookingUseCase.getOwnerDashboardStats(
+        user,
+        validatedQuery.statsStart,
+        validatedQuery.statsEnd,
+        validatedQuery.targetYear,
+      );
+      return res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }

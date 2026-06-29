@@ -2,7 +2,7 @@ import { ClientSession, QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
 import { IBookingRepository } from "../../repositories/booking/IBookingRepository";
 import { IBookingEngine } from "./IBookingEngine";
-import { BookingDbQuery, PaginatedBookingsResponse } from "../../domain/dtos/booking/BookingDto";
+import { BookingDbQuery, PaginatedBookingsResponse, GetOwnerDashboardStatsDataParams, GetOwnerDashboardStatsDataResponse, OwnerMonthlyRevenue, OwnerActivityItem } from "../../domain/dtos/booking/BookingDto";
 
 type BookingEngineConstructorParams = {
   bookingRepository: IBookingRepository;
@@ -63,6 +63,16 @@ export class BookingEngine implements IBookingEngine {
 
   async getBookings(dbQuery: BookingDbQuery): Promise<PaginatedBookingsResponse> {
     return await this.bookingRepository.getBookings(dbQuery);
+  }
+
+  async autoCompletePastBookings(): Promise<void> {
+    await this.bookingRepository.autoCompletePastBookings();
+  }
+
+  async getOwnerDashboardStatsData(
+    params: GetOwnerDashboardStatsDataParams,
+  ): Promise<GetOwnerDashboardStatsDataResponse> {
+    return await this.bookingRepository.getOwnerDashboardStatsData(params);
   }
 }
 

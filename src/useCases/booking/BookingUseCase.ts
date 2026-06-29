@@ -4,8 +4,7 @@ import { IBookingEngine } from "../../engines/booking/IBookingEngine";
 import { IAuditoriumEngine } from "../../engines/auditorium/IAuditoriumEngine";
 import { IBookingUseCase } from "./IBookingUseCase";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
-import { BookingFilters, PaginatedBookingsResponse } from "../../domain/dtos/booking/BookingDto";
-import { BookingModel } from "../../infrastructure/services/mongodb/models/booking/BookingModel";
+import { BookingFilters, PaginatedBookingsResponse, OwnerDashboardStats, OwnerActivityItem, OwnerMonthlyRevenue } from "../../domain/dtos/booking/BookingDto";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { ApiError } from "../../domain/errors/ApiError";
 import UserRoles from "../../domain/enums/UserRole";
@@ -31,22 +30,7 @@ export class BookingUseCase implements IBookingUseCase {
 
   private async autoCompletePastBookings(): Promise<void> {
     try {
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-      await BookingModel.updateMany(
-        {
-          bookingStatus: BookingStatus.CONFIRMED,
-          $expr: {
-            $lt: [
-              { $dateFromString: { dateString: "$endDate", format: "%d-%m-%Y" } },
-              now,
-            ],
-          },
-        },
-        {
-          $set: { bookingStatus: BookingStatus.COMPLETED },
-        },
-      );
+      await this.bookingEngine.autoCompletePastBookings();
     } catch (error) {
       console.error("Failed to autocomplete past bookings:", error);
     }
@@ -272,6 +256,37 @@ export class BookingUseCase implements IBookingUseCase {
     }
 
     await this.bookingEngine.deleteBooking(id);
+  }
+
+  async getOwnerDashboardStats(
+    user: UserTokenDto,
+    statsStart: Date,
+    statsEnd: Date,
+    targetYear: number,
+  ): Promise<OwnerDashboardStats> {
+    await this.autoCompletePastBookings();
+
+    const [statsData, auditoriums] = await Promise.all([
+      this.bookingEngine.getOwnerDashboardStatsData({
+        ownerId: user.id,
+        statsStart,
+        statsEnd,
+        targetYear,
+      }),
+      this.auditoriumEngine.getAllAuditoriums({ ownerId: user.id }),
+    ]);
+
+    const totalRevenue = statsData.monthlyRevenue.reduce((s, m) => s + m.revenue, 0);
+
+    return {
+      totalAuditoriums: auditoriums.length,
+      totalBookings: statsData.totalBookings,
+      confirmedCount: statsData.confirmedCount,
+      completedCount: statsData.completedCount,
+      totalRevenue,
+      monthlyRevenue: statsData.monthlyRevenue,
+      recentActivity: statsData.recentActivity,
+    };
   }
 
   async getPublicBookingsForAuditorium(

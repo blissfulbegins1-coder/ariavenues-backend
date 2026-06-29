@@ -27,3 +27,43 @@ export interface BookingDbQuery {
   skip?: number | null;
   limit?: number | null;
 }
+
+export interface OwnerActivityItem {
+  id: string;
+  type: "booking" | "payment";
+  bookingNumber: string;
+  auditoriumName: string;
+  customerName: string;
+  amount: number;
+  createdAt: Date;
+}
+
+export interface OwnerMonthlyRevenue {
+  month: string;
+  revenue: number;
+}
+
+export interface OwnerDashboardStats {
+  totalAuditoriums: number;
+  totalBookings: number;
+  confirmedCount: number;
+  completedCount: number;
+  totalRevenue: number;
+  monthlyRevenue: OwnerMonthlyRevenue[];
+  recentActivity: OwnerActivityItem[];
+}
+
+export interface GetOwnerDashboardStatsDataParams {
+  ownerId: string;
+  statsStart: Date;
+  statsEnd: Date;
+  targetYear: number;
+}
+
+export interface GetOwnerDashboardStatsDataResponse {
+  totalBookings: number;
+  confirmedCount: number;
+  completedCount: number;
+  monthlyRevenue: OwnerMonthlyRevenue[];
+  recentActivity: OwnerActivityItem[];
+}

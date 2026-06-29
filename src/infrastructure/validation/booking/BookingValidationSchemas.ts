@@ -48,3 +48,39 @@ export const getPublicBookingsSchema = yup.object().shape({
       message: "End date must be in DD-MM-YYYY format",
     }),
 });
+
+export const ownerDashboardStatsQuerySchema = yup.object().shape({
+  year: yup
+    .number()
+    .transform((value, originalValue) => (originalValue === "" || originalValue === undefined || originalValue === null) ? null : Number(originalValue))
+    .optional()
+    .nullable()
+    .integer("Year must be an integer")
+    .min(2000, "Year must be 2000 or later"),
+  month: yup
+    .number()
+    .transform((value, originalValue) => (originalValue === "" || originalValue === undefined || originalValue === null) ? null : Number(originalValue))
+    .optional()
+    .nullable()
+    .integer("Month must be an integer")
+    .min(1, "Month must be between 1 and 12")
+    .max(12, "Month must be between 1 and 12"),
+}).transform((value) => {
+  if (!value) return value;
+  const targetYear = value.year ?? new Date().getFullYear();
+  let statsStart: Date;
+  let statsEnd: Date;
+  if (value.month) {
+    statsStart = new Date(targetYear, value.month - 1, 1);
+    statsEnd   = new Date(targetYear, value.month, 0, 23, 59, 59, 999);
+  } else {
+    statsStart = new Date(targetYear, 0, 1);
+    statsEnd   = new Date(targetYear, 11, 31, 23, 59, 59, 999);
+  }
+  return {
+    ...value,
+    statsStart,
+    statsEnd,
+    targetYear,
+  };
+});
