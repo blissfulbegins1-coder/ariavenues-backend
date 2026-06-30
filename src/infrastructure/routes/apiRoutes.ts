@@ -8,6 +8,7 @@ import { setupPaymentRoutes } from "./payment/paymentRoutes";
 import { setupAdminRoutes } from "./admin/adminRoutes";
 import { setupLocationRoutes } from "./location/locationRoutes";
 import { setupNotificationRoutes } from "./notification/notificationRoutes";
+import { setupReviewRoutes } from "./review/reviewRoutes";
 
 export const setupApiRoutes = (
   container: AwilixContainer<IContainer>,
@@ -34,6 +35,9 @@ export const setupApiRoutes = (
 
   // Mount Notification Routes under /notification
   router.use("/notification", setupNotificationRoutes(container));
+
+  // Mount Review Routes under /review
+  router.use("/review", setupReviewRoutes(container));
 
   return router;
 };

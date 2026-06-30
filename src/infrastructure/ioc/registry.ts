@@ -42,6 +42,10 @@ import { NotificationEngine } from "../../engines/notification/NotificationEngin
 import { NotificationUseCase } from "../../useCases/notification/NotificationUseCase";
 import { NotificationController } from "../../controllers/NotificationController";
 import { SocketService } from "../services/socket/SocketService";
+import { ReviewRepository } from "../../repositories/review/ReviewRepository";
+import { ReviewEngine } from "../../engines/review/ReviewEngine";
+import { ReviewUseCase } from "../../useCases/review/ReviewUseCase";
+import { ReviewController } from "../../controllers/ReviewController";
 
 export interface IContainer {
   databaseService: DatabaseService;
@@ -136,6 +140,12 @@ export const setupContainer = (): AwilixContainer<IContainer> => {
     locationEngine: asClass(LocationEngine).singleton(),
     locationUseCase: asClass(LocationUseCase).singleton(),
     locationController: asClass(LocationController).singleton(),
+
+    // Review System
+    reviewRepository: asClass(ReviewRepository).singleton(),
+    reviewEngine: asClass(ReviewEngine).singleton(),
+    reviewUseCase: asClass(ReviewUseCase).singleton(),
+    reviewController: asClass(ReviewController).singleton(),
   });
 
   return container;
