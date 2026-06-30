@@ -12,12 +12,16 @@ import { IActivityEngine } from "../../engines/activity/IActivityEngine";
 import { PaymentStatus } from "../../domain/enums/PaymentStatus";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { parseDDMMYYYY } from "../../utils/dateUtils";
+import { IProducer } from "../../infrastructure/amqp/producer/IProducer";
+import UserRoles from "../../domain/enums/UserRole";
+import { BrokerConfig } from "../../infrastructure/config/brocker/brokerConfig";
 
 type PaymentUseCaseConstructorParams = {
   paymentEngine: IPaymentEngine;
   bookingEngine: IBookingEngine;
   razorpayService: IRazorpayService;
   activityEngine: IActivityEngine;
+  producer: IProducer;
 };
 
 export class PaymentUseCase implements IPaymentUseCase {
@@ -25,17 +29,20 @@ export class PaymentUseCase implements IPaymentUseCase {
   private bookingEngine: IBookingEngine;
   private razorpayService: IRazorpayService;
   private activityEngine: IActivityEngine;
+  private producer: IProducer;
 
   constructor({
     paymentEngine,
     bookingEngine,
     razorpayService,
     activityEngine,
+    producer,
   }: PaymentUseCaseConstructorParams) {
     this.paymentEngine = paymentEngine;
     this.bookingEngine = bookingEngine;
     this.razorpayService = razorpayService;
     this.activityEngine = activityEngine;
+    this.producer = producer;
   }
 
   async createRazorpayOrder(
@@ -235,6 +242,35 @@ export class PaymentUseCase implements IPaymentUseCase {
 
       await session.commitTransaction();
       session.endSession();
+
+      // Publish notifications to RabbitMQ after commit succeeds
+      this.producer.publish(BrokerConfig.routingKeys.PAYMENT_NOTIFICATION, {
+        receiverId: bookingDoc.userId,
+        senderId: null,
+        role: UserRoles.CUSTOMER,
+        type: "payment_success",
+        title: "Booking Confirmed",
+        message: `Your booking #${bookingDoc.bookingNumber} for "${bookingDoc.auditorium?.name || "Venue"}" is confirmed.`,
+        referenceId: bookingDoc.id,
+        referenceType: "booking",
+        isRead: false,
+        readAt: null,
+        delivered: false,
+      }).catch(err => console.error("Failed to publish customer booking notification:", err));
+
+      this.producer.publish(BrokerConfig.routingKeys.PAYMENT_NOTIFICATION, {
+        receiverId: bookingDoc.ownerId,
+        senderId: bookingDoc.userId,
+        role: UserRoles.OWNER,
+        type: "payment_received",
+        title: "Payment Received",
+        message: `Payment of ₹${bookingDoc.adminAdvance.toLocaleString()} received for booking #${bookingDoc.bookingNumber}.`,
+        referenceId: bookingDoc.id,
+        referenceType: "booking",
+        isRead: false,
+        readAt: null,
+        delivered: false,
+      }).catch(err => console.error("Failed to publish owner booking notification:", err));
 
       return updatedPayment;
     } catch (error) {

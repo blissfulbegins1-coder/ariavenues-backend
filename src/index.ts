@@ -7,9 +7,14 @@ const main = async (): Promise<void> => {
   try {
     const container = setupContainer();
     
-    const databaseService =
-      container.resolve<DatabaseService>("databaseService");
+    const databaseService = container.resolve<DatabaseService>("databaseService");
     await databaseService.connect();
+
+    const brokerConnection = container.resolve("brokerConnection");
+    const consumer = container.resolve("consumer");
+    
+    await brokerConnection.connect();
+    await consumer.start();
 
     const port = parseInt(process.env.PORT!);
 

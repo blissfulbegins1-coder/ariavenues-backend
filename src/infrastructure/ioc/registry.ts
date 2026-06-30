@@ -34,6 +34,14 @@ import { LocationUseCase } from "../../useCases/location/LocationUseCase";
 import { LocationController } from "../../controllers/LocationController";
 import { ActivityRepository } from "../../repositories/activity/ActivityRepository";
 import { ActivityEngine } from "../../engines/activity/ActivityEngine";
+import { BrokerConnection } from "../config/brocker/BrokerConnection";
+import { Producer } from "../amqp/producer/Producer";
+import { Consumer } from "../amqp/consumer/Consumer";
+import { NotificationRepository } from "../../repositories/notification/NotificationRepository";
+import { NotificationEngine } from "../../engines/notification/NotificationEngine";
+import { NotificationUseCase } from "../../useCases/notification/NotificationUseCase";
+import { NotificationController } from "../../controllers/NotificationController";
+import { SocketService } from "../services/socket/SocketService";
 
 export interface IContainer {
   databaseService: DatabaseService;
@@ -65,6 +73,14 @@ export interface IContainer {
   locationController: LocationController;
   activityRepository: ActivityRepository;
   activityEngine: ActivityEngine;
+  brokerConnection: BrokerConnection;
+  producer: Producer;
+  consumer: Consumer;
+  notificationRepository: NotificationRepository;
+  notificationEngine: NotificationEngine;
+  notificationUseCase: NotificationUseCase;
+  notificationController: NotificationController;
+  socketService: SocketService;
 }
 
 export const setupContainer = (): AwilixContainer<IContainer> => {
@@ -78,6 +94,8 @@ export const setupContainer = (): AwilixContainer<IContainer> => {
     otpService: asClass(OtpService).singleton(),
     cloudinaryService: asClass(CloudinaryService).singleton(),
     razorpayService: asClass(RazorpayService).singleton(),
+    brokerConnection: asClass(BrokerConnection).singleton(),
+    socketService: asClass(SocketService).singleton(),
 
     // Repositories
     userRepository: asClass(UserRepository).singleton(),
@@ -85,6 +103,7 @@ export const setupContainer = (): AwilixContainer<IContainer> => {
     bookingRepository: asClass(BookingRepository).singleton(),
     paymentRepository: asClass(PaymentRepository).singleton(),
     activityRepository: asClass(ActivityRepository).singleton(),
+    notificationRepository: asClass(NotificationRepository).singleton(),
 
     // Engines
     userEngine: asClass(UserEngine).singleton(),
@@ -93,6 +112,9 @@ export const setupContainer = (): AwilixContainer<IContainer> => {
     paymentEngine: asClass(PaymentEngine).singleton(),
     jwtManagementEngine: asClass(JwtManagementEngine).singleton(),
     activityEngine: asClass(ActivityEngine).singleton(),
+    notificationEngine: asClass(NotificationEngine).singleton(),
+    producer: asClass(Producer).singleton(),
+    consumer: asClass(Consumer).singleton(),
 
     // Use Cases
     userUseCase: asClass(UserUseCase).singleton(),
@@ -100,6 +122,7 @@ export const setupContainer = (): AwilixContainer<IContainer> => {
     bookingUseCase: asClass(BookingUseCase).singleton(),
     paymentUseCase: asClass(PaymentUseCase).singleton(),
     adminUseCase: asClass(AdminUseCase).singleton(),
+    notificationUseCase: asClass(NotificationUseCase).singleton(),
 
     // Controllers
     userController: asClass(UserController).singleton(),
@@ -107,6 +130,7 @@ export const setupContainer = (): AwilixContainer<IContainer> => {
     bookingController: asClass(BookingController).singleton(),
     paymentController: asClass(PaymentController).singleton(),
     adminController: asClass(AdminController).singleton(),
+    notificationController: asClass(NotificationController).singleton(),
 
     locationRepository: asClass(LocationRepository).singleton(),
     locationEngine: asClass(LocationEngine).singleton(),

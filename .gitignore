@@ -10,3 +10,4 @@ tools
 setup-codeql.sh
 owasp-results.csv
 .DS_Store
+rabbitmq_notification_system.txt

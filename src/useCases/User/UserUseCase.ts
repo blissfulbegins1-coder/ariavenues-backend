@@ -7,12 +7,16 @@ import { OtpService } from "../../infrastructure/services/otp/OtpService";
 import { REDIRECT_PATHS } from "../../domain/constants/constants";
 import { ApiError } from "../../domain/errors/ApiError";
 import { IActivityEngine } from "../../engines/activity/IActivityEngine";
+import { IProducer } from "../../infrastructure/amqp/producer/IProducer";
+import { BrokerConfig } from "../../infrastructure/config/brocker/brokerConfig";
+import UserRoles from "../../domain/enums/UserRole";
 
 type UserUseCaseConstructorParams = {
   userEngine: IUserEngine;
   otpService: OtpService;
   jwtManagementEngine: IJwtManagementEngine;
   activityEngine: IActivityEngine;
+  producer: IProducer;
 };
 
 export class UserUseCase implements IUserUseCase {
@@ -20,17 +24,20 @@ export class UserUseCase implements IUserUseCase {
   private otpService: OtpService;
   private jwtManagementEngine: IJwtManagementEngine;
   private activityEngine: IActivityEngine;
+  private producer: IProducer;
 
   constructor({
     userEngine,
     otpService,
     jwtManagementEngine,
     activityEngine,
+    producer,
   }: UserUseCaseConstructorParams) {
     this.userEngine = userEngine;
     this.otpService = otpService;
     this.jwtManagementEngine = jwtManagementEngine;
     this.activityEngine = activityEngine;
+    this.producer = producer;
   }
 
   async signUp(input: UserDTO): Promise<UserSuccessResponse> {
@@ -85,9 +92,31 @@ export class UserUseCase implements IUserUseCase {
         title: updatedUser.role === "owner" ? "New Owner Registration" : "New User Registration",
         description: `${updatedUser.name} Registered`,
         referenceId: updatedUser.id,
-        referenceType: updatedUser.role === "owner" ? "ONWER" : "USER",
+        referenceType: updatedUser.role === "owner" ? "OWNER" : "USER",
         performedBy: updatedUser.id,
       }).catch((err) => console.error("Failed to log registration activity:", err));
+
+      // Notify Admin(s) of new registration
+      try {
+        const admins = await this.userEngine.getAllUsers({ role: UserRoles.ADMIN });
+        for (const admin of admins) {
+          await this.producer.publish(BrokerConfig.routingKeys.ADMIN_NOTIFICATION, {
+            receiverId: admin.id,
+            senderId: updatedUser.id,
+            role: UserRoles.ADMIN,
+            type: "user_registered",
+            title: "New User Registration",
+            message: `${updatedUser.name} has registered as a ${updatedUser.role}.`,
+            referenceId: updatedUser.id,
+            referenceType: "user",
+            isRead: false,
+            readAt: null,
+            delivered: false,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to notify admins of user registration:", error);
+      }
     }
 
     const redirectUrl = REDIRECT_PATHS[updatedUser.role];

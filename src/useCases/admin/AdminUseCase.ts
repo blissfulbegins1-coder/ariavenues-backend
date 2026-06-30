@@ -20,6 +20,9 @@ import UserStatus from "../../domain/enums/UserStatus";
 import { parseDDMMYYYY } from "../../utils/dateUtils";
 import { IActivityEngine } from "../../engines/activity/IActivityEngine";
 import { getRelativeTime } from "../../domain/functions/getRaltiveTime";
+import { IProducer } from "../../infrastructure/amqp/producer/IProducer";
+import UserRoles from "../../domain/enums/UserRole";
+import { BrokerConfig } from "../../infrastructure/config/brocker/brokerConfig";
 
 
 type AdminUseCaseConstructorParams = {
@@ -29,6 +32,7 @@ type AdminUseCaseConstructorParams = {
   jwtManagementEngine: IJwtManagementEngine;
   otpService: OtpService;
   activityEngine: IActivityEngine;
+  producer: IProducer;
 };
 
 export class AdminUseCase implements IAdminUseCase {
@@ -38,6 +42,7 @@ export class AdminUseCase implements IAdminUseCase {
   private jwtManagementEngine: IJwtManagementEngine;
   private otpService: OtpService;
   private activityEngine: IActivityEngine;
+  private producer: IProducer;
 
   constructor({
     userEngine,
@@ -46,6 +51,7 @@ export class AdminUseCase implements IAdminUseCase {
     jwtManagementEngine,
     otpService,
     activityEngine,
+    producer,
   }: AdminUseCaseConstructorParams) {
     this.userEngine = userEngine;
     this.auditoriumEngine = auditoriumEngine;
@@ -53,7 +59,7 @@ export class AdminUseCase implements IAdminUseCase {
     this.jwtManagementEngine = jwtManagementEngine;
     this.otpService = otpService;
     this.activityEngine = activityEngine;
-
+    this.producer = producer;
   }
 
   async signIn(mobile: string): Promise<{ success: boolean; message: string }> {
@@ -391,7 +397,23 @@ export class AdminUseCase implements IAdminUseCase {
     } else if (status === AuditoriumStatus.REJECTED) {
       updateData.approved = false;
     }
-    return await this.auditoriumEngine.updateAuditorium(id, updateData);
+    const updated = await this.auditoriumEngine.updateAuditorium(id, updateData);
+    if (updated) {
+      await this.producer.publish(BrokerConfig.routingKeys.ADMIN_NOTIFICATION, {
+        receiverId: updated.ownerId,
+        senderId: null,
+        role: UserRoles.OWNER,
+        type: "auditorium_status",
+        title: `Auditorium status set to ${status}`,
+        message: `Your auditorium "${updated.name}" is now ${status.toLowerCase()}.`,
+        referenceId: updated.id,
+        referenceType: "auditorium",
+        isRead: false,
+        readAt: null,
+        delivered: false,
+      });
+    }
+    return updated;
   }
 
   async updateUserStatus(
@@ -412,6 +434,37 @@ export class AdminUseCase implements IAdminUseCase {
     const updated = await this.bookingEngine.updateBooking(id, { bookingStatus: status });
     if (!updated) {
       throw new ApiError("Booking Not Found!");
+    }
+    if (updated) {
+      // Notify customer
+      await this.producer.publish(BrokerConfig.routingKeys.ADMIN_NOTIFICATION, {
+        receiverId: updated.userId,
+        senderId: null,
+        role: UserRoles.CUSTOMER,
+        type: "booking_status",
+        title: `Booking status updated to ${status}`,
+        message: `Your booking #${updated.bookingNumber} status is now ${status.toLowerCase()}.`,
+        referenceId: updated.id,
+        referenceType: "booking",
+        isRead: false,
+        readAt: null,
+        delivered: false,
+      });
+
+      // Notify owner
+      await this.producer.publish(BrokerConfig.routingKeys.ADMIN_NOTIFICATION, {
+        receiverId: updated.ownerId,
+        senderId: null,
+        role: UserRoles.OWNER,
+        type: "booking_status",
+        title: `Booking status updated to ${status}`,
+        message: `Booking #${updated.bookingNumber} status is now ${status.toLowerCase()}.`,
+        referenceId: updated.id,
+        referenceType: "booking",
+        isRead: false,
+        readAt: null,
+        delivered: false,
+      });
     }
     return updated;
   }

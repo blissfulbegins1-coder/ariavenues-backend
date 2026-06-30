@@ -10,22 +10,28 @@ import { ApiError } from "../../domain/errors/ApiError";
 import UserRoles from "../../domain/enums/UserRole";
 import { parseDDMMYYYY } from "../../utils/dateUtils";
 import mongoose, { QueryFilter } from "mongoose";
+import { IProducer } from "../../infrastructure/amqp/producer/IProducer";
+import { BrokerConfig } from "../../infrastructure/config/brocker/brokerConfig";
 
 type BookingUseCaseConstructorParams = {
   bookingEngine: IBookingEngine;
   auditoriumEngine: IAuditoriumEngine;
+  producer: IProducer;
 };
 
 export class BookingUseCase implements IBookingUseCase {
   private bookingEngine: IBookingEngine;
   private auditoriumEngine: IAuditoriumEngine;
+  private producer: IProducer;
 
   constructor({
     bookingEngine,
     auditoriumEngine,
+    producer,
   }: BookingUseCaseConstructorParams) {
     this.bookingEngine = bookingEngine;
     this.auditoriumEngine = auditoriumEngine;
+    this.producer = producer;
   }
 
   private async autoCompletePastBookings(): Promise<void> {
@@ -142,6 +148,22 @@ export class BookingUseCase implements IBookingUseCase {
       bookingStatus: BookingStatus.PENDING_PAYMENT,
       guestCount: data.guestCount,
     });
+
+    if (newBooking) {
+      await this.producer.publish(BrokerConfig.routingKeys.BOOKING_NOTIFICATION, {
+        receiverId: newBooking.ownerId,
+        senderId: user.id,
+        role: UserRoles.OWNER,
+        type: "booking_created",
+        title: "New Booking Request",
+        message: `You have a new booking request for "${auditorium.name}" (Ref: ${bookingNumber}).`,
+        referenceId: newBooking.id,
+        referenceType: "booking",
+        isRead: false,
+        readAt: null,
+        delivered: false,
+      });
+    }
 
     return newBooking;
   }
