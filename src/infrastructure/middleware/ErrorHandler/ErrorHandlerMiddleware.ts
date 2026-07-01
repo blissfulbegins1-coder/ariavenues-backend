@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import * as yup from "yup";
 
-interface HttpError extends Error {
+type HttpError = Error & {
   status?: number;
   statusCode?: number;
 }

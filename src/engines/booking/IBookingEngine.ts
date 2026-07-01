@@ -2,7 +2,7 @@ import { ClientSession, QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
 import { BookingDbQuery, PaginatedBookingsResponse, GetOwnerDashboardStatsDataParams, GetOwnerDashboardStatsDataResponse } from "../../domain/dtos/booking/BookingDto";
 
-export interface IBookingEngine {
+export type IBookingEngine = {
   createBooking(
     data: Partial<Booking>,
     session?: ClientSession,

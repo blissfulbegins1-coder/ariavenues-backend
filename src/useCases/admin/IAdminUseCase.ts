@@ -8,7 +8,7 @@ import { UserFilters, PaginatedUsersResponse } from "../../domain/dtos/user/User
 import { AuditoriumFilters, PaginatedAuditoriumsResponse } from "../../domain/dtos/auditorium/AuditoriumDto";
 import { BookingFilters, PaginatedBookingsResponse } from "../../domain/dtos/booking/BookingDto";
 
-export interface DashboardStats {
+export type DashboardStats = {
   totalUsers: number;
   totalOwners: number;
   totalAuditoriums: number;
@@ -24,7 +24,7 @@ export interface DashboardStats {
   }[];
 }
 
-export interface IAdminUseCase {
+export type IAdminUseCase = {
   signIn(mobile: string): Promise<{ success: boolean; message: string }>;
   verifyOtp(
     mobile: string,

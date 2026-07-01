@@ -2,7 +2,7 @@ import { ClientSession, QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
 import { BookingDbQuery, PaginatedBookingsResponse, GetOwnerDashboardStatsDataParams, GetOwnerDashboardStatsDataResponse } from "../../domain/dtos/booking/BookingDto";
 
-export interface IBookingRepository {
+export type IBookingRepository = {
   create(data: Partial<Booking>, session?: ClientSession): Promise<Booking>;
   findById(id: string, session?: ClientSession): Promise<Booking | null>;
   findByBookingNumber(bookingNumber: string, session?: ClientSession): Promise<Booking | null>;

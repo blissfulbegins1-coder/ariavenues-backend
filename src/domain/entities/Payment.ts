@@ -1,6 +1,6 @@
 import { PaymentStatus } from "../enums/PaymentStatus";
 
-export interface Payment {
+export type Payment = {
   id: string;
   bookingId: string;
   amount: number;

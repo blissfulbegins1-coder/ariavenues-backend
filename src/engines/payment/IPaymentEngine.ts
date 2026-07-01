@@ -1,7 +1,7 @@
 import { ClientSession } from "mongoose";
 import { Payment } from "../../domain/entities/Payment";
 
-export interface IPaymentEngine {
+export type IPaymentEngine = {
   createPayment(
     data: Partial<Payment>,
     session?: ClientSession,

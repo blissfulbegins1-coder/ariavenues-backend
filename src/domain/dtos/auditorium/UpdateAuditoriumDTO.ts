@@ -1,4 +1,4 @@
-export interface UpdateAuditoriumDTO {
+export type UpdateAuditoriumDTO = {
   name: string;
   description: string;
   address: string;

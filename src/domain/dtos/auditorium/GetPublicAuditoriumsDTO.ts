@@ -1,4 +1,4 @@
-export interface GetPublicAuditoriumsDTO {
+export type GetPublicAuditoriumsDTO = {
   destination?: string;
   startDate?: Date;
   endDate?: Date;

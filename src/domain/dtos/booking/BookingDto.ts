@@ -1,6 +1,6 @@
 import { Booking } from "../../entities/Booking";
 
-export interface BookingFilters {
+export type BookingFilters = {
   page?: number | null;
   limit?: number | null;
   search?: string;
@@ -12,7 +12,7 @@ export interface BookingFilters {
   endDate?: string;
 }
 
-export interface PaginatedBookingsResponse {
+export type PaginatedBookingsResponse = {
   bookings: Booking[];
   total: number;
   totalCount: number;
@@ -21,14 +21,14 @@ export interface PaginatedBookingsResponse {
   cancelledCount: number;
 }
 
-export interface BookingDbQuery {
+export type BookingDbQuery = {
   query: any;
   sort: any;
   skip?: number | null;
   limit?: number | null;
 }
 
-export interface OwnerActivityItem {
+export type OwnerActivityItem = {
   id: string;
   type: "booking" | "payment";
   bookingNumber: string;
@@ -38,12 +38,12 @@ export interface OwnerActivityItem {
   createdAt: Date;
 }
 
-export interface OwnerMonthlyRevenue {
+export type OwnerMonthlyRevenue = {
   month: string;
   revenue: number;
 }
 
-export interface OwnerDashboardStats {
+export type OwnerDashboardStats = {
   totalAuditoriums: number;
   totalBookings: number;
   confirmedCount: number;
@@ -53,14 +53,14 @@ export interface OwnerDashboardStats {
   recentActivity: OwnerActivityItem[];
 }
 
-export interface GetOwnerDashboardStatsDataParams {
+export type GetOwnerDashboardStatsDataParams = {
   ownerId: string;
   statsStart: Date;
   statsEnd: Date;
   targetYear: number;
 }
 
-export interface GetOwnerDashboardStatsDataResponse {
+export type GetOwnerDashboardStatsDataResponse = {
   totalBookings: number;
   confirmedCount: number;
   completedCount: number;

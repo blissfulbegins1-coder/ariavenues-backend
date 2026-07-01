@@ -2,7 +2,7 @@ import { Notification } from "../../domain/entities/Notification";
 import { PaginatedNotificationsResponse } from "../../domain/dtos/notification/NotificationDto";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 
-export interface INotificationUseCase {
+export type INotificationUseCase = {
   listMyNotifications(
     user: UserTokenDto,
     page?: number | null,

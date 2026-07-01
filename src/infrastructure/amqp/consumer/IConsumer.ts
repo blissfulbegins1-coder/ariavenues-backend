@@ -1,3 +1,3 @@
-export interface IConsumer {
+export type IConsumer = {
   start(): Promise<void>;
 }

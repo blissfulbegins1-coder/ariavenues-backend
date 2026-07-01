@@ -1,4 +1,4 @@
-export interface Auditorium {
+export type Auditorium = {
   id: string;
   ownerId: string;
   name: string;
@@ -8,13 +8,13 @@ export interface Auditorium {
   district: string;
   city: string;
   capacity: number;
-  dayRate: number; // INR
+  dayRate: number;
   amenities: string[];
   images: string[];
   averageRating: number;
   totalReviews: number;
   totalBookings: number;
-  status: "pending" | "draft" | "maintenance" | "active" | "rejected" | "blocked";
+  status: string;
   approved: boolean;
   adminAdvance?: number;
   auditoriumAdvance?: number;

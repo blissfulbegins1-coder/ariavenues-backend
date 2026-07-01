@@ -1,7 +1,7 @@
 import UserRoles from "../enums/UserRole";
 import UserStatus from "../enums/UserStatus";
 
-export interface User {
+export type User = {
   id: string;
   name: string;
   mobile: string;

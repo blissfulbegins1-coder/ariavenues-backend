@@ -2,7 +2,7 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import { IRazorpayService } from "./IRazorpayService";
 
-export interface RazorpayOrderResponse {
+export type RazorpayOrderResponse = {
   id: string;
   entity: string;
   amount: number;

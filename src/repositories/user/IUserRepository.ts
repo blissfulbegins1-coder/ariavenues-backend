@@ -3,7 +3,7 @@ import { UserDTO, UserDbQuery, PaginatedUsersResponse } from "../../domain/dtos/
 import { QueryFilter } from "mongoose";
 
 // Repository Interface - contract for data access
-export interface IUserRepository {
+export type IUserRepository = {
   create(data: UserDTO): Promise<boolean>;
   findByMobile(mobile: string): Promise<User | null>;
   update(id: string, data: Partial<User>): Promise<User | null>;

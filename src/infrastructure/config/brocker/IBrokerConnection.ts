@@ -1,4 +1,4 @@
-export interface IBrokerConnection {
+export type IBrokerConnection = {
   connect(): Promise<void>;
   getChannel(): any;
   close(): Promise<void>;

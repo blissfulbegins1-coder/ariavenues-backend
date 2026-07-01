@@ -6,7 +6,7 @@ import { BookingDbQuery, PaginatedBookingsResponse, GetOwnerDashboardStatsDataPa
 import { parseDDMMYYYY } from "../../utils/dateUtils";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 
-interface BookingAggregationDoc {
+type BookingAggregationDoc = {
   _id: mongoose.Types.ObjectId;
   bookingNumber: string;
   auditoriumId: mongoose.Types.ObjectId;

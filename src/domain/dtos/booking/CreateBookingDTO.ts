@@ -1,4 +1,4 @@
-export interface CreateBookingDTO {
+export type CreateBookingDTO = {
   auditoriumId: string;
   startDate: string;
   endDate: string;

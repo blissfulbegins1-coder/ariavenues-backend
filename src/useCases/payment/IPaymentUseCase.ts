@@ -2,7 +2,7 @@ import { Payment } from "../../domain/entities/Payment";
 import { VerifyPaymentDTO } from "../../domain/dtos/payment/VerifyPaymentDTO";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 
-export interface RazorpayOrderResult {
+export type RazorpayOrderResult = {
   orderId: string;
   amount: number;
   currency: string;
@@ -10,7 +10,7 @@ export interface RazorpayOrderResult {
   bookingNumber: string;
 }
 
-export interface IPaymentUseCase {
+export type IPaymentUseCase = {
   createRazorpayOrder(
     bookingId: string,
     user: UserTokenDto,

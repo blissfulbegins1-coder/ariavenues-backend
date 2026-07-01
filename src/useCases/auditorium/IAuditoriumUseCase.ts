@@ -5,7 +5,7 @@ import { GetPublicAuditoriumsDTO } from "../../domain/dtos/auditorium/GetPublicA
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 import { AuditoriumFilters, PaginatedAuditoriumsResponse } from "../../domain/dtos/auditorium/AuditoriumDto";
 
-export interface IAuditoriumUseCase {
+export type IAuditoriumUseCase = {
   createAuditorium(data: CreateAuditoriumDTO): Promise<boolean>;
   getOwnerAuditoriums(user: UserTokenDto, filters?: AuditoriumFilters): Promise<PaginatedAuditoriumsResponse>;
   getPublicAuditoriums(filters?: GetPublicAuditoriumsDTO): Promise<Auditorium[]>;

@@ -1,7 +1,7 @@
 import { Notification } from "../../domain/entities/Notification";
 import { PaginatedNotificationsResponse } from "../../domain/dtos/notification/NotificationDto";
 
-export interface INotificationEngine {
+export type INotificationEngine = {
   createNotification(data: Partial<Notification>): Promise<Notification>;
   getNotificationById(id: string): Promise<Notification | null>;
   updateNotification(id: string, data: Partial<Notification>): Promise<Notification | null>;

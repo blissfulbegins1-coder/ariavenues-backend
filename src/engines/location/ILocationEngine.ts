@@ -1,6 +1,6 @@
 import { Location } from "../../domain/entities/Location";
 
-export interface ILocationEngine {
+export type ILocationEngine = {
   getStates(): Promise<string[]>;
   getDistricts(state: string): Promise<string[]>;
   getCities(state: string, district: string): Promise<string[]>;

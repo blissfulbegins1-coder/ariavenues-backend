@@ -1,6 +1,6 @@
 import { Review } from "../../domain/entities/Review";
 
-export interface IReviewEngine {
+export type IReviewEngine = {
   createReview(data: Partial<Review>): Promise<Review>;
   getAuditoriumReviews(
     auditoriumId: string,

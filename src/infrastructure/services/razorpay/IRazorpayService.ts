@@ -1,6 +1,6 @@
 import { RazorpayOrderResponse } from "./RazorpayService";
 
-export interface IRazorpayService {
+export type IRazorpayService = {
   createOrder(
     amountInPaise: number,
     receipt: string,

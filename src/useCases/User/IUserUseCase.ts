@@ -6,7 +6,7 @@ import {
 } from "../../domain/dtos/user/UserDto";
 import { User } from "../../domain/entities/User";
 
-export interface IUserUseCase {
+export type IUserUseCase = {
   signUp(input: UserDTO): Promise<UserSuccessResponse>;
   verifyOtp(input: VerifyOtpDTO): Promise<UserVerificationResponse>;
   resendOtp(mobile: string): Promise<UserSuccessResponse>;

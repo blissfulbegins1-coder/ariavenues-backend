@@ -1,11 +1,11 @@
 import { Notification } from "../../entities/Notification";
 
-export interface NotificationFilters {
+export type NotificationFilters = {
   page?: number | null;
   limit?: number | null;
 }
 
-export interface PaginatedNotificationsResponse {
+export type PaginatedNotificationsResponse = {
   notifications: Notification[];
   total: number;
   unreadCount: number;

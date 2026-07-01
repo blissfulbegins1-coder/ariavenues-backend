@@ -1,6 +1,6 @@
 import * as yup from "yup";
 
-export interface CreateReviewDTO {
+export type CreateReviewDTO = {
   auditoriumId: string;
   rating: number;
   comment: string;

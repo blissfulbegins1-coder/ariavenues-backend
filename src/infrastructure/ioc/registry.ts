@@ -47,7 +47,7 @@ import { ReviewEngine } from "../../engines/review/ReviewEngine";
 import { ReviewUseCase } from "../../useCases/review/ReviewUseCase";
 import { ReviewController } from "../../controllers/ReviewController";
 
-export interface IContainer {
+export type IContainer = {
   databaseService: DatabaseService;
   otpService: OtpService;
   cloudinaryService: CloudinaryService;

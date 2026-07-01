@@ -9,7 +9,7 @@ import {
 } from "../../../domain/constants/constants";
 import { ApiError } from "../../../domain/errors/ApiError";
 
-interface Msg91Response {
+type Msg91Response = {
   type: "success" | "error";
   message: string;
 }

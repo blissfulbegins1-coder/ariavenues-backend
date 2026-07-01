@@ -1,6 +1,6 @@
 import { Auditorium } from "../../entities/Auditorium";
 
-export interface AuditoriumFilters {
+export type AuditoriumFilters = {
   page?: number | null;
   limit?: number | null;
   search?: string;
@@ -8,7 +8,7 @@ export interface AuditoriumFilters {
   sortBy?: "recent" | "name" | string;
 }
 
-export interface PaginatedAuditoriumsResponse {
+export type PaginatedAuditoriumsResponse = {
   auditoriums: Auditorium[];
   total: number;
   totalCount: number;
@@ -17,7 +17,7 @@ export interface PaginatedAuditoriumsResponse {
   maintenanceCount: number;
 }
 
-export interface AuditoriumDbQuery {
+export type AuditoriumDbQuery = {
   query: any;
   sort: any;
   skip?: number | null;

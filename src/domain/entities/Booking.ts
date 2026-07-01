@@ -1,6 +1,6 @@
 import { BookingStatus } from "../enums/BookingStatus";
 
-export interface Booking {
+export type Booking = {
   id: string;
   bookingNumber: string;
   auditoriumId: string;

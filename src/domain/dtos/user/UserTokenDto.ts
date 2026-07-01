@@ -1,9 +1,9 @@
 type UserTokenDto = {
   id: string;
-  role: "customer" | "owner" | "admin";
+  role: string;
   mobile: string;
 };
 export default UserTokenDto;
-export interface UserRequestInterface extends Request {
+export type UserRequestInterface = Request & {
   user: UserTokenDto;
 }

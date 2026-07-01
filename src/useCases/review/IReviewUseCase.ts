@@ -2,7 +2,7 @@ import { Review } from "../../domain/entities/Review";
 import { CreateReviewDTO } from "../../domain/dtos/review/ReviewDto";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 
-export interface IReviewUseCase {
+export type IReviewUseCase = {
   addReview(user: UserTokenDto, data: CreateReviewDTO): Promise<Review>;
   listAuditoriumReviews(
     auditoriumId: string,

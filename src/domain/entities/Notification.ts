@@ -1,6 +1,6 @@
 import UserRoles from "../enums/UserRole";
 
-export interface Notification {
+export type Notification = {
   id: string;
   receiverId: string;
   senderId: string | null;

@@ -3,7 +3,7 @@ import { CreateBookingDTO } from "../../domain/dtos/booking/CreateBookingDTO";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 import { BookingFilters, PaginatedBookingsResponse, OwnerDashboardStats } from "../../domain/dtos/booking/BookingDto";
 
-export interface IBookingUseCase {
+export type IBookingUseCase = {
   createBooking(data: CreateBookingDTO, user: UserTokenDto): Promise<Booking>;
   getCustomerBookings(user: UserTokenDto): Promise<Booking[]>;
   getOwnerBookings(user: UserTokenDto, filters: BookingFilters): Promise<PaginatedBookingsResponse>;

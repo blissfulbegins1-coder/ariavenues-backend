@@ -4,7 +4,7 @@ import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 import { QueryFilter } from "mongoose";
 import { AuditoriumDbQuery, PaginatedAuditoriumsResponse } from "../../domain/dtos/auditorium/AuditoriumDto";
 
-export interface IAuditoriumRepository {
+export type IAuditoriumRepository = {
   create(data: CreateAuditoriumDTO): Promise<Auditorium>;
   listByOwner(user: UserTokenDto): Promise<Auditorium[]>;
   listPublic(filter?: QueryFilter<Auditorium>): Promise<Auditorium[]>;

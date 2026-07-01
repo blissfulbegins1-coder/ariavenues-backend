@@ -1,7 +1,7 @@
 import { AuditoriumStatus } from "../../enums/AuditoriumStatus";
 import UserTokenDto from "../user/UserTokenDto";
 
-export interface CreateAuditoriumDTO {
+export type CreateAuditoriumDTO = {
   user: UserTokenDto;
   name: string;
   description: string;

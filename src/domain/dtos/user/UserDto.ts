@@ -1,39 +1,39 @@
 import UserRoles from "../../enums/UserRole";
 import { User } from "../../entities/User";
 
-export interface UserDTO {
+export type UserDTO = {
   name: string;
   email?: string;
   mobile: string;
   role: UserRoles;
 }
 
-export interface UserSuccessResponse {
+export type UserSuccessResponse = {
   success: boolean;
   message: string;
 }
 
-export interface UserVerificationResponse {
+export type UserVerificationResponse = {
   user: { id: string; name: string; };
   token: string;
   redirectUrl: string;
 }
 
-export interface VerifyOtpDTO{
+export type VerifyOtpDTO = {
   mobile: string;
   otp: string;
 }
 
-export interface UserFilters {
+export type UserFilters = {
   page?: number | null;
   limit?: number | null;
   search?: string;
-  status?: "all" | "active" | "blocked" | string;
-  sortBy?: "recent" | "name" | string;
+  status?: string;
+  sortBy?: string;
   role?: string;
 }
 
-export interface PaginatedUsersResponse {
+export type PaginatedUsersResponse = {
   users: User[];
   total: number;
   totalCount: number;
@@ -41,7 +41,7 @@ export interface PaginatedUsersResponse {
   blockedCount: number;
 }
 
-export interface UserDbQuery {
+export type UserDbQuery = {
   query: any;
   sort: any;
   skip?: number | null;
