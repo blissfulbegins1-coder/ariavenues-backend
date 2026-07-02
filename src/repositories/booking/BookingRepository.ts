@@ -307,7 +307,30 @@ export class BookingRepository implements IBookingRepository {
     params: GetOwnerDashboardStatsDataParams,
   ): Promise<GetOwnerDashboardStatsDataResponse> {
     const ownerId = new mongoose.Types.ObjectId(params.ownerId);
-    const baseMatch: any = { ownerId, isActive: true, createdAt: { $gte: params.statsStart, $lte: params.statsEnd } };
+
+    const statsStart = new Date(params.statsStart);
+    const statsEnd = new Date(params.statsEnd);
+
+    const baseMatch: any = {
+      ownerId,
+      isActive: true,
+      $expr: {
+        $and: [
+          {
+            $gte: [
+              { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
+              statsStart,
+            ],
+          },
+          {
+            $lte: [
+              { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
+              statsEnd,
+            ],
+          },
+        ],
+      },
+    };
 
     const [totalBookings, confirmedCount, completedCount] = await Promise.all([
       BookingModel.countDocuments(baseMatch),
@@ -318,28 +341,47 @@ export class BookingRepository implements IBookingRepository {
     const MONTH_SHORT = ["Jan","Feb","Mar","Apr","May","Jun",
                           "Jul","Aug","Sep","Oct","Nov","Dec"];
 
+    const startOfYear = new Date(params.targetYear, 0, 1);
+    const endOfYear = new Date(params.targetYear, 11, 31, 23, 59, 59, 999);
+
     const revenueAgg = await BookingModel.aggregate([
       {
         $match: {
           ownerId,
           isActive: true,
           bookingStatus: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] },
-          createdAt: {
-            $gte: new Date(params.targetYear, 0, 1),
-            $lte: new Date(params.targetYear, 11, 31, 23, 59, 59, 999),
+        },
+      },
+      {
+        $addFields: {
+          parsedStartDate: {
+            $dateFromString: {
+              dateString: "$startDate",
+              format: "%d-%m-%Y",
+            },
+          },
+        },
+      },
+      {
+        $match: {
+          parsedStartDate: {
+            $gte: startOfYear,
+            $lte: endOfYear,
           },
         },
       },
       {
         $group: {
-          _id: { $month: "$createdAt" },
+          _id: { $month: "$parsedStartDate" },
           revenue: { $sum: { $add: ["$adminAdvance", "$auditoriumAdvance"] } },
         },
       },
     ]);
 
     const revenueMap: Record<number, number> = {};
-    for (const row of revenueAgg) revenueMap[row._id] = row.revenue;
+    for (const row of revenueAgg) {
+      revenueMap[row._id] = row.revenue;
+    }
 
     const monthlyRevenue: OwnerMonthlyRevenue[] = MONTH_SHORT.map((name, i) => ({
       month: name,
@@ -355,7 +397,7 @@ export class BookingRepository implements IBookingRepository {
         },
       },
       { $sort: { createdAt: -1 } },
-      { $limit: 10 },
+      { $limit: 3 },
       {
         $lookup: {
           from: "auditoriums",

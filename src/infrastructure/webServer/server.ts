@@ -28,6 +28,7 @@ export class Server {
   }
 
   private setupMiddleware(): void {
+    this.app.set("trust proxy", true);
     this.app.use(express.json({ limit: "100mb" }));
     this.app.use(express.urlencoded({ limit: "100mb", extended: false }));
     this.app.use(requestLogger);

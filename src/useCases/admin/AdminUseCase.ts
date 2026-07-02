@@ -165,28 +165,30 @@ export class AdminUseCase implements IAdminUseCase {
       const auditoriums = await this.auditoriumEngine.getAllAuditoriums(auditoriumFilter);
 
       let bookingFilter: QueryFilter<Booking> = {
-        bookingStatus: { $in: [BookingStatus.CONFIRMED] },
+        bookingStatus: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] },
       };
+      const bookings = await this.bookingEngine.getAllBookings(bookingFilter);
+
+      let filteredBookings = bookings;
       if (startDate && endDate) {
         const start = parseDDMMYYYY(startDate);
         const end = parseDDMMYYYY(endDate);
         end.setHours(23, 59, 59, 999);
-        bookingFilter.createdAt = {
-          $gte: start,
-          $lte: end,
-        };
+        filteredBookings = bookings.filter((bk) => {
+          const slotDate = parseDDMMYYYY(bk.startDate);
+          return slotDate >= start && slotDate <= end;
+        });
       }
-      const bookings = await this.bookingEngine.getAllBookings(bookingFilter);
 
       let actualCommission = 0;
       const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       const commissionsByMonth = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-      bookings.forEach((bk) => {
+      filteredBookings.forEach((bk) => {
         const commission = bk.adminAdvance || 0;
         actualCommission += commission;
 
-        const monthIndex = new Date(bk.createdAt).getMonth();
+        const monthIndex = parseDDMMYYYY(bk.startDate).getMonth();
 
         if (monthIndex >= 0 && monthIndex <= 11) {
           commissionsByMonth[monthIndex] += commission;
@@ -228,7 +230,7 @@ export class AdminUseCase implements IAdminUseCase {
         totalUsers: customers.length,
         totalOwners: owners.length,
         totalAuditoriums: auditoriums.length,
-        activeBookings: bookings.length,
+        activeBookings: filteredBookings.length,
         totalCommission: actualCommission,
         monthlyCommission,
         recentActivities,
@@ -338,9 +340,21 @@ export class AdminUseCase implements IAdminUseCase {
       const start = parseDDMMYYYY(filters.startDate);
       const end = parseDDMMYYYY(filters.endDate);
       end.setHours(23, 59, 59, 999);
-      query.createdAt = {
-        $gte: start,
-        $lte: end,
+      query.$expr = {
+        $and: [
+          {
+            $lte: [
+              { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
+              end,
+            ],
+          },
+          {
+            $gte: [
+              { $dateFromString: { dateString: "$endDate", format: "%d-%m-%Y" } },
+              start,
+            ],
+          },
+        ],
       };
     }
 
