@@ -1,3 +1,5 @@
+import { CORS_ORIGINS } from "@/config/env";
+
 export const headers = {
   accept: "application/json",
   "content-type": "application/json",
@@ -5,6 +7,4 @@ export const headers = {
   "x-transaction-id": ""
 };
 
-export const corsOrigins = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(",").map((origin) => origin.trim())
-  : ["http://localhost:3000", "http://localhost:5173"];
+export const corsOrigins = CORS_ORIGINS;

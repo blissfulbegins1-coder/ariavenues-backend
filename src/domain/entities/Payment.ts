@@ -4,8 +4,8 @@ export type Payment = {
   id: string;
   bookingId: string;
   amount: number;
-  currency: "INR";
-  gateway: "Razorpay";
+  currency: string;
+  gateway: string;
   orderId: string;
   paymentId?: string;
   signature?: string;

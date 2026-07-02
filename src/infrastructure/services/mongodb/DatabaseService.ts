@@ -1,12 +1,15 @@
 import mongoose from "mongoose";
+import { DATABASE_URI, DATABASE_NAME } from "@/config/env";
+import { logger } from "../../../utils/logger";
+
 
 export class DatabaseService {
   private databaseUri: string;
   private databaseName: string;
 
   constructor() {
-    this.databaseUri = process.env.DATABASE_URI!;
-    this.databaseName = process.env.DATABASE_NAME!;
+    this.databaseUri = DATABASE_URI;
+    this.databaseName = DATABASE_NAME;
   }
 
   private getMongoUri(): string {
@@ -17,7 +20,7 @@ export class DatabaseService {
     try {
       const mongoUri = this.getMongoUri();
       await mongoose.connect(mongoUri);
-      console.log(`✓ MongoDB connected to ${this.databaseName}`);
+      logger.info(`✓ MongoDB connected to ${this.databaseName}`);
     } catch (error) {
       throw error;
     }
@@ -26,7 +29,7 @@ export class DatabaseService {
   async disconnect(): Promise<void> {
     try {
       await mongoose.disconnect();
-      console.log("✓ MongoDB disconnected");
+      logger.info("✓ MongoDB disconnected");
     } catch (error) {
       throw error;
     }

@@ -10,6 +10,10 @@ import { IActivityEngine } from "../../engines/activity/IActivityEngine";
 import { IProducer } from "../../infrastructure/amqp/producer/IProducer";
 import { BrokerConfig } from "../../infrastructure/config/brocker/brokerConfig";
 import UserRoles from "../../domain/enums/UserRole";
+import { HttpStatus } from "../../domain/enums/HttpStatus";
+import { logger } from "../../utils/logger";
+
+
 
 type UserUseCaseConstructorParams = {
   userEngine: IUserEngine;
@@ -44,7 +48,7 @@ export class UserUseCase implements IUserUseCase {
     const existingUser = await this.userEngine.getUserByMobile(input.mobile);
     if (existingUser) {
       if (existingUser.mobileVerified) {
-        throw new ApiError("User with this mobile number already exists");
+        throw new ApiError("User with this mobile number already exists", HttpStatus.CONFLICT);
       }
 
       await this.userEngine.updateUser(existingUser.id, {
@@ -70,7 +74,8 @@ export class UserUseCase implements IUserUseCase {
     const user = await this.userEngine.getUserByMobile(input.mobile);
     if (!user) {
       throw new ApiError(
-        "User not found"
+        "User not found",
+        HttpStatus.NOT_FOUND
       );
     }
 
@@ -82,7 +87,7 @@ export class UserUseCase implements IUserUseCase {
         mobileVerified: true,
       });
       if (!result) {
-        throw new ApiError("Failed to update user verification status");
+        throw new ApiError("Failed to update user verification status", HttpStatus.INTERNAL_SERVER_ERROR);
       }
       updatedUser = result;
 
@@ -94,7 +99,7 @@ export class UserUseCase implements IUserUseCase {
         referenceId: updatedUser.id,
         referenceType: updatedUser.role === "owner" ? "OWNER" : "USER",
         performedBy: updatedUser.id,
-      }).catch((err) => console.error("Failed to log registration activity:", err));
+      }).catch((err) => logger.error("Failed to log registration activity:", err));
 
       // Notify Admin(s) of new registration
       try {
@@ -115,7 +120,7 @@ export class UserUseCase implements IUserUseCase {
           });
         }
       } catch (error) {
-        console.error("Failed to notify admins of user registration:", error);
+        logger.error("Failed to notify admins of user registration:", error);
       }
     }
 
@@ -142,7 +147,7 @@ export class UserUseCase implements IUserUseCase {
   ): Promise<UserSuccessResponse> {
     const user = await this.userEngine.getUserByMobile(mobile);
     if (!user) {
-      throw new ApiError("User not found");
+      throw new ApiError("User not found", HttpStatus.NOT_FOUND);
     }
 
     await this.otpService.sendOtp(mobile);
@@ -156,12 +161,13 @@ export class UserUseCase implements IUserUseCase {
   async signIn(mobile: string): Promise<UserSuccessResponse> {
     const user = await this.userEngine.getUserByMobile(mobile);
     if (!user) {
-      throw new ApiError("User not found");
+      throw new ApiError("User not found", HttpStatus.NOT_FOUND);
     }
 
     if (!user.mobileVerified) {
       throw new ApiError(
         "User mobile is not verified",
+        HttpStatus.FORBIDDEN
       );
     }
 

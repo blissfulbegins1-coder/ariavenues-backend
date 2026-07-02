@@ -84,3 +84,19 @@ export const ownerDashboardStatsQuerySchema = yup.object().shape({
     targetYear,
   };
 });
+
+export const getCustomerBookingsQuerySchema = yup.object().shape({
+  page: yup
+    .number()
+    .transform((value, originalValue) => (originalValue === "" || originalValue === undefined || originalValue === null) ? 1 : Number(originalValue))
+    .integer("Page must be an integer")
+    .min(1, "Page must be 1 or greater")
+    .default(1),
+  limit: yup
+    .number()
+    .transform((value, originalValue) => (originalValue === "" || originalValue === undefined || originalValue === null) ? 6 : Number(originalValue))
+    .integer("Limit must be an integer")
+    .min(1, "Limit must be 1 or greater")
+    .max(50, "Limit cannot exceed 50")
+    .default(6),
+});

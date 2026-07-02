@@ -1,5 +1,7 @@
+import { RABBITMQ_URI } from "@/config/env";
+
 export const BrokerConfig = {
-  rabbitmqUri: process.env.RABBITMQ_URI || "amqp://localhost",
+  rabbitmqUri: RABBITMQ_URI,
   
   exchanges: {
     NOTIFICATION_EXCHANGE: "notification_exchange",

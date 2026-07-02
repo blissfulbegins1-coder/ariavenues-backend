@@ -4,8 +4,8 @@ export type AuditoriumFilters = {
   page?: number | null;
   limit?: number | null;
   search?: string;
-  status?: "all" | "active" | "pending" | "rejected" | "maintenance" | "blocked" | string;
-  sortBy?: "recent" | "name" | string;
+  status?: string;
+  sortBy?: string;
 }
 
 export type PaginatedAuditoriumsResponse = {

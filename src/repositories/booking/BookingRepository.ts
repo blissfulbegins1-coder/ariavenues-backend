@@ -2,9 +2,11 @@ import mongoose, { ClientSession, QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
 import { BookingModel } from "../../infrastructure/services/mongodb/models/booking/BookingModel";
 import { IBookingRepository } from "./IBookingRepository";
-import { BookingDbQuery, PaginatedBookingsResponse, GetOwnerDashboardStatsDataParams, GetOwnerDashboardStatsDataResponse, OwnerMonthlyRevenue, OwnerActivityItem } from "../../domain/dtos/booking/BookingDto";
+import { BookingDbQuery, PaginatedBookingsResponse, GetOwnerDashboardStatsDataParams, GetOwnerDashboardStatsDataResponse, OwnerMonthlyRevenue, OwnerActivityItem, CustomerBookingsPaginatedResponse, CustomerBookingsQuery } from "../../domain/dtos/booking/BookingDto";
 import { parseDDMMYYYY } from "../../utils/dateUtils";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
+import { logger } from "../../utils/logger";
+
 
 type BookingAggregationDoc = {
   _id: mongoose.Types.ObjectId;
@@ -183,13 +185,31 @@ export class BookingRepository implements IBookingRepository {
     await BookingModel.findByIdAndUpdate(id, { isActive: false });
   }
 
-  async listByCustomer(userId: string): Promise<Booking[]> {
-    const results = await BookingModel.aggregate<BookingAggregationDoc>([
-      { $match: { userId: new mongoose.Types.ObjectId(userId), isActive: true } },
-      ...bookingDetailsLookup,
-      { $sort: { createdAt: -1 } },
+  async listByCustomerPaginated(
+    userId: string,
+    { page, limit }: CustomerBookingsQuery,
+  ): Promise<CustomerBookingsPaginatedResponse> {
+    const skip = (page - 1) * limit;
+    const matchStage = { userId: new mongoose.Types.ObjectId(userId), isActive: true };
+
+    const [data, countResult] = await Promise.all([
+      BookingModel.aggregate<BookingAggregationDoc>([
+        { $match: matchStage },
+        ...bookingDetailsLookup,
+        { $sort: { createdAt: -1 } },
+        { $skip: skip },
+        { $limit: limit },
+      ]),
+      BookingModel.countDocuments(matchStage as any),
     ]);
-    return results.map((doc) => this.toEntity(doc));
+
+    const total = countResult;
+    return {
+      bookings: data.map((doc) => this.toEntity(doc)),
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async listByOwner(ownerId: string): Promise<Booking[]> {
@@ -279,8 +299,7 @@ export class BookingRepository implements IBookingRepository {
         },
       );
     } catch (error) {
-      // Log or swallow error per custom pattern
-      console.error("Error auto-completing past bookings:", error);
+      logger.error("Error auto-completing past bookings:", error);
     }
   }
 
@@ -361,8 +380,8 @@ export class BookingRepository implements IBookingRepository {
       id: doc._id.toString(),
       type: doc.bookingStatus === BookingStatus.CONFIRMED ? "booking" : "payment",
       bookingNumber: doc.bookingNumber,
-      auditoriumName: doc.audData?.[0]?.name ?? "Unknown Venue",
-      customerName: doc.userData?.[0]?.name ?? "Unknown Customer",
+      auditoriumName: doc.audData?.[0]?.name,
+      customerName: doc.userData?.[0]?.name,
       amount: (doc.adminAdvance ?? 0) + (doc.auditoriumAdvance ?? 0),
       createdAt: doc.createdAt,
     }));

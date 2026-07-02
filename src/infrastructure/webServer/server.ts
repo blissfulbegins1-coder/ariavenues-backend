@@ -9,6 +9,8 @@ import { DatabaseService } from "../services/mongodb/DatabaseService";
 import { errorHandler } from "../middleware/ErrorHandler/ErrorHandlerMiddleware";
 import { corsOrigins } from "../../domain/constants/axiosHeader";
 import { uploadMiddleware } from "../middleware/Upload/UploadMiddleware";
+import { logger } from "../../utils/logger";
+import { requestLogger } from "../middleware/RequestLogger/RequestLoggerMiddleware";
 
 export class Server {
   private app: Express;
@@ -26,7 +28,7 @@ export class Server {
   private setupMiddleware(): void {
     this.app.use(express.json({ limit: "100mb" }));
     this.app.use(express.urlencoded({ limit: "100mb", extended: false }));
-
+    this.app.use(requestLogger);
     this.app.use(uploadMiddleware);
     this.app.use((req, res, next) => {
       req.container = this.container;
@@ -71,7 +73,7 @@ export class Server {
       socketService.initialize(io);
 
       this.httpServer.listen(port, () => {
-        console.log(`Server running on http://localhost:${port}`);
+        logger.info(`Server running on http://localhost:${port}`);
       });
     } catch (error) {
       process.exit(1);

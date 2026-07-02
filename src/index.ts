@@ -2,6 +2,7 @@ import "dotenv/config";
 import { setupContainer } from "./infrastructure/ioc/registry";
 import { Server } from "./infrastructure/webServer/server";
 import { DatabaseService } from "./infrastructure/services/mongodb/DatabaseService";
+import { PORT } from "./config/env";
 
 const main = async (): Promise<void> => {
   try {
@@ -16,10 +17,8 @@ const main = async (): Promise<void> => {
     await brokerConnection.connect();
     await consumer.start();
 
-    const port = parseInt(process.env.PORT!);
-
     const server = new Server(container);
-    await server.start(port);
+    await server.start(PORT);
   } catch (error) {
     process.exit(1);
   }

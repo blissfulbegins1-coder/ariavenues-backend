@@ -10,5 +10,5 @@ export type UpdateAuditoriumDTO = {
   amenities: string[];
   existingImages: string[];
   newImages?: Express.Multer.File[];
-  status?: "pending" | "draft" | "maintenance" | "active" | "rejected";
+  status?: string;
 }

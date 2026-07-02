@@ -1,6 +1,8 @@
 import { IProducer } from "./IProducer";
 import { IBrokerConnection } from "../../config/brocker/IBrokerConnection";
 import { BrokerConfig } from "../../config/brocker/brokerConfig";
+import { logger } from "../../../utils/logger";
+
 
 type ProducerConstructorParams = {
   brokerConnection: IBrokerConnection;
@@ -24,7 +26,7 @@ export class Producer implements IProducer {
         { persistent: true },
       );
     } catch (error) {
-      console.error("Failed to publish message to RabbitMQ:", error);
+      logger.error("Failed to publish message to RabbitMQ:", error);
       return false;
     }
   }

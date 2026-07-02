@@ -1,6 +1,6 @@
 import { ClientSession, QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
-import { BookingDbQuery, PaginatedBookingsResponse, GetOwnerDashboardStatsDataParams, GetOwnerDashboardStatsDataResponse } from "../../domain/dtos/booking/BookingDto";
+import { BookingDbQuery, PaginatedBookingsResponse, GetOwnerDashboardStatsDataParams, GetOwnerDashboardStatsDataResponse, CustomerBookingsPaginatedResponse, CustomerBookingsQuery } from "../../domain/dtos/booking/BookingDto";
 
 export type IBookingEngine = {
   createBooking(
@@ -14,8 +14,7 @@ export type IBookingEngine = {
     data: Partial<Booking>,
     session?: ClientSession,
   ): Promise<Booking | null>;
-  listBookingsByCustomer(userId: string): Promise<Booking[]>;
-  listBookingsByOwner(ownerId: string): Promise<Booking[]>;
+  listBookingsByCustomerPaginated(userId: string, query: CustomerBookingsQuery): Promise<CustomerBookingsPaginatedResponse>;
   checkAvailability(filter: QueryFilter<Booking>): Promise<boolean>;
   deleteBooking(id: string): Promise<void>;
   getAllBookings(filter?: QueryFilter<Booking>): Promise<Booking[]>;

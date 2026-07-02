@@ -1,6 +1,8 @@
 import { Server as SocketIOServer } from "socket.io";
 import { ISocketService } from "./ISocketService";
 import { IJwtManagementEngine } from "../../../engines/jwt/IJwtManagementEngine";
+import { logger } from "../../../utils/logger";
+
 
 type SocketServiceConstructorParams = {
   jwtManagementEngine: IJwtManagementEngine;
@@ -41,7 +43,7 @@ export class SocketService implements ISocketService {
 
     io.on("connection", (socket: any) => {
       const userId = socket.userId;
-      console.log(`User connected via socket: ${userId} (Socket ID: ${socket.id})`);
+      logger.info(`User connected via socket: ${userId} (Socket ID: ${socket.id})`);
 
       // Add socket ID to mapping
       const sockets = this.userSockets.get(userId) || [];
@@ -49,7 +51,7 @@ export class SocketService implements ISocketService {
       this.userSockets.set(userId, sockets);
 
       socket.on("disconnect", () => {
-        console.log(`User disconnected from socket: ${userId} (Socket ID: ${socket.id})`);
+        logger.info(`User disconnected from socket: ${userId} (Socket ID: ${socket.id})`);
         const currentSockets = this.userSockets.get(userId) || [];
         const updatedSockets = currentSockets.filter((id) => id !== socket.id);
         if (updatedSockets.length > 0) {
@@ -63,18 +65,18 @@ export class SocketService implements ISocketService {
 
   sendNotificationToUser(userId: string, event: string, data: any): void {
     if (!this.io) {
-      console.warn("Socket.io server is not initialized yet.");
+      logger.warn("Socket.io server is not initialized yet.");
       return;
     }
 
     const socketIds = this.userSockets.get(userId);
     if (socketIds && socketIds.length > 0) {
-      console.log(`Pushing real-time socket event "${event}" to user ${userId}`);
+      logger.info(`Pushing real-time socket event "${event}" to user ${userId}`);
       socketIds.forEach((id) => {
         this.io!.to(id).emit(event, data);
       });
     } else {
-      console.log(`User ${userId} is not connected via socket. Event queued in DB.`);
+      logger.info(`User ${userId} is not connected via socket. Event queued in DB.`);
     }
   }
 }

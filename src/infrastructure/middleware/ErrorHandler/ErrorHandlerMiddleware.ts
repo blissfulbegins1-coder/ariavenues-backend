@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import * as yup from "yup";
+import { IS_DEV } from "@/config/env";
+import { logger } from "@/utils/logger";
 
 type HttpError = Error & {
   status?: number;
@@ -12,6 +14,8 @@ export const errorHandler = (
   res: Response,
   next: NextFunction,
 ) => {
+  logger.error(`Error on ${req.method} ${req.originalUrl}:`, err);
+
   if (err instanceof yup.ValidationError) {
     const validationErrors: Record<string, string[]> = {};
     err.inner.forEach((error) => {
@@ -36,6 +40,6 @@ export const errorHandler = (
   res.status(status).json({
     success: false,
     error: message,
-    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+    ...(IS_DEV && { stack: err.stack }),
   });
 };

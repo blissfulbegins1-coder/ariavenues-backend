@@ -5,6 +5,7 @@ import {
   bookingIdParamSchema,
   getPublicBookingsSchema,
   ownerDashboardStatsQuerySchema,
+  getCustomerBookingsQuerySchema,
 } from "../infrastructure/validation/booking/BookingValidationSchemas";
 import { CreateBookingDTO } from "../domain/dtos/booking/CreateBookingDTO";
 import UserTokenDto from "../domain/dtos/user/UserTokenDto";
@@ -54,7 +55,13 @@ export class BookingController {
   ): Promise<Response | void> {
     try {
       const user = req.user as UserTokenDto;
-      const result = await this.bookingUseCase.getCustomerBookings(user);
+      const validatedQuery = await getCustomerBookingsQuerySchema.validate(req.query, {
+        abortEarly: false,
+      });
+      const result = await this.bookingUseCase.getCustomerBookings(user, {
+        page: validatedQuery.page,
+        limit: validatedQuery.limit,
+      });
       return res.status(200).json({
         success: true,
         data: result,

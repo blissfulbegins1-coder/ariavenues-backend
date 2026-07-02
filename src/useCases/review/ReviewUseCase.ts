@@ -6,6 +6,8 @@ import { IAuditoriumEngine } from "../../engines/auditorium/IAuditoriumEngine";
 import { IUserEngine } from "../../engines/user/IUserEngine";
 import { ApiError } from "../../domain/errors/ApiError";
 import { IReviewUseCase } from "./IReviewUseCase";
+import { HttpStatus } from "../../domain/enums/HttpStatus";
+
 
 type ReviewUseCaseConstructorParams = {
   reviewEngine: IReviewEngine;
@@ -31,7 +33,7 @@ export class ReviewUseCase implements IReviewUseCase {
   async addReview(user: UserTokenDto, data: CreateReviewDTO): Promise<Review> {
     const auditorium = await this.auditoriumEngine.getAuditoriumById(data.auditoriumId);
     if (!auditorium) {
-      throw new ApiError("Auditorium not found");
+      throw new ApiError("Auditorium not found", HttpStatus.NOT_FOUND);
     }
 
     const dbUser = await this.userEngine.getUserByMobile(user.mobile);

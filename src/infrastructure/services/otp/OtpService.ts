@@ -8,6 +8,10 @@ import {
   otpMockValue,
 } from "../../../domain/constants/constants";
 import { ApiError } from "../../../domain/errors/ApiError";
+import { HttpStatus } from "../../../domain/enums/HttpStatus";
+import { logger } from "../../../utils/logger";
+
+
 
 type Msg91Response = {
   type: "success" | "error";
@@ -30,7 +34,7 @@ export class OtpService {
 
   async sendOtp(mobile: string): Promise<boolean> {
     if (Environment !== "production") {
-      console.log(`[MOCK OTP] Sent OTP to ${mobile}`);
+      logger.info(`[MOCK OTP] Sent OTP to ${mobile}`);
       return true;
     }
 
@@ -61,7 +65,7 @@ export class OtpService {
         return true;
       }
 
-      throw new ApiError("Invalid OTP");
+      throw new ApiError("Invalid OTP", HttpStatus.BAD_REQUEST);
     }
 
     try {
@@ -82,7 +86,7 @@ export class OtpService {
 
   private ensureSuccess(response: Msg91Response): void {
     if (response.type !== "success") {
-      throw new ApiError(response.message);
+      throw new ApiError(response.message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -92,13 +96,13 @@ export class OtpService {
         (error.response?.data as { message?: string } | undefined)?.message ??
         error.message;
 
-      throw new ApiError(message);
+      throw new ApiError(message, HttpStatus.BAD_REQUEST);
     }
 
     if (error instanceof Error) {
-      throw new ApiError(error.message);
+      throw new ApiError(error.message, HttpStatus.BAD_REQUEST);
     }
 
-    throw new ApiError(defaultMessage);
+    throw new ApiError(defaultMessage, HttpStatus.BAD_REQUEST);
   }
 }

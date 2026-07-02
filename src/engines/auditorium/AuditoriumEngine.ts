@@ -25,8 +25,12 @@ export class AuditoriumEngine implements IAuditoriumEngine {
     return await this.auditoriumRepository.listByOwner(user);
   }
 
-  async getPublicAuditoriums(filter?: QueryFilter<Auditorium>): Promise<Auditorium[]> {
-    return await this.auditoriumRepository.listPublic(filter);
+  async getPublicAuditoriums(
+    filter?: QueryFilter<Auditorium>,
+    skip?: number | null,
+    limit?: number | null,
+  ): Promise<{ auditoriums: Auditorium[]; total: number }> {
+    return await this.auditoriumRepository.listPublic(filter, skip, limit);
   }
 
   async getAuditoriumById(id: string): Promise<Auditorium | null> {

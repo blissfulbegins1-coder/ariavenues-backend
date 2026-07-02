@@ -1,6 +1,8 @@
 import { connect as amqpConnect } from "amqplib";
 import { IBrokerConnection } from "./IBrokerConnection";
 import { BrokerConfig } from "./brokerConfig";
+import { logger } from "../../../utils/logger";
+
 
 export class BrokerConnection implements IBrokerConnection {
   private connection: any = null;
@@ -8,7 +10,7 @@ export class BrokerConnection implements IBrokerConnection {
 
   async connect(): Promise<void> {
     try {
-      console.log("Connecting to RabbitMQ...");
+      logger.info("Connecting to RabbitMQ...");
       this.connection = await amqpConnect(BrokerConfig.rabbitmqUri);
       this.channel = await this.connection.createChannel();
 
@@ -32,19 +34,19 @@ export class BrokerConnection implements IBrokerConnection {
         BrokerConfig.routingKeys.ALL_NOTIFICATIONS,
       );
 
-      console.log("RabbitMQ Connected & configured successfully!");
+      logger.info("RabbitMQ Connected & configured successfully!");
 
       this.connection.on("error", (err: any) => {
-        console.error("RabbitMQ Connection error:", err);
+        logger.error("RabbitMQ Connection error:", err);
         this.reconnect();
       });
 
       this.connection.on("close", () => {
-        console.warn("RabbitMQ Connection closed, reconnecting...");
+        logger.warn("RabbitMQ Connection closed, reconnecting...");
         this.reconnect();
       });
     } catch (error) {
-      console.error("Failed to connect to RabbitMQ, retrying in 5s...", error);
+      logger.error("Failed to connect to RabbitMQ, retrying in 5s...", error);
       setTimeout(() => this.connect(), 5000);
     }
   }
@@ -67,7 +69,7 @@ export class BrokerConnection implements IBrokerConnection {
       if (this.channel) await this.channel.close();
       if (this.connection) await this.connection.close();
     } catch (error) {
-      console.error("Error closing RabbitMQ connection:", error);
+      logger.error("Error closing RabbitMQ connection:", error);
     }
   }
 }

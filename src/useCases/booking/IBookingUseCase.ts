@@ -1,11 +1,11 @@
 import { Booking } from "../../domain/entities/Booking";
 import { CreateBookingDTO } from "../../domain/dtos/booking/CreateBookingDTO";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
-import { BookingFilters, PaginatedBookingsResponse, OwnerDashboardStats } from "../../domain/dtos/booking/BookingDto";
+import { BookingFilters, PaginatedBookingsResponse, OwnerDashboardStats, CustomerBookingsPaginatedResponse, CustomerBookingsQuery } from "../../domain/dtos/booking/BookingDto";
 
 export type IBookingUseCase = {
   createBooking(data: CreateBookingDTO, user: UserTokenDto): Promise<Booking>;
-  getCustomerBookings(user: UserTokenDto): Promise<Booking[]>;
+  getCustomerBookings(user: UserTokenDto, query: CustomerBookingsQuery): Promise<CustomerBookingsPaginatedResponse>;
   getOwnerBookings(user: UserTokenDto, filters: BookingFilters): Promise<PaginatedBookingsResponse>;
   getOwnerDashboardStats(
     user: UserTokenDto,

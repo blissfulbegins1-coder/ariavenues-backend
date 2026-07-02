@@ -13,6 +13,8 @@ import { Booking } from "../../domain/entities/Booking";
 import UserRole from "../../domain/enums/UserRole";
 import { ApiError } from "../../domain/errors/ApiError";
 import { REDIRECT_PATHS } from "../../domain/constants/constants";
+import { HttpStatus } from "../../domain/enums/HttpStatus";
+
 import { QueryFilter, Types } from "mongoose";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { AuditoriumStatus } from "../../domain/enums/AuditoriumStatus";
@@ -65,12 +67,13 @@ export class AdminUseCase implements IAdminUseCase {
   async signIn(mobile: string): Promise<{ success: boolean; message: string }> {
     const user = await this.userEngine.getUserByMobile(mobile);
     if (!user) {
-      throw new ApiError("User not found!");
+      throw new ApiError("User not found!", HttpStatus.NOT_FOUND);
     }
 
     if (user.role !== UserRole.ADMIN) {
       throw new ApiError(
-        "Access denied. Only system administrators can sign in here."
+        "Access denied. Only system administrators can sign in here.",
+        HttpStatus.FORBIDDEN
       );
     }
 
@@ -92,7 +95,7 @@ export class AdminUseCase implements IAdminUseCase {
   }> {
     const user = await this.userEngine.getUserByMobile(mobile);
     if (!user || user.role !== UserRole.ADMIN) {
-      throw new ApiError("Unauthorized admin credentials.");
+      throw new ApiError("Unauthorized admin credentials.", HttpStatus.UNAUTHORIZED);
     }
 
     await this.otpService.verifyOtp(mobile, otp);
@@ -118,7 +121,7 @@ export class AdminUseCase implements IAdminUseCase {
   ): Promise<{ success: boolean; message: string }> {
     const user = await this.userEngine.getUserByMobile(mobile);
     if (!user || user.role !== UserRole.ADMIN) {
-      throw new ApiError("Unauthorized admin credentials.");
+      throw new ApiError("Unauthorized admin credentials.", HttpStatus.UNAUTHORIZED);
     }
 
     await this.otpService.sendOtp(mobile);
@@ -422,7 +425,7 @@ export class AdminUseCase implements IAdminUseCase {
   ): Promise<User> {
     const updated = await this.userEngine.updateUser(id, { status });
     if (!updated) {
-      throw new ApiError("User Not Found");
+      throw new ApiError("User Not Found", HttpStatus.NOT_FOUND);
     }
     return updated;
   }
@@ -433,7 +436,7 @@ export class AdminUseCase implements IAdminUseCase {
   ): Promise<Booking> {
     const updated = await this.bookingEngine.updateBooking(id, { bookingStatus: status });
     if (!updated) {
-      throw new ApiError("Booking Not Found!");
+      throw new ApiError("Booking Not Found!", HttpStatus.NOT_FOUND);
     }
     if (updated) {
       // Notify customer

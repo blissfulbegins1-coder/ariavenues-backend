@@ -1,7 +1,7 @@
 import { Auditorium } from "../../domain/entities/Auditorium";
 import { CreateAuditoriumDTO } from "../../domain/dtos/auditorium/CreateAuditoriumDTO";
 import { UpdateAuditoriumDTO } from "../../domain/dtos/auditorium/UpdateAuditoriumDTO";
-import { GetPublicAuditoriumsDTO } from "../../domain/dtos/auditorium/GetPublicAuditoriumsDTO";
+import { GetPublicAuditoriumsDTO, PaginatedPublicAuditoriumsResponse } from "../../domain/dtos/auditorium/GetPublicAuditoriumsDTO";
 import { IAuditoriumEngine } from "../../engines/auditorium/IAuditoriumEngine";
 import { IBookingEngine } from "../../engines/booking/IBookingEngine";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
@@ -9,10 +9,13 @@ import { IAuditoriumUseCase } from "./IAuditoriumUseCase";
 import { CloudinaryService } from "../../infrastructure/services/cloudinary/CloudinaryService";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 import { ApiError } from "../../domain/errors/ApiError";
+import { HttpStatus } from "../../domain/enums/HttpStatus";
 import { QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
 import { IActivityEngine } from "../../engines/activity/IActivityEngine";
 import { AuditoriumFilters, PaginatedAuditoriumsResponse } from "../../domain/dtos/auditorium/AuditoriumDto";
+import { logger } from "../../utils/logger";
+
 
 type AuditoriumUseCaseConstructorParams = {
   auditoriumEngine: IAuditoriumEngine;
@@ -55,7 +58,7 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
       referenceId: auditorium.id,
       referenceType: "AUDITORIUM",
       performedBy: data.user.id,
-    }).catch((err) => console.error("Failed to log auditorium submission activity:", err));
+    }).catch((err) => logger.error("Failed to log auditorium submission activity:", err));
 
     return true;
   }
@@ -92,10 +95,16 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
     });
   }
 
-  async getPublicAuditoriums(filters?: GetPublicAuditoriumsDTO): Promise<Auditorium[]> {
+  async getPublicAuditoriums(filters?: GetPublicAuditoriumsDTO): Promise<PaginatedPublicAuditoriumsResponse> {
     const query: QueryFilter<Auditorium> = {};
 
+    let page = 1;
+    let limit = 9;
+
     if (filters) {
+      if (filters.page) page = filters.page;
+      if (filters.limit) limit = filters.limit;
+
       if (filters.destination) {
         const terms = filters.destination
           .split(/[\s,]+/)
@@ -169,7 +178,17 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
       }
     }
 
-    return await this.auditoriumEngine.getPublicAuditoriums(query);
+    const skip = (page - 1) * limit;
+
+    const { auditoriums, total } = await this.auditoriumEngine.getPublicAuditoriums(query, skip, limit);
+
+    return {
+      auditoriums,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async getAuditoriumById(id: string): Promise<Auditorium | null> {
@@ -183,13 +202,13 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
   ): Promise<Auditorium> {
     const venue = await this.auditoriumEngine.getAuditoriumById(id);
     if (!venue) {
-      throw new ApiError("Auditorium not found");
+      throw new ApiError("Auditorium not found", HttpStatus.NOT_FOUND);
     }
     if (venue.ownerId !== user.id) {
-      throw new ApiError("Unauthorized to update this auditorium");
+      throw new ApiError("Unauthorized to update this auditorium", HttpStatus.FORBIDDEN);
     }
     if (venue.status === "pending") {
-      throw new ApiError("Cannot edit a venue that is pending approval");
+      throw new ApiError("Cannot edit a venue that is pending approval", HttpStatus.BAD_REQUEST);
     }
 
     const { existingImages, newImages, ...rest } = data;

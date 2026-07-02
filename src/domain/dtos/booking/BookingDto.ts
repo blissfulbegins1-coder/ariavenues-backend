@@ -4,8 +4,8 @@ export type BookingFilters = {
   page?: number | null;
   limit?: number | null;
   search?: string;
-  status?: "all" | "confirmed" | "completed" | "cancelled" | "pending_payment" | string;
-  sortBy?: "recent" | "oldest" | string;
+  status?: string;
+  sortBy?: string;
   year?: number | null;
   month?: number | null;
   startDate?: string;
@@ -21,6 +21,18 @@ export type PaginatedBookingsResponse = {
   cancelledCount: number;
 }
 
+export type CustomerBookingsPaginatedResponse = {
+  bookings: Booking[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+export type CustomerBookingsQuery = {
+  page: number;
+  limit: number;
+}
+
 export type BookingDbQuery = {
   query: any;
   sort: any;
@@ -30,7 +42,7 @@ export type BookingDbQuery = {
 
 export type OwnerActivityItem = {
   id: string;
-  type: "booking" | "payment";
+  type: string;
   bookingNumber: string;
   auditoriumName: string;
   customerName: string;

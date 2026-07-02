@@ -234,6 +234,19 @@ export const publicAuditoriumFilterSchema = yup.object().shape({
       return isNaN(num) ? undefined : num;
     })
     .min(0, "Max price cannot be negative"),
+  page: yup
+    .number()
+    .transform((value, originalValue) => (originalValue === "" || originalValue === undefined || originalValue === null) ? 1 : Number(originalValue))
+    .integer("Page must be an integer")
+    .min(1, "Page must be at least 1")
+    .default(1),
+  limit: yup
+    .number()
+    .transform((value, originalValue) => (originalValue === "" || originalValue === undefined || originalValue === null) ? 9 : Number(originalValue))
+    .integer("Limit must be an integer")
+    .min(1, "Limit must be at least 1")
+    .max(100, "Limit cannot exceed 100")
+    .default(9),
 }).test(
   "date-range-valid",
   "Both startDate and endDate must be provided together, and startDate must be before or equal to endDate",

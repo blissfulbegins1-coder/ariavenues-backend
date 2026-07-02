@@ -4,7 +4,7 @@ import { IBookingEngine } from "../../engines/booking/IBookingEngine";
 import { IAuditoriumEngine } from "../../engines/auditorium/IAuditoriumEngine";
 import { IBookingUseCase } from "./IBookingUseCase";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
-import { BookingFilters, PaginatedBookingsResponse, OwnerDashboardStats, OwnerActivityItem, OwnerMonthlyRevenue } from "../../domain/dtos/booking/BookingDto";
+import { BookingFilters, PaginatedBookingsResponse, OwnerDashboardStats, OwnerActivityItem, OwnerMonthlyRevenue, CustomerBookingsPaginatedResponse, CustomerBookingsQuery } from "../../domain/dtos/booking/BookingDto";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { ApiError } from "../../domain/errors/ApiError";
 import UserRoles from "../../domain/enums/UserRole";
@@ -12,6 +12,10 @@ import { parseDDMMYYYY } from "../../utils/dateUtils";
 import mongoose, { QueryFilter } from "mongoose";
 import { IProducer } from "../../infrastructure/amqp/producer/IProducer";
 import { BrokerConfig } from "../../infrastructure/config/brocker/brokerConfig";
+import { HttpStatus } from "../../domain/enums/HttpStatus";
+import { logger } from "../../utils/logger";
+
+
 
 type BookingUseCaseConstructorParams = {
   bookingEngine: IBookingEngine;
@@ -38,7 +42,7 @@ export class BookingUseCase implements IBookingUseCase {
     try {
       await this.bookingEngine.autoCompletePastBookings();
     } catch (error) {
-      console.error("Failed to autocomplete past bookings:", error);
+      logger.error("Failed to autocomplete past bookings:", error);
     }
   }
 
@@ -50,24 +54,25 @@ export class BookingUseCase implements IBookingUseCase {
       data.auditoriumId,
     );
     if (!auditorium) {
-      throw new ApiError("Auditorium not found");
+      throw new ApiError("Auditorium not found", HttpStatus.NOT_FOUND);
     }
 
     if (auditorium.ownerId === user.id) {
-      throw new ApiError("You cannot book your own auditorium");
+      throw new ApiError("You cannot book your own auditorium", HttpStatus.BAD_REQUEST);
     }
 
     if (auditorium.adminAdvance === 0 || auditorium.auditoriumAdvance === 0) {
-      throw new ApiError("Advance is not available to book this auditorium");
+      throw new ApiError("Advance is not available to book this auditorium", HttpStatus.BAD_REQUEST);
     }
 
     if (!auditorium.approved) {
-      throw new ApiError("Auditorium is not verified to book");
+      throw new ApiError("Auditorium is not verified to book", HttpStatus.BAD_REQUEST);
     }
 
     if (data.guestCount > auditorium.capacity) {
       throw new ApiError(
         `Guest count exceeds auditorium maximum capacity of ${auditorium.capacity}`,
+        HttpStatus.BAD_REQUEST
       );
     }
 
@@ -78,15 +83,15 @@ export class BookingUseCase implements IBookingUseCase {
     today.setHours(0, 0, 0, 0);
 
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      throw new ApiError("Invalid dates provided");
+      throw new ApiError("Invalid dates provided", HttpStatus.BAD_REQUEST);
     }
 
     if (start.getTime() < today.getTime()) {
-      throw new ApiError("Cannot book a date in the past");
+      throw new ApiError("Cannot book a date in the past", HttpStatus.BAD_REQUEST);
     }
 
     if (start.getTime() > end.getTime()) {
-      throw new ApiError("Start date cannot be after end date");
+      throw new ApiError("Start date cannot be after end date", HttpStatus.BAD_REQUEST);
     }
 
     // Check overlaps
@@ -121,6 +126,7 @@ export class BookingUseCase implements IBookingUseCase {
     if (!isAvailable) {
       throw new ApiError(
         "Auditorium is already reserved or booked for these dates",
+        HttpStatus.CONFLICT
       );
     }
 
@@ -168,9 +174,12 @@ export class BookingUseCase implements IBookingUseCase {
     return newBooking;
   }
 
-  async getCustomerBookings(user: UserTokenDto): Promise<Booking[]> {
+  async getCustomerBookings(
+    user: UserTokenDto,
+    query: CustomerBookingsQuery,
+  ): Promise<CustomerBookingsPaginatedResponse> {
     await this.autoCompletePastBookings();
-    return await this.bookingEngine.listBookingsByCustomer(user.id);
+    return await this.bookingEngine.listBookingsByCustomerPaginated(user.id, query);
   }
 
   async getOwnerBookings(user: UserTokenDto, filters: BookingFilters): Promise<PaginatedBookingsResponse> {
@@ -246,14 +255,14 @@ export class BookingUseCase implements IBookingUseCase {
 
     const booking = await this.bookingEngine.getBookingById(id);
     if (!booking) {
-      throw new ApiError("Booking details not found");
+      throw new ApiError("Booking details not found", HttpStatus.NOT_FOUND);
     }
 
     if (user.role === UserRoles.CUSTOMER && booking.userId !== user.id) {
-      throw new ApiError("Unauthorized access to this booking details");
+      throw new ApiError("Unauthorized access to this booking details", HttpStatus.FORBIDDEN);
     }
     if (user.role === UserRoles.OWNER && booking.ownerId !== user.id) {
-      throw new ApiError("Unauthorized access to this booking details");
+      throw new ApiError("Unauthorized access to this booking details", HttpStatus.FORBIDDEN);
     }
 
     return booking;
@@ -262,18 +271,20 @@ export class BookingUseCase implements IBookingUseCase {
   async cancelPendingBooking(id: string, user: UserTokenDto): Promise<void> {
     const booking = await this.bookingEngine.getBookingById(id);
     if (!booking) {
-      throw new ApiError("Booking not found");
+      throw new ApiError("Booking not found", HttpStatus.NOT_FOUND);
     }
 
     if (booking.userId !== user.id) {
       throw new ApiError(
         "Unauthorized: you cannot cancel this booking",
+        HttpStatus.FORBIDDEN
       );
     }
 
     if (booking.bookingStatus !== BookingStatus.PENDING_PAYMENT) {
       throw new ApiError(
         "Only PENDING_PAYMENT bookings can be cancelled this way",
+        HttpStatus.BAD_REQUEST
       );
     }
 

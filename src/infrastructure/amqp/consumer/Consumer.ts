@@ -3,6 +3,8 @@ import { IBrokerConnection } from "../../config/brocker/IBrokerConnection";
 import { BrokerConfig } from "../../config/brocker/brokerConfig";
 import { INotificationEngine } from "../../../engines/notification/INotificationEngine";
 import { ISocketService } from "../../services/socket/ISocketService";
+import { logger } from "../../../utils/logger";
+
 
 type ConsumerConstructorParams = {
   brokerConnection: IBrokerConnection;
@@ -23,7 +25,7 @@ export class Consumer implements IConsumer {
 
   async start(): Promise<void> {
     try {
-      console.log("Starting RabbitMQ consumer...");
+      logger.info("Starting RabbitMQ consumer...");
       const channel = this.brokerConnection.getChannel();
 
       await channel.consume(
@@ -33,7 +35,7 @@ export class Consumer implements IConsumer {
 
           try {
             const rawBody = msg.content.toString();
-            console.log("Received notification message from queue:", rawBody);
+            logger.info(`Received notification message from queue: ${rawBody}`);
 
             const payload = JSON.parse(rawBody);
 
@@ -45,18 +47,18 @@ export class Consumer implements IConsumer {
 
             // Acknowledge message delivery
             channel.ack(msg);
-            console.log("Notification message processed, saved, and pushed via WS!");
+            logger.info("Notification message processed, saved, and pushed via WS!");
           } catch (error) {
-            console.error("Error processing consumed message:", error);
+            logger.error("Error processing consumed message:", error);
             channel.reject(msg, false); // Discard/don't requeue to prevent infinite loops
           }
         },
         { noAck: false },
       );
 
-      console.log("RabbitMQ consumer is listening for messages.");
+      logger.info("RabbitMQ consumer is listening for messages.");
     } catch (error) {
-      console.error("Failed to start RabbitMQ consumer, retrying in 5s...", error);
+      logger.error("Failed to start RabbitMQ consumer, retrying in 5s...", error);
       setTimeout(() => this.start(), 5000);
     }
   }

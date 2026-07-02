@@ -7,7 +7,11 @@ import { AuditoriumDbQuery, PaginatedAuditoriumsResponse } from "../../domain/dt
 export type IAuditoriumRepository = {
   create(data: CreateAuditoriumDTO): Promise<Auditorium>;
   listByOwner(user: UserTokenDto): Promise<Auditorium[]>;
-  listPublic(filter?: QueryFilter<Auditorium>): Promise<Auditorium[]>;
+  listPublic(
+    filter?: QueryFilter<Auditorium>,
+    skip?: number | null,
+    limit?: number | null,
+  ): Promise<{ auditoriums: Auditorium[]; total: number }>;
   findById(id: string): Promise<Auditorium | null>;
   update(id: string, data: Partial<Auditorium>): Promise<Auditorium>;
   listAll(filter?: QueryFilter<Auditorium>): Promise<Auditorium[]>;

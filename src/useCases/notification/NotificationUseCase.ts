@@ -4,6 +4,8 @@ import { INotificationEngine } from "../../engines/notification/INotificationEng
 import { INotificationUseCase } from "./INotificationUseCase";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 import { ApiError } from "../../domain/errors/ApiError";
+import { HttpStatus } from "../../domain/enums/HttpStatus";
+
 
 type NotificationUseCaseConstructorParams = {
   notificationEngine: INotificationEngine;
@@ -27,11 +29,11 @@ export class NotificationUseCase implements INotificationUseCase {
   async markAsRead(id: string, user: UserTokenDto): Promise<Notification> {
     const notification = await this.notificationEngine.getNotificationById(id);
     if (!notification) {
-      throw new ApiError("Notification not found");
+      throw new ApiError("Notification not found", HttpStatus.NOT_FOUND);
     }
 
     if (notification.receiverId.toString() !== user.id.toString()) {
-      throw new ApiError("Unauthorized to read this notification");
+      throw new ApiError("Unauthorized to read this notification", HttpStatus.FORBIDDEN);
     }
 
     const updated = await this.notificationEngine.updateNotification(id, {
@@ -40,7 +42,7 @@ export class NotificationUseCase implements INotificationUseCase {
     });
 
     if (!updated) {
-      throw new ApiError("Failed to update notification");
+      throw new ApiError("Failed to update notification", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     return updated;

@@ -1,6 +1,7 @@
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import { IRazorpayService } from "./IRazorpayService";
+import { RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET } from "@/config/env";
 
 export type RazorpayOrderResponse = {
   id: string;
@@ -21,8 +22,8 @@ export class RazorpayService implements IRazorpayService {
   private keySecret: string;
 
   constructor() {
-    this.keyId = process.env.RAZORPAY_KEY_ID!;
-    this.keySecret = process.env.RAZORPAY_KEY_SECRET!;
+    this.keyId = RAZORPAY_KEY_ID;
+    this.keySecret = RAZORPAY_KEY_SECRET;
 
     this.razorpayClient = new Razorpay({
       key_id: this.keyId,

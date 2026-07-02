@@ -15,6 +15,10 @@ import { parseDDMMYYYY } from "../../utils/dateUtils";
 import { IProducer } from "../../infrastructure/amqp/producer/IProducer";
 import UserRoles from "../../domain/enums/UserRole";
 import { BrokerConfig } from "../../infrastructure/config/brocker/brokerConfig";
+import { HttpStatus } from "../../domain/enums/HttpStatus";
+import { logger } from "../../utils/logger";
+
+
 
 type PaymentUseCaseConstructorParams = {
   paymentEngine: IPaymentEngine;
@@ -51,16 +55,17 @@ export class PaymentUseCase implements IPaymentUseCase {
   ): Promise<RazorpayOrderResult> {
     const booking = await this.bookingEngine.getBookingById(bookingId);
     if (!booking) {
-      throw new ApiError("Booking details not found");
+      throw new ApiError("Booking details not found", HttpStatus.NOT_FOUND);
     }
 
     if (booking.userId !== user.id) {
-      throw new ApiError("Access denied. Unauthorized reservation owner");
+      throw new ApiError("Access denied. Unauthorized reservation owner", HttpStatus.FORBIDDEN);
     }
 
     if (booking.bookingStatus === BookingStatus.CANCELLED) {
       throw new ApiError(
         "Cannot initiate payment for a cancelled booking",
+        HttpStatus.BAD_REQUEST
       );
     }
 
@@ -68,7 +73,7 @@ export class PaymentUseCase implements IPaymentUseCase {
       booking.bookingStatus === BookingStatus.CONFIRMED ||
       booking.bookingStatus === BookingStatus.COMPLETED
     ) {
-      throw new ApiError("This booking is already paid and confirmed");
+      throw new ApiError("This booking is already paid and confirmed", HttpStatus.BAD_REQUEST);
     }
 
     const availabilityFilter: QueryFilter<Booking> = {
@@ -103,6 +108,7 @@ export class PaymentUseCase implements IPaymentUseCase {
     if (!isAvailable) {
       throw new ApiError(
         "The selected dates are no longer available for booking",
+        HttpStatus.CONFLICT
       );
     }
 
@@ -113,6 +119,7 @@ export class PaymentUseCase implements IPaymentUseCase {
     if (existingPayment && existingPayment.paymentStatus === PaymentStatus.SUCCESS) {
       throw new ApiError(
         "Payment already completed successfully for this booking",
+        HttpStatus.BAD_REQUEST
       );
     }
 
@@ -158,29 +165,32 @@ export class PaymentUseCase implements IPaymentUseCase {
       const paymentDoc = await this.paymentEngine.getPaymentByOrderId(data.orderId, session);
 
       if (!paymentDoc) {
-        throw new ApiError("Payment record not found for this order ID");
+        throw new ApiError("Payment record not found for this order ID", HttpStatus.NOT_FOUND);
       }
 
       if (paymentDoc.paymentStatus === PaymentStatus.SUCCESS) {
         throw new ApiError(
           "Payment signature verification has already succeeded",
+          HttpStatus.BAD_REQUEST
         );
       }
 
       const bookingDoc = await this.bookingEngine.getBookingById(paymentDoc.bookingId, session);
       if (!bookingDoc) {
-        throw new ApiError("Associated booking details not found");
+        throw new ApiError("Associated booking details not found", HttpStatus.NOT_FOUND);
       }
 
       if (bookingDoc.userId.toString() !== user.id) {
         throw new ApiError(
           "Access denied. Unauthorized transaction owner",
+          HttpStatus.FORBIDDEN
         );
       }
 
       if (bookingDoc.bookingStatus === BookingStatus.CANCELLED) {
         throw new ApiError(
           "Cannot complete payment for a cancelled booking",
+          HttpStatus.BAD_REQUEST
         );
       }
 
@@ -194,7 +204,7 @@ export class PaymentUseCase implements IPaymentUseCase {
         await this.paymentEngine.updatePayment(paymentDoc.id, {
           paymentStatus: PaymentStatus.FAILED,
         }, session);
-        throw new ApiError("Razorpay signature validation failed");
+        throw new ApiError("Razorpay signature validation failed", HttpStatus.BAD_REQUEST);
       }
 
       const updatedPayment = await this.paymentEngine.updatePayment(
@@ -210,7 +220,7 @@ export class PaymentUseCase implements IPaymentUseCase {
       );
 
       if (!updatedPayment) {
-        throw new ApiError("Failed to update payment record");
+        throw new ApiError("Failed to update payment record", HttpStatus.INTERNAL_SERVER_ERROR);
       }
 
       await this.bookingEngine.updateBooking(
@@ -229,7 +239,7 @@ export class PaymentUseCase implements IPaymentUseCase {
         referenceId: bookingDoc.id,
         referenceType: "BOOKING",
         performedBy: user.id,
-      }, session).catch((err) => console.error("Failed to log booking confirmed activity:", err));
+      }, session).catch((err) => logger.error("Failed to log booking confirmed activity:", err));
 
       await this.activityEngine.createActivity({
         type: "PAYMENT_RECEIVED",
@@ -238,7 +248,7 @@ export class PaymentUseCase implements IPaymentUseCase {
         referenceId: updatedPayment.id,
         referenceType: "PAYMENT",
         performedBy: user.id,
-      }, session).catch((err) => console.error("Failed to log payment received activity:", err));
+      }, session).catch((err) => logger.error("Failed to log payment received activity:", err));
 
       await session.commitTransaction();
       session.endSession();
@@ -256,7 +266,7 @@ export class PaymentUseCase implements IPaymentUseCase {
         isRead: false,
         readAt: null,
         delivered: false,
-      }).catch(err => console.error("Failed to publish customer booking notification:", err));
+      }).catch(err => logger.error("Failed to publish customer booking notification:", err));
 
       this.producer.publish(BrokerConfig.routingKeys.PAYMENT_NOTIFICATION, {
         receiverId: bookingDoc.ownerId,
@@ -270,7 +280,7 @@ export class PaymentUseCase implements IPaymentUseCase {
         isRead: false,
         readAt: null,
         delivered: false,
-      }).catch(err => console.error("Failed to publish owner booking notification:", err));
+      }).catch(err => logger.error("Failed to publish owner booking notification:", err));
 
       return updatedPayment;
     } catch (error) {
