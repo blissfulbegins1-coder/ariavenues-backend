@@ -4,7 +4,7 @@ import { BrokerConfig } from "../../config/brocker/brokerConfig";
 import { INotificationEngine } from "../../../engines/notification/INotificationEngine";
 import { ISocketService } from "../../services/socket/ISocketService";
 import { logger } from "../../../utils/logger";
-
+import { NEW_NOTIFICATION_EVENT } from "../../../domain/constants/constants";
 
 type ConsumerConstructorParams = {
   brokerConnection: IBrokerConnection;
@@ -43,7 +43,7 @@ export class Consumer implements IConsumer {
             const saved = await this.notificationEngine.createNotification(payload);
 
             // Emit via WebSocket in real-time
-            this.socketService.sendNotificationToUser(saved.receiverId.toString(), "new_notification", saved);
+            this.socketService.sendNotificationToUser(saved.receiverId.toString(), NEW_NOTIFICATION_EVENT, saved);
 
             // Acknowledge message delivery
             channel.ack(msg);

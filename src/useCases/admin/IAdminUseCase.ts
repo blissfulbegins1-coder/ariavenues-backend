@@ -17,7 +17,7 @@ export type DashboardStats = {
   monthlyCommission: { name: string; commission: number }[];
   recentActivities: {
     id: string;
-    type: "booking" | "payment" | "registration" | "auditorium" | "system";
+    type: string;
     title: string;
     message: string;
     time: string;
@@ -59,7 +59,7 @@ export type IAdminUseCase = {
     limit: number
   ): Promise<{
     id: string;
-    type: "booking" | "payment" | "registration" | "auditorium" | "system";
+    type: string;
     title: string;
     message: string;
     time: string;

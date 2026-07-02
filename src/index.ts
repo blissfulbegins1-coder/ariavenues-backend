@@ -2,7 +2,7 @@ import "dotenv/config";
 import { setupContainer } from "./infrastructure/ioc/registry";
 import { Server } from "./infrastructure/webServer/server";
 import { DatabaseService } from "./infrastructure/services/mongodb/DatabaseService";
-import { PORT } from "./config/env";
+import { PORT } from "@/config/env";
 
 const main = async (): Promise<void> => {
   try {

@@ -16,7 +16,6 @@ import { IActivityEngine } from "../../engines/activity/IActivityEngine";
 import { AuditoriumFilters, PaginatedAuditoriumsResponse } from "../../domain/dtos/auditorium/AuditoriumDto";
 import { logger } from "../../utils/logger";
 
-
 type AuditoriumUseCaseConstructorParams = {
   auditoriumEngine: IAuditoriumEngine;
   bookingEngine: IBookingEngine;

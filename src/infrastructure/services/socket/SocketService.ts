@@ -1,8 +1,11 @@
-import { Server as SocketIOServer } from "socket.io";
+import { Server as SocketIOServer, Socket } from "socket.io";
 import { ISocketService } from "./ISocketService";
 import { IJwtManagementEngine } from "../../../engines/jwt/IJwtManagementEngine";
 import { logger } from "../../../utils/logger";
 
+interface AuthenticatedSocket extends Socket {
+  userId?: string;
+}
 
 type SocketServiceConstructorParams = {
   jwtManagementEngine: IJwtManagementEngine;
@@ -19,9 +22,7 @@ export class SocketService implements ISocketService {
 
   initialize(io: SocketIOServer): void {
     this.io = io;
-
-    // Authentication middleware
-    io.use((socket: any, next) => {
+    io.use((socket: AuthenticatedSocket, next) => {
       try {
         const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization;
         if (!token) {
@@ -29,7 +30,7 @@ export class SocketService implements ISocketService {
         }
 
         const cleanToken = token.startsWith("Bearer ") ? token.slice(7) : token;
-        const decoded = this.jwtManagementEngine.verifyToken(cleanToken) as any;
+        const decoded = this.jwtManagementEngine.verifyToken(cleanToken) as { id: string } | null;
         if (!decoded || !decoded.id) {
           return next(new Error("Invalid authentication token."));
         }
@@ -41,8 +42,8 @@ export class SocketService implements ISocketService {
       }
     });
 
-    io.on("connection", (socket: any) => {
-      const userId = socket.userId;
+    io.on("connection", (socket: AuthenticatedSocket) => {
+      const userId = socket.userId || "unknown";
       logger.info(`User connected via socket: ${userId} (Socket ID: ${socket.id})`);
 
       // Add socket ID to mapping
@@ -63,7 +64,7 @@ export class SocketService implements ISocketService {
     });
   }
 
-  sendNotificationToUser(userId: string, event: string, data: any): void {
+  sendNotificationToUser(userId: string, event: string, data: unknown): void {
     if (!this.io) {
       logger.warn("Socket.io server is not initialized yet.");
       return;

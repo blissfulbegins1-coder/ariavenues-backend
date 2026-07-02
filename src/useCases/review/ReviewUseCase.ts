@@ -8,7 +8,6 @@ import { ApiError } from "../../domain/errors/ApiError";
 import { IReviewUseCase } from "./IReviewUseCase";
 import { HttpStatus } from "../../domain/enums/HttpStatus";
 
-
 type ReviewUseCaseConstructorParams = {
   reviewEngine: IReviewEngine;
   auditoriumEngine: IAuditoriumEngine;

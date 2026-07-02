@@ -1,17 +1,15 @@
 import axios, { AxiosInstance } from "axios";
 import {
-  auth_Key,
-  baseUrl,
-  templateId,
-  otpTimeout,
-  Environment,
-  otpMockValue,
-} from "../../../domain/constants/constants";
+  OTP_AUTH_KEY,
+  OTP_BASE_URL,
+  OTP_TEMPLATE_ID,
+  OTP_TIMEOUT,
+  NODE_ENV,
+  OTP_MOCK_VALUE,
+} from "@/config/env";
 import { ApiError } from "../../../domain/errors/ApiError";
 import { HttpStatus } from "../../../domain/enums/HttpStatus";
 import { logger } from "../../../utils/logger";
-
-
 
 type Msg91Response = {
   type: "success" | "error";
@@ -23,17 +21,17 @@ export class OtpService {
 
   constructor() {
     this.client = axios.create({
-      baseURL: baseUrl,
+      baseURL: OTP_BASE_URL,
       timeout: 10000,
       headers: {
-        authkey: auth_Key,
+        authkey: OTP_AUTH_KEY,
         "Content-Type": "application/json",
       },
     });
   }
 
   async sendOtp(mobile: string): Promise<boolean> {
-    if (Environment !== "production") {
+    if (NODE_ENV !== "production") {
       logger.info(`[MOCK OTP] Sent OTP to ${mobile}`);
       return true;
     }
@@ -44,9 +42,9 @@ export class OtpService {
         {},
         {
           params: {
-            template_id: templateId,
+            template_id: OTP_TEMPLATE_ID,
             mobile,
-            otp_expiry: otpTimeout,
+            otp_expiry: OTP_TIMEOUT,
           },
         }
       );
@@ -60,8 +58,8 @@ export class OtpService {
   }
 
   async verifyOtp(mobile: string, otp: string): Promise<boolean> {
-    if (Environment !== "production") {
-      if (otp === otpMockValue) {
+    if (NODE_ENV !== "production") {
+      if (otp === OTP_MOCK_VALUE) {
         return true;
       }
 

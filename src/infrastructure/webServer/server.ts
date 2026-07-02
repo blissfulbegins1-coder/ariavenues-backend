@@ -11,6 +11,8 @@ import { corsOrigins } from "../../domain/constants/axiosHeader";
 import { uploadMiddleware } from "../middleware/Upload/UploadMiddleware";
 import { logger } from "../../utils/logger";
 import { requestLogger } from "../middleware/RequestLogger/RequestLoggerMiddleware";
+import { transactionSecurityMiddleware } from "../middleware/Security/TransactionSecurityMiddleware";
+import { rateLimitMiddleware } from "../middleware/RateLimit/RateLimitMiddleware";
 
 export class Server {
   private app: Express;
@@ -29,6 +31,7 @@ export class Server {
     this.app.use(express.json({ limit: "100mb" }));
     this.app.use(express.urlencoded({ limit: "100mb", extended: false }));
     this.app.use(requestLogger);
+    this.app.use(rateLimitMiddleware);
     this.app.use(uploadMiddleware);
     this.app.use((req, res, next) => {
       req.container = this.container;
@@ -40,8 +43,10 @@ export class Server {
         origin: corsOrigins,
         credentials: true,
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+        allowedHeaders: ["Content-Type", "Authorization", "x-transaction-id"],
       }),
     );
+    this.app.use(transactionSecurityMiddleware);
 
     this.app.get("/health", async (req, res) => {
       const isHealthy = await this.databaseService.healthCheck();

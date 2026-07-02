@@ -8,14 +8,12 @@ import { BookingFilters, PaginatedBookingsResponse, OwnerDashboardStats, OwnerAc
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { ApiError } from "../../domain/errors/ApiError";
 import UserRoles from "../../domain/enums/UserRole";
-import { parseDDMMYYYY } from "../../utils/dateUtils";
+import { parseDDMMYYYY } from "../../domain/functions/dateFunctions";
 import mongoose, { QueryFilter } from "mongoose";
 import { IProducer } from "../../infrastructure/amqp/producer/IProducer";
 import { BrokerConfig } from "../../infrastructure/config/brocker/brokerConfig";
 import { HttpStatus } from "../../domain/enums/HttpStatus";
 import { logger } from "../../utils/logger";
-
-
 
 type BookingUseCaseConstructorParams = {
   bookingEngine: IBookingEngine;

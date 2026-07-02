@@ -11,14 +11,12 @@ import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 import { IActivityEngine } from "../../engines/activity/IActivityEngine";
 import { PaymentStatus } from "../../domain/enums/PaymentStatus";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
-import { parseDDMMYYYY } from "../../utils/dateUtils";
+import { parseDDMMYYYY } from "../../domain/functions/dateFunctions";
 import { IProducer } from "../../infrastructure/amqp/producer/IProducer";
 import UserRoles from "../../domain/enums/UserRole";
 import { BrokerConfig } from "../../infrastructure/config/brocker/brokerConfig";
 import { HttpStatus } from "../../domain/enums/HttpStatus";
 import { logger } from "../../utils/logger";
-
-
 
 type PaymentUseCaseConstructorParams = {
   paymentEngine: IPaymentEngine;

@@ -1,6 +1,6 @@
 import * as yup from "yup";
 import { AuditoriumStatus } from "../../../domain/enums/AuditoriumStatus";
-import { parseDDMMYYYY } from "../../../utils/dateUtils";
+import { parseDDMMYYYY } from "../../../domain/functions/dateFunctions";
 
 export const createAuditoriumSchema = yup.object().shape({
   name: yup

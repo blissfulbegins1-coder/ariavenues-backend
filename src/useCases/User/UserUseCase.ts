@@ -13,8 +13,6 @@ import UserRoles from "../../domain/enums/UserRole";
 import { HttpStatus } from "../../domain/enums/HttpStatus";
 import { logger } from "../../utils/logger";
 
-
-
 type UserUseCaseConstructorParams = {
   userEngine: IUserEngine;
   otpService: OtpService;

@@ -14,27 +14,21 @@ export class UserEngine implements IUserEngine {
     this.userRepository = userRepository;
   }
 
-  // create user 
   async createUser(data: UserDTO): Promise<boolean> {
     return await this.userRepository.create(data);
   }
 
-  // find user by mobile 
   async getUserByMobile(mobile: string): Promise<User | null> {
     return await this.userRepository.findByMobile(mobile);
   }
-
-  // update user 
   async updateUser(id: string, data: Partial<User>): Promise<User | null> {
     return await this.userRepository.update(id, data);
   }
 
-  // get all users
   async getAllUsers(filter?: QueryFilter<User>): Promise<User[]> {
     return await this.userRepository.findAll(filter);
   }
 
-  // get users with filters and pagination
   async getUsers(dbQuery: UserDbQuery): Promise<PaginatedUsersResponse> {
     return await this.userRepository.getUsers(dbQuery);
   }

@@ -3,7 +3,6 @@ import { IBrokerConnection } from "../../config/brocker/IBrokerConnection";
 import { BrokerConfig } from "../../config/brocker/brokerConfig";
 import { logger } from "../../../utils/logger";
 
-
 type ProducerConstructorParams = {
   brokerConnection: IBrokerConnection;
 };

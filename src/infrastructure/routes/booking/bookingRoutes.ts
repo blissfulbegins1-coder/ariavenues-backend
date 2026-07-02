@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import { AwilixContainer } from "awilix";
 import { IContainer } from "../../ioc/registry";
 import { requireRole } from "../../middleware/Auth/AuthMiddleware";
+import UserRoles from "../../../domain/enums/UserRole";
 
 export const setupBookingRoutes = (
   container: AwilixContainer<IContainer>,
@@ -11,42 +12,42 @@ export const setupBookingRoutes = (
 
   router.post(
     "/",
-    requireRole(["customer"]),
+    requireRole([UserRoles.CUSTOMER]),
     async (req: Request, res: Response, next: NextFunction) =>
       bookingController.create(req, res, next),
   );
 
   router.get(
     "/my",
-    requireRole(["customer"]),
+    requireRole([UserRoles.CUSTOMER]),
     async (req: Request, res: Response, next: NextFunction) =>
       bookingController.getCustomerBookings(req, res, next),
   );
 
   router.get(
     "/owner/dashboard",
-    requireRole(["owner"]),
+    requireRole([UserRoles.OWNER]),
     async (req: Request, res: Response, next: NextFunction) =>
       bookingController.getOwnerDashboardStats(req, res, next),
   );
 
   router.get(
     "/owner",
-    requireRole(["owner"]),
+    requireRole([UserRoles.OWNER]),
     async (req: Request, res: Response, next: NextFunction) =>
       bookingController.getOwnerBookings(req, res, next),
   );
 
   router.get(
     "/:id",
-    requireRole(["customer"]),
+    requireRole([UserRoles.CUSTOMER]),
     async (req: Request, res: Response, next: NextFunction) =>
       bookingController.getBookingById(req, res, next),
   );
 
   router.delete(
     "/:id",
-    requireRole(["customer"]),
+    requireRole([UserRoles.CUSTOMER]),
     async (req: Request, res: Response, next: NextFunction) =>
       bookingController.cancelBooking(req, res, next),
   );

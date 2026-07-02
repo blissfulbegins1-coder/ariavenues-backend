@@ -1,5 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { ILocationUseCase } from "../useCases/location/ILocationUseCase";
+import {
+  getDistrictsQuerySchema,
+  getCitiesQuerySchema,
+} from "../infrastructure/validation/location/LocationValidationSchemas";
 
 type LocationControllerConstructorParams = {
   locationUseCase: ILocationUseCase;
@@ -50,14 +54,10 @@ export class LocationController {
     next: NextFunction,
   ): Promise<Response | void> {
     try {
-      const { state } = req.query;
-      if (!state || typeof state !== "string") {
-        return res.status(400).json({
-          success: false,
-          message: "State query parameter is required",
-        });
-      }
-      const result = await this.locationUseCase.getDistricts(state);
+      const validatedQuery = await getDistrictsQuerySchema.validate(req.query, {
+        abortEarly: false,
+      });
+      const result = await this.locationUseCase.getDistricts(validatedQuery.state);
       return res.status(200).json({
         success: true,
         data: result,
@@ -73,20 +73,13 @@ export class LocationController {
     next: NextFunction,
   ): Promise<Response | void> {
     try {
-      const { state, district } = req.query;
-      if (!state || typeof state !== "string") {
-        return res.status(400).json({
-          success: false,
-          message: "State query parameter is required",
-        });
-      }
-      if (!district || typeof district !== "string") {
-        return res.status(400).json({
-          success: false,
-          message: "District query parameter is required",
-        });
-      }
-      const result = await this.locationUseCase.getCities(state, district);
+      const validatedQuery = await getCitiesQuerySchema.validate(req.query, {
+        abortEarly: false,
+      });
+      const result = await this.locationUseCase.getCities(
+        validatedQuery.state,
+        validatedQuery.district,
+      );
       return res.status(200).json({
         success: true,
         data: result,

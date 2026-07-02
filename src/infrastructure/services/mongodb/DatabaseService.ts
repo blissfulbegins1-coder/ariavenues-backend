@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 import { DATABASE_URI, DATABASE_NAME } from "@/config/env";
 import { logger } from "../../../utils/logger";
 
-
 export class DatabaseService {
   private databaseUri: string;
   private databaseName: string;

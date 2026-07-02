@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import { IReviewUseCase } from "../useCases/review/IReviewUseCase";
 import { createReviewSchema } from "../domain/dtos/review/ReviewDto";
 import UserTokenDto from "../domain/dtos/user/UserTokenDto";
+import { getReviewsQuerySchema } from "../infrastructure/validation/review/ReviewValidationSchemas";
+import { auditoriumIdParamSchema } from "../infrastructure/validation/auditorium/AuditoriumSchemaValidation";
 
 type ReviewControllerConstructorParams = {
   reviewUseCase: IReviewUseCase;
@@ -33,11 +35,18 @@ export class ReviewController {
 
   async getReviewsByAuditorium(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { auditoriumId } = req.params;
-      const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
-      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
+      const { id: auditoriumId } = await auditoriumIdParamSchema.validate(req.params, {
+        abortEarly: false,
+      });
+      const validatedQuery = await getReviewsQuerySchema.validate(req.query, {
+        abortEarly: false,
+      });
 
-      const result = await this.reviewUseCase.listAuditoriumReviews(auditoriumId as string, page, limit);
+      const result = await this.reviewUseCase.listAuditoriumReviews(
+        auditoriumId,
+        validatedQuery.page ?? 1,
+        validatedQuery.limit ?? 10,
+      );
 
       res.status(200).json({
         success: true,

@@ -6,7 +6,6 @@ import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 import { ApiError } from "../../domain/errors/ApiError";
 import { HttpStatus } from "../../domain/enums/HttpStatus";
 
-
 type NotificationUseCaseConstructorParams = {
   notificationEngine: INotificationEngine;
 };

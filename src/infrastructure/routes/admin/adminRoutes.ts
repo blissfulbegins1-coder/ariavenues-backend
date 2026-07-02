@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import { AwilixContainer } from "awilix";
 import { IContainer } from "../../ioc/registry";
 import { requireRole } from "../../middleware/Auth/AuthMiddleware";
+import UserRoles from "../../../domain/enums/UserRole";
 
 export const setupAdminRoutes = (
   container: AwilixContainer<IContainer>
@@ -31,63 +32,63 @@ export const setupAdminRoutes = (
   // Protected admin management routes
   router.get(
     "/dashboard-stats",
-    requireRole(["admin"]),
+    requireRole([UserRoles.ADMIN]),
     async (req: Request, res: Response, next: NextFunction) =>
       adminController.getDashboardStats(req, res, next)
   );
 
   router.get(
     "/users",
-    requireRole(["admin"]),
+    requireRole([UserRoles.ADMIN]),
     async (req: Request, res: Response, next: NextFunction) =>
       adminController.getUsers(req, res, next)
   );
 
   router.get(
     "/owners",
-    requireRole(["admin"]),
+    requireRole([UserRoles.ADMIN]),
     async (req: Request, res: Response, next: NextFunction) =>
       adminController.getOwners(req, res, next)
   );
 
   router.get(
     "/auditoriums",
-    requireRole(["admin"]),
+    requireRole([UserRoles.ADMIN]),
     async (req: Request, res: Response, next: NextFunction) =>
       adminController.getAuditoriums(req, res, next)
   );
 
   router.get(
     "/bookings",
-    requireRole(["admin"]),
+    requireRole([UserRoles.ADMIN]),
     async (req: Request, res: Response, next: NextFunction) =>
       adminController.getBookings(req, res, next)
   );
 
   router.patch(
     "/auditoriums/:id/status",
-    requireRole(["admin"]),
+    requireRole([UserRoles.ADMIN]),
     async (req: Request, res: Response, next: NextFunction) =>
       adminController.updateAuditoriumStatus(req, res, next)
   );
 
   router.patch(
     "/users/:id/status",
-    requireRole(["admin"]),
+    requireRole([UserRoles.ADMIN]),
     async (req: Request, res: Response, next: NextFunction) =>
       adminController.updateUserStatus(req, res, next)
   );
 
   router.patch(
     "/bookings/:id/status",
-    requireRole(["admin"]),
+    requireRole([UserRoles.ADMIN]),
     async (req: Request, res: Response, next: NextFunction) =>
       adminController.updateBookingStatus(req, res, next)
   );
 
   router.get(
     "/activities",
-    requireRole(["admin"]),
+    requireRole([UserRoles.ADMIN]),
     async (req: Request, res: Response, next: NextFunction) =>
       adminController.getActivities(req, res, next)
   );

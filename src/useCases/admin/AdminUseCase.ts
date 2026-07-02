@@ -14,18 +14,16 @@ import UserRole from "../../domain/enums/UserRole";
 import { ApiError } from "../../domain/errors/ApiError";
 import { REDIRECT_PATHS } from "../../domain/constants/constants";
 import { HttpStatus } from "../../domain/enums/HttpStatus";
-
 import { QueryFilter, Types } from "mongoose";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { AuditoriumStatus } from "../../domain/enums/AuditoriumStatus";
 import UserStatus from "../../domain/enums/UserStatus";
-import { parseDDMMYYYY } from "../../utils/dateUtils";
+import { parseDDMMYYYY } from "../../domain/functions/dateFunctions";
 import { IActivityEngine } from "../../engines/activity/IActivityEngine";
 import { getRelativeTime } from "../../domain/functions/getRaltiveTime";
 import { IProducer } from "../../infrastructure/amqp/producer/IProducer";
 import UserRoles from "../../domain/enums/UserRole";
 import { BrokerConfig } from "../../infrastructure/config/brocker/brokerConfig";
-
 
 type AdminUseCaseConstructorParams = {
   userEngine: IUserEngine;

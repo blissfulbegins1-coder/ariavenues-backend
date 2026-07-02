@@ -3,7 +3,7 @@ import { Booking } from "../../domain/entities/Booking";
 import { BookingModel } from "../../infrastructure/services/mongodb/models/booking/BookingModel";
 import { IBookingRepository } from "./IBookingRepository";
 import { BookingDbQuery, PaginatedBookingsResponse, GetOwnerDashboardStatsDataParams, GetOwnerDashboardStatsDataResponse, OwnerMonthlyRevenue, OwnerActivityItem, CustomerBookingsPaginatedResponse, CustomerBookingsQuery } from "../../domain/dtos/booking/BookingDto";
-import { parseDDMMYYYY } from "../../utils/dateUtils";
+import { parseDDMMYYYY } from "../../domain/functions/dateFunctions";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { logger } from "../../utils/logger";
 
