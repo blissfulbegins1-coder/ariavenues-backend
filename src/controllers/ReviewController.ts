@@ -2,8 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { IReviewUseCase } from "../useCases/review/IReviewUseCase";
 import { createReviewSchema } from "../domain/dtos/review/ReviewDto";
 import UserTokenDto from "../domain/dtos/user/UserTokenDto";
-import { getReviewsQuerySchema } from "../infrastructure/validation/review/ReviewValidationSchemas";
-import { auditoriumIdParamSchema } from "../infrastructure/validation/auditorium/AuditoriumSchemaValidation";
+import { getReviewsQuerySchema, getReviewsParamSchema } from "../infrastructure/validation/review/ReviewValidationSchemas";
 
 type ReviewControllerConstructorParams = {
   reviewUseCase: IReviewUseCase;
@@ -35,7 +34,7 @@ export class ReviewController {
 
   async getReviewsByAuditorium(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { id: auditoriumId } = await auditoriumIdParamSchema.validate(req.params, {
+      const { auditoriumId } = await getReviewsParamSchema.validate(req.params, {
         abortEarly: false,
       });
       const validatedQuery = await getReviewsQuerySchema.validate(req.query, {

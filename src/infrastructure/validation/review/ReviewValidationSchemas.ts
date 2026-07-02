@@ -16,3 +16,10 @@ export const getReviewsQuerySchema = yup.object().shape({
     .integer()
     .min(1),
 });
+export const getReviewsParamSchema = yup.object().shape({
+  auditoriumId: yup
+    .string()
+    .required("Auditorium ID is required")
+    .trim()
+    .matches(/^[a-f\d]{24}$/i, "Auditorium ID must be a valid MongoDB ObjectId"),
+});

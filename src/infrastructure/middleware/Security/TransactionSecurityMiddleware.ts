@@ -15,13 +15,13 @@ export const transactionSecurityMiddleware = (
   const transactionId = req.headers["x-transaction-id"];
 
   if (!transactionId || typeof transactionId !== "string") {
-    throw new ApiError("Security check failed: Missing x-transaction-id header", HttpStatus.BAD_REQUEST);
+    throw new ApiError("Missing x-transaction-id header", HttpStatus.BAD_REQUEST);
   }
 
   // Ensure it's exactly 24 characters and alphanumeric
   const isValid = /^[a-zA-Z0-9]{24}$/.test(transactionId);
   if (!isValid) {
-    throw new ApiError("Security check failed: Invalid x-transaction-id format", HttpStatus.BAD_REQUEST);
+    throw new ApiError("Invalid x-transaction-id format", HttpStatus.BAD_REQUEST);
   }
 
   next();
