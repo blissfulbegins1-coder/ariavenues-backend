@@ -2,19 +2,7 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import { IRazorpayService } from "./IRazorpayService";
 import { RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET } from "@/config/env";
-
-export type RazorpayOrderResponse = {
-  id: string;
-  entity: string;
-  amount: number;
-  amount_paid: number;
-  amount_due: number;
-  currency: string;
-  receipt: string;
-  status: string;
-  attempts: number;
-  created_at: number;
-}
+import { RazorpayOrderResponse } from "./RazorpayTypes";
 
 export class RazorpayService implements IRazorpayService {
   private razorpayClient: Razorpay;

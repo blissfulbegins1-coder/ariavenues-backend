@@ -1,4 +1,4 @@
-import { RazorpayOrderResponse } from "./RazorpayService";
+import { RazorpayOrderResponse } from "./RazorpayTypes";
 
 export type IRazorpayService = {
   createOrder(
