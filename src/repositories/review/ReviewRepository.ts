@@ -48,4 +48,22 @@ export class ReviewRepository implements IReviewRepository {
       total,
     };
   }
+
+  async findByUserAndAuditorium(userId: string, auditoriumId: string): Promise<Review | null> {
+    const doc = await ReviewModel.findOne({
+      userId,
+      auditoriumId,
+    });
+    return doc ? this.toEntity(doc) : null;
+  }
+
+  async findById(id: string): Promise<Review | null> {
+    const doc = await ReviewModel.findById(id);
+    return doc ? this.toEntity(doc) : null;
+  }
+
+  async deleteReview(id: string): Promise<boolean> {
+    const result = await ReviewModel.deleteOne({ _id: new mongoose.Types.ObjectId(id) });
+    return result.deletedCount > 0;
+  }
 }

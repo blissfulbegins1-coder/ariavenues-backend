@@ -23,3 +23,10 @@ export const getReviewsParamSchema = yup.object().shape({
     .trim()
     .matches(/^[a-f\d]{24}$/i, "Auditorium ID must be a valid MongoDB ObjectId"),
 });
+export const deleteReviewParamSchema = yup.object().shape({
+  id: yup
+    .string()
+    .required("Review ID is required")
+    .trim()
+    .matches(/^[a-f\d]{24}$/i, "Review ID must be a valid MongoDB ObjectId"),
+});

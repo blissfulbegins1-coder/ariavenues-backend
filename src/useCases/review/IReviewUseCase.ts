@@ -9,4 +9,5 @@ export type IReviewUseCase = {
     page?: number | null,
     limit?: number | null,
   ): Promise<{ reviews: Review[]; total: number }>;
+  deleteReview(user: UserTokenDto, id: string): Promise<boolean>;
 }

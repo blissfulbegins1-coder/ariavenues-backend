@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { IReviewUseCase } from "../useCases/review/IReviewUseCase";
 import { createReviewSchema } from "../domain/dtos/review/ReviewDto";
 import UserTokenDto from "../domain/dtos/user/UserTokenDto";
-import { getReviewsQuerySchema, getReviewsParamSchema } from "../infrastructure/validation/review/ReviewValidationSchemas";
+import { getReviewsQuerySchema, getReviewsParamSchema, deleteReviewParamSchema } from "../infrastructure/validation/review/ReviewValidationSchemas";
 
 type ReviewControllerConstructorParams = {
   reviewUseCase: IReviewUseCase;
@@ -50,6 +50,22 @@ export class ReviewController {
       res.status(200).json({
         success: true,
         data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteReview(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const user = req.user as UserTokenDto;
+      const { id } = await deleteReviewParamSchema.validate(req.params, { abortEarly: false });
+
+      await this.reviewUseCase.deleteReview(user, id);
+
+      res.status(200).json({
+        success: true,
+        message: "Review deleted successfully",
       });
     } catch (error) {
       next(error);

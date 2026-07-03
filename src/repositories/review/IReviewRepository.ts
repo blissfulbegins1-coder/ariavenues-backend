@@ -7,4 +7,7 @@ export type IReviewRepository = {
     page?: number | null,
     limit?: number | null,
   ): Promise<{ reviews: Review[]; total: number }>;
+  findByUserAndAuditorium(userId: string, auditoriumId: string): Promise<Review | null>;
+  findById(id: string): Promise<Review | null>;
+  deleteReview(id: string): Promise<boolean>;
 }

@@ -7,4 +7,7 @@ export type IReviewEngine = {
     page?: number | null,
     limit?: number | null,
   ): Promise<{ reviews: Review[]; total: number }>;
+  getReviewByUserAndAuditorium(userId: string, auditoriumId: string): Promise<Review | null>;
+  getReviewById(id: string): Promise<Review | null>;
+  deleteReview(id: string): Promise<boolean>;
 }

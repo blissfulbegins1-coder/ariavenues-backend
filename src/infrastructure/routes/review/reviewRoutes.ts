@@ -24,5 +24,12 @@ export const setupReviewRoutes = (
       reviewController.getReviewsByAuditorium(req, res, next),
   );
 
+  router.delete(
+    "/:id",
+    requireRole([UserRoles.CUSTOMER]),
+    async (req: Request, res: Response, next: NextFunction) =>
+      reviewController.deleteReview(req, res, next),
+  );
+
   return router;
 };

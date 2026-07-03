@@ -24,4 +24,16 @@ export class ReviewEngine implements IReviewEngine {
   ): Promise<{ reviews: Review[]; total: number }> {
     return await this.reviewRepository.findByAuditorium(auditoriumId, page, limit);
   }
+
+  async getReviewByUserAndAuditorium(userId: string, auditoriumId: string): Promise<Review | null> {
+    return await this.reviewRepository.findByUserAndAuditorium(userId, auditoriumId);
+  }
+
+  async getReviewById(id: string): Promise<Review | null> {
+    return await this.reviewRepository.findById(id);
+  }
+
+  async deleteReview(id: string): Promise<boolean> {
+    return await this.reviewRepository.deleteReview(id);
+  }
 }
