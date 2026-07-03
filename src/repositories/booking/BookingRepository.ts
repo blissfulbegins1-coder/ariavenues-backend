@@ -253,8 +253,10 @@ export class BookingRepository implements IBookingRepository {
     }
 
     const statsQuery: any = { isActive: true };
-    if (query && query.$expr) {
-      statsQuery.$expr = query.$expr;
+    if (query) {
+      if (query.ownerId) statsQuery.ownerId = query.ownerId;
+      if (query.userId) statsQuery.userId = query.userId;
+      if (query.$expr) statsQuery.$expr = query.$expr;
     }
 
     const [docs, total, totalCount, confirmedCount, completedCount, cancelledCount] = await Promise.all([
@@ -336,8 +338,8 @@ export class BookingRepository implements IBookingRepository {
       BookingModel.countDocuments({ ...baseMatch, bookingStatus: BookingStatus.COMPLETED }),
     ]);
 
-    const MONTH_SHORT = ["Jan","Feb","Mar","Apr","May","Jun",
-                          "Jul","Aug","Sep","Oct","Nov","Dec"];
+    const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
     const startOfYear = new Date(params.targetYear, 0, 1);
     const endOfYear = new Date(params.targetYear, 11, 31, 23, 59, 59, 999);
@@ -347,7 +349,7 @@ export class BookingRepository implements IBookingRepository {
         $match: {
           ownerId,
           isActive: true,
-          bookingStatus: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] },
+          bookingStatus: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED, BookingStatus.CANCELLED] },
         },
       },
       {
@@ -371,7 +373,7 @@ export class BookingRepository implements IBookingRepository {
       {
         $group: {
           _id: { $month: "$parsedStartDate" },
-          revenue: { $sum: { $add: ["$adminAdvance", "$auditoriumAdvance"] } },
+          revenue: { $sum: "$auditoriumAdvance" },
         },
       },
     ]);
@@ -422,7 +424,7 @@ export class BookingRepository implements IBookingRepository {
       bookingNumber: doc.bookingNumber,
       auditoriumName: doc.audData?.[0]?.name,
       customerName: doc.userData?.[0]?.name,
-      amount: (doc.adminAdvance ?? 0) + (doc.auditoriumAdvance ?? 0),
+      amount: doc.auditoriumAdvance ?? 0,
       createdAt: doc.createdAt,
     }));
 

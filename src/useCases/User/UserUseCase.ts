@@ -10,6 +10,7 @@ import { IActivityEngine } from "../../engines/activity/IActivityEngine";
 import { IProducer } from "../../infrastructure/amqp/producer/IProducer";
 import { BrokerConfig } from "../../infrastructure/config/brocker/brokerConfig";
 import UserRoles from "../../domain/enums/UserRole";
+import UserStatus from "../../domain/enums/UserStatus";
 import { HttpStatus } from "../../domain/enums/HttpStatus";
 import { logger } from "../../utils/logger";
 
@@ -45,6 +46,9 @@ export class UserUseCase implements IUserUseCase {
   async signUp(input: UserDTO): Promise<UserSuccessResponse> {
     const existingUser = await this.userEngine.getUserByMobile(input.mobile);
     if (existingUser) {
+      if (existingUser.status === UserStatus.BLOCKED) {
+        throw new ApiError("Your account is blocked. Please contact support.", HttpStatus.FORBIDDEN);
+      }
       if (existingUser.mobileVerified) {
         throw new ApiError("User with this mobile number already exists", HttpStatus.CONFLICT);
       }
@@ -74,6 +78,13 @@ export class UserUseCase implements IUserUseCase {
       throw new ApiError(
         "User not found",
         HttpStatus.NOT_FOUND
+      );
+    }
+
+    if (user.status === UserStatus.BLOCKED) {
+      throw new ApiError(
+        "Your account is blocked. Please contact support.",
+        HttpStatus.FORBIDDEN
       );
     }
 
@@ -148,6 +159,13 @@ export class UserUseCase implements IUserUseCase {
       throw new ApiError("User not found", HttpStatus.NOT_FOUND);
     }
 
+    if (user.status === UserStatus.BLOCKED) {
+      throw new ApiError(
+        "Your account is blocked. Please contact support.",
+        HttpStatus.FORBIDDEN
+      );
+    }
+
     await this.otpService.sendOtp(mobile);
 
     return {
@@ -160,6 +178,13 @@ export class UserUseCase implements IUserUseCase {
     const user = await this.userEngine.getUserByMobile(mobile);
     if (!user) {
       throw new ApiError("User not found", HttpStatus.NOT_FOUND);
+    }
+
+    if (user.status === UserStatus.BLOCKED) {
+      throw new ApiError(
+        "Your account is blocked. Please contact support.",
+        HttpStatus.FORBIDDEN
+      );
     }
 
     if (!user.mobileVerified) {
