@@ -1,14 +1,11 @@
-import UserRoles from "../enums/UserRole";
-import UserStatus from "../enums/UserStatus";
-
 export type User = {
   id: string;
   name: string;
   mobile: string;
   email?: string;
   mobileVerified: boolean;
-  role: UserRoles;
-  status: UserStatus;
+  role: string;
+  status: string;
   isActive?: boolean;
   createdAt: Date;
   updatedAt: Date;

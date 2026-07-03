@@ -4,7 +4,6 @@ import { IJwtManagementEngine } from "../../engines/jwt/IJwtManagementEngine";
 import { User } from "../../domain/entities/User";
 import { IUserUseCase } from "./IUserUseCase";
 import { OtpService } from "../../infrastructure/services/otp/OtpService";
-import { REDIRECT_PATHS } from "../../domain/constants/constants";
 import { ApiError } from "../../domain/errors/ApiError";
 import { IActivityEngine } from "../../engines/activity/IActivityEngine";
 import { IProducer } from "../../infrastructure/amqp/producer/IProducer";
@@ -133,7 +132,7 @@ export class UserUseCase implements IUserUseCase {
       }
     }
 
-    const redirectUrl = REDIRECT_PATHS[updatedUser.role];
+    const redirectUrl = updatedUser.role === UserRoles.OWNER ? "/owner/dashboard" : "/dashboard";
 
     const token = this.jwtManagementEngine.generateToken({
       id: updatedUser.id,

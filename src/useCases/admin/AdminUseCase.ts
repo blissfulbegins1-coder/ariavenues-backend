@@ -17,7 +17,6 @@ import { HttpStatus } from "../../domain/enums/HttpStatus";
 import { QueryFilter, Types } from "mongoose";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { AuditoriumStatus } from "../../domain/enums/AuditoriumStatus";
-import UserStatus from "../../domain/enums/UserStatus";
 import { parseDDMMYYYY } from "../../domain/functions/dateFunctions";
 import { IActivityEngine } from "../../engines/activity/IActivityEngine";
 import { getRelativeTime } from "../../domain/functions/getRaltiveTime";
@@ -110,7 +109,7 @@ export class AdminUseCase implements IAdminUseCase {
         name: user.name,
       },
       token,
-      redirectUrl: REDIRECT_PATHS[UserRole.ADMIN],
+      redirectUrl: REDIRECT_PATHS.admin,
     };
   }
 
@@ -433,7 +432,7 @@ export class AdminUseCase implements IAdminUseCase {
 
   async updateUserStatus(
     id: string,
-    status: UserStatus
+    status: string
   ): Promise<User> {
     const updated = await this.userEngine.updateUser(id, { status });
     if (!updated) {

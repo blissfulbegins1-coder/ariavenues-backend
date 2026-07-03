@@ -2,7 +2,6 @@ import { User } from "../../domain/entities/User";
 import { Auditorium } from "../../domain/entities/Auditorium";
 import { Booking } from "../../domain/entities/Booking";
 import { AuditoriumStatus } from "../../domain/enums/AuditoriumStatus";
-import UserStatus from "../../domain/enums/UserStatus";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { UserFilters, PaginatedUsersResponse } from "../../domain/dtos/user/UserDto";
 import { AuditoriumFilters, PaginatedAuditoriumsResponse } from "../../domain/dtos/auditorium/AuditoriumDto";
@@ -48,7 +47,7 @@ export type IAdminUseCase = {
   ): Promise<Auditorium>;
   updateUserStatus(
     id: string,
-    status: UserStatus
+    status: string
   ): Promise<User>;
   updateBookingStatus(
     id: string,
