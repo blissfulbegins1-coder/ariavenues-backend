@@ -7,7 +7,6 @@ import { parseDDMMYYYY } from "../../domain/functions/dateFunctions";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { logger } from "../../utils/logger";
 
-
 type BookingAggregationDoc = {
   _id: mongoose.Types.ObjectId;
   bookingNumber: string;
@@ -131,7 +130,6 @@ export class BookingRepository implements IBookingRepository {
     const booking = new BookingModel(data);
     await booking.save({ session });
 
-    // Use $lookup aggregation after save to retrieve with auditorium details
     const results = await BookingModel.aggregate<BookingAggregationDoc>([
       { $match: { _id: booking._id } },
       ...bookingDetailsLookup,

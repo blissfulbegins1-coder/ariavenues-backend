@@ -4,7 +4,7 @@ import { IBookingEngine } from "../../engines/booking/IBookingEngine";
 import { IAuditoriumEngine } from "../../engines/auditorium/IAuditoriumEngine";
 import { IBookingUseCase } from "./IBookingUseCase";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
-import { BookingFilters, PaginatedBookingsResponse, OwnerDashboardStats, OwnerActivityItem, OwnerMonthlyRevenue, CustomerBookingsPaginatedResponse, CustomerBookingsQuery } from "../../domain/dtos/booking/BookingDto";
+import { BookingFilters, PaginatedBookingsResponse, OwnerDashboardStats, CustomerBookingsPaginatedResponse, CustomerBookingsQuery } from "../../domain/dtos/booking/BookingDto";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { ApiError } from "../../domain/errors/ApiError";
 import UserRoles from "../../domain/enums/UserRole";
@@ -189,9 +189,7 @@ export class BookingUseCase implements IBookingUseCase {
       const start = parseDDMMYYYY(filters.startDate);
       const end = parseDDMMYYYY(filters.endDate);
       end.setHours(23, 59, 59, 999);
-
-      // Match bookings whose event period overlaps [start, end]:
-      //   booking.startDate <= end  AND  booking.endDate >= start
+      
       query.$expr = {
         $and: [
           {

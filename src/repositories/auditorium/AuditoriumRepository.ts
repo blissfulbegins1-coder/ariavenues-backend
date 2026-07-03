@@ -10,7 +10,7 @@ import { QueryFilter } from "mongoose";
 import { AuditoriumDbQuery, PaginatedAuditoriumsResponse } from "../../domain/dtos/auditorium/AuditoriumDto";
 
 export class AuditoriumRepository implements IAuditoriumRepository {
-  private mapToEntity(doc: any): Auditorium {
+  private toEntity(doc: any): Auditorium {
     const obj = doc.toObject();
     const ownerIdStr = typeof obj.ownerId === "object" && obj.ownerId !== null && "_id" in obj.ownerId
       ? obj.ownerId._id.toString()
@@ -58,12 +58,12 @@ export class AuditoriumRepository implements IAuditoriumRepository {
       isActive: true,
     });
     const saved = await auditorium.save();
-    return this.mapToEntity(saved);
+    return this.toEntity(saved);
   }
 
   async listByOwner(user: UserTokenDto): Promise<Auditorium[]> {
     const items = await AuditoriumModel.find({ ownerId: user.id, isActive: true });
-    return items.map((item) => this.mapToEntity(item));
+    return items.map((item) => this.toEntity(item));
   }
 
   async listPublic(
@@ -90,7 +90,7 @@ export class AuditoriumRepository implements IAuditoriumRepository {
 
     const items = await queryBuilder;
     return {
-      auditoriums: items.map((item) => this.mapToEntity(item)),
+      auditoriums: items.map((item) => this.toEntity(item)),
       total,
     };
   }
@@ -98,7 +98,7 @@ export class AuditoriumRepository implements IAuditoriumRepository {
   async findById(id: string): Promise<Auditorium | null> {
     const item = await AuditoriumModel.findOne({ _id: id, isActive: true });
     if (!item) return null;
-    return this.mapToEntity(item);
+    return this.toEntity(item);
   }
 
   async update(id: string, data: Partial<Auditorium>): Promise<Auditorium> {
@@ -110,7 +110,7 @@ export class AuditoriumRepository implements IAuditoriumRepository {
     if (!item) {
       throw new ApiError("Auditorium not found", HttpStatus.NOT_FOUND);
     }
-    return this.mapToEntity(item);
+    return this.toEntity(item);
   }
 
   async listAll(filter?: QueryFilter<Auditorium>): Promise<Auditorium[]> {
@@ -119,7 +119,7 @@ export class AuditoriumRepository implements IAuditoriumRepository {
       ...filter,
     };
     const items = await AuditoriumModel.find(query).sort({ createdAt: -1 });
-    return items.map((item) => this.mapToEntity(item));
+    return items.map((item) => this.toEntity(item));
   }
 
   async getAuditoriums(dbQuery: AuditoriumDbQuery): Promise<PaginatedAuditoriumsResponse> {
@@ -144,7 +144,7 @@ export class AuditoriumRepository implements IAuditoriumRepository {
       AuditoriumModel.countDocuments({ ...statsQuery, status: "maintenance" }).exec(),
     ]);
 
-    const auditoriums = items.map((item) => this.mapToEntity(item));
+    const auditoriums = items.map((item) => this.toEntity(item));
 
     return {
       auditoriums,

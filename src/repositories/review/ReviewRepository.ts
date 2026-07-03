@@ -4,10 +4,25 @@ import { ReviewModel } from "../../infrastructure/services/mongodb/models/review
 import { IReviewRepository } from "./IReviewRepository";
 
 export class ReviewRepository implements IReviewRepository {
+  private toEntity(doc: any): Review {
+    if (!doc) return doc;
+    const obj = doc.toObject ? doc.toObject() : doc;
+    return {
+      id: obj._id.toString(),
+      userId: obj.userId.toString(),
+      userName: obj.userName,
+      auditoriumId: obj.auditoriumId.toString(),
+      rating: obj.rating,
+      comment: obj.comment,
+      createdAt: obj.createdAt,
+      updatedAt: obj.updatedAt,
+    };
+  }
+
   async create(data: Partial<Review>): Promise<Review> {
     const doc = new ReviewModel(data);
     await doc.save();
-    return doc as any;
+    return this.toEntity(doc);
   }
 
   async findByAuditorium(
@@ -26,7 +41,7 @@ export class ReviewRepository implements IReviewRepository {
     }
 
     const docs = await dbQuery.exec();
-    const reviews = docs as any[];
+    const reviews = docs.map((doc) => this.toEntity(doc));
 
     return {
       reviews,

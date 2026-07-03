@@ -3,7 +3,7 @@ import { LocationModel } from "../../infrastructure/services/mongodb/models/loca
 import { ILocationRepository } from "./ILocationRepository";
 
 export class LocationRepository implements ILocationRepository {
-  private mapToEntity(doc: any): Location {
+  private toEntity(doc: any): Location {
     const obj = doc.toObject ? doc.toObject() : doc;
     return {
       id: obj._id.toString(),
@@ -36,6 +36,6 @@ export class LocationRepository implements ILocationRepository {
 
   async getAll(): Promise<Location[]> {
     const docs = await LocationModel.find().sort({ state: 1, district: 1, city: 1 });
-    return docs.map((doc) => this.mapToEntity(doc));
+    return docs.map((doc) => this.toEntity(doc));
   }
 }

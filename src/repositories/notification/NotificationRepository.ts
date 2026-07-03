@@ -5,16 +5,37 @@ import { NotificationModel } from "../../infrastructure/services/mongodb/models/
 import { INotificationRepository } from "./INotificationRepository";
 
 export class NotificationRepository implements INotificationRepository {
+  private toEntity(doc: any): Notification {
+    if (!doc) return doc;
+    const obj = doc.toObject ? doc.toObject() : doc;
+    return {
+      id: obj._id.toString(),
+      receiverId: obj.receiverId.toString(),
+      senderId: obj.senderId ? obj.senderId.toString() : null,
+      role: obj.role,
+      type: obj.type,
+      title: obj.title,
+      message: obj.message,
+      referenceId: obj.referenceId ? obj.referenceId.toString() : "",
+      referenceType: obj.referenceType,
+      isRead: obj.isRead,
+      readAt: obj.readAt,
+      delivered: obj.delivered,
+      createdAt: obj.createdAt,
+      updatedAt: obj.updatedAt,
+    };
+  }
+
   async create(data: Partial<Notification>): Promise<Notification> {
     const doc = new NotificationModel(data);
     await doc.save();
-    return doc as any;
+    return this.toEntity(doc);
   }
 
   async findById(id: string): Promise<Notification | null> {
     const doc = await NotificationModel.findById(id);
     if (!doc) return null;
-    return doc as any;
+    return this.toEntity(doc);
   }
 
   async update(id: string, data: Partial<Notification>): Promise<Notification | null> {
@@ -24,7 +45,7 @@ export class NotificationRepository implements INotificationRepository {
       { new: true },
     );
     if (!doc) return null;
-    return doc as any;
+    return this.toEntity(doc);
   }
 
   async listByUser(
@@ -45,7 +66,7 @@ export class NotificationRepository implements INotificationRepository {
     }
 
     const docs = await dbQuery.exec();
-    const notifications = docs as any[];
+    const notifications = docs.map((doc) => this.toEntity(doc));
 
     return {
       notifications,

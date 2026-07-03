@@ -6,6 +6,23 @@ import UserStatus from "../../domain/enums/UserStatus";
 import { QueryFilter } from "mongoose";
 
 export class UserRepository implements IUserRepository {
+  private toEntity(doc: any): User {
+    if (!doc) return doc;
+    const obj = doc.toObject ? doc.toObject() : doc;
+    return {
+      id: obj._id.toString(),
+      name: obj.name,
+      email: obj.email,
+      mobile: obj.mobile,
+      mobileVerified: obj.mobileVerified,
+      role: obj.role,
+      status: obj.status,
+      isActive: obj.isActive ?? true,
+      createdAt: obj.createdAt,
+      updatedAt: obj.updatedAt,
+    };
+  }
+
   async create(data: UserDTO): Promise<boolean> {
     const user = new UserModel({
       ...data,
@@ -18,7 +35,7 @@ export class UserRepository implements IUserRepository {
 
   async findByMobile(mobile: string): Promise<User | null> {
     const user = await UserModel.findOne({ mobile, isActive: true });
-    return user;
+    return user ? this.toEntity(user) : null;
   }
 
   async update(id: string, data: Partial<User>): Promise<User | null> {
@@ -27,11 +44,12 @@ export class UserRepository implements IUserRepository {
       data,
       { returnDocument: "after" },
     );
-    return user;
+    return user ? this.toEntity(user) : null;
   }
 
   async findAll(filter?: QueryFilter<User>): Promise<User[]> {
-    return await UserModel.find({ ...filter, isActive: true }).sort({ createdAt: -1 });
+    const users = await UserModel.find({ ...filter, isActive: true }).sort({ createdAt: -1 });
+    return users.map((u) => this.toEntity(u));
   }
 
   async getUsers(dbQuery: UserDbQuery): Promise<PaginatedUsersResponse> {
@@ -49,13 +67,15 @@ export class UserRepository implements IUserRepository {
       statsQuery.role = query.role;
     }
 
-    const [users, total, totalCount, activeCount, blockedCount] = await Promise.all([
+    const [usersDocs, total, totalCount, activeCount, blockedCount] = await Promise.all([
       userQuery.exec(),
       UserModel.countDocuments(query).exec(),
       UserModel.countDocuments(statsQuery).exec(),
       UserModel.countDocuments({ ...statsQuery, status: "active" }).exec(),
       UserModel.countDocuments({ ...statsQuery, status: "blocked" }).exec(),
     ]);
+
+    const users = usersDocs.map((u) => this.toEntity(u));
 
     return {
       users,
