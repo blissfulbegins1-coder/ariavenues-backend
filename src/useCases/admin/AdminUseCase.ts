@@ -445,6 +445,50 @@ export class AdminUseCase implements IAdminUseCase {
     id: string,
     status: BookingStatus
   ): Promise<Booking> {
+    if (status === BookingStatus.CONFIRMED) {
+      const existingBooking = await this.bookingEngine.getBookingById(id);
+      if (existingBooking) {
+        const start = parseDDMMYYYY(existingBooking.startDate);
+        const end = parseDDMMYYYY(existingBooking.endDate);
+
+        const availabilityFilter: QueryFilter<Booking> = {
+          _id: { $ne: existingBooking.id } as any,
+          auditoriumId: existingBooking.auditoriumId as any,
+          bookingStatus: {
+            $in: [
+              BookingStatus.PENDING_PAYMENT,
+              BookingStatus.CONFIRMED,
+              BookingStatus.COMPLETED,
+            ],
+          },
+          $expr: {
+            $and: [
+              {
+                $lte: [
+                  { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
+                  end,
+                ],
+              },
+              {
+                $gte: [
+                  { $dateFromString: { dateString: "$endDate", format: "%d-%m-%Y" } },
+                  start,
+                ],
+              },
+            ],
+          },
+        };
+
+        const isAvailable = await this.bookingEngine.checkAvailability(availabilityFilter);
+        if (!isAvailable) {
+          throw new ApiError(
+            "Cannot restore booking: Dates are already booked by someone else",
+            HttpStatus.CONFLICT
+          );
+        }
+      }
+    }
+
     const updated = await this.bookingEngine.updateBooking(id, { bookingStatus: status });
     if (!updated) {
       throw new ApiError("Booking Not Found!", HttpStatus.NOT_FOUND);
