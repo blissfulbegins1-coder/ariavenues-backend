@@ -46,6 +46,8 @@ import { ReviewRepository } from "../../repositories/review/ReviewRepository";
 import { ReviewEngine } from "../../engines/review/ReviewEngine";
 import { ReviewUseCase } from "../../useCases/review/ReviewUseCase";
 import { ReviewController } from "../../controllers/ReviewController";
+import { AuditoriumAdapter } from "../../adapters/auditorium/AuditoriumAdapter";
+import { BookingAdapter } from "../../adapters/booking/BookingAdapter";
 
 export type IContainer = {
   databaseService: DatabaseService;
@@ -85,6 +87,8 @@ export type IContainer = {
   notificationUseCase: NotificationUseCase;
   notificationController: NotificationController;
   socketService: SocketService;
+  auditoriumAdapter: AuditoriumAdapter;
+  bookingAdapter: BookingAdapter;
 }
 
 export const setupContainer = (): AwilixContainer<IContainer> => {
@@ -108,6 +112,9 @@ export const setupContainer = (): AwilixContainer<IContainer> => {
     paymentRepository: asClass(PaymentRepository).singleton(),
     activityRepository: asClass(ActivityRepository).singleton(),
     notificationRepository: asClass(NotificationRepository).singleton(),
+
+    auditoriumAdapter: asClass(AuditoriumAdapter).singleton(),
+    bookingAdapter: asClass(BookingAdapter).singleton(),
 
     // Engines
     userEngine: asClass(UserEngine).singleton(),

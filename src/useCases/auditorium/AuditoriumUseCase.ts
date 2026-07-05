@@ -1,7 +1,8 @@
 import { Auditorium } from "../../domain/entities/Auditorium";
 import { CreateAuditoriumDTO } from "../../domain/dtos/auditorium/CreateAuditoriumDTO";
 import { UpdateAuditoriumDTO } from "../../domain/dtos/auditorium/UpdateAuditoriumDTO";
-import { GetPublicAuditoriumsDTO, PaginatedPublicAuditoriumsResponse } from "../../domain/dtos/auditorium/GetPublicAuditoriumsDTO";
+import { GetPublicAuditoriumsDTO } from "../../domain/dtos/auditorium/GetPublicAuditoriumsDTO";
+import { PaginatedPublicAuditoriumsDTO, PublicAuditoriumDTO } from "../../domain/dtos/auditorium/PublicAuditoriumDTO";
 import { IAuditoriumEngine } from "../../engines/auditorium/IAuditoriumEngine";
 import { IBookingEngine } from "../../engines/booking/IBookingEngine";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
@@ -15,12 +16,14 @@ import { Booking } from "../../domain/entities/Booking";
 import { IActivityEngine } from "../../engines/activity/IActivityEngine";
 import { AuditoriumFilters, PaginatedAuditoriumsResponse } from "../../domain/dtos/auditorium/AuditoriumDto";
 import { logger } from "../../utils/logger";
+import { IAuditoriumAdapter } from "../../adapters/auditorium/IAuditoriumAdapter";
 
 type AuditoriumUseCaseConstructorParams = {
   auditoriumEngine: IAuditoriumEngine;
   bookingEngine: IBookingEngine;
   cloudinaryService: CloudinaryService;
   activityEngine: IActivityEngine;
+  auditoriumAdapter: IAuditoriumAdapter;
 };
 
 export class AuditoriumUseCase implements IAuditoriumUseCase {
@@ -28,17 +31,20 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
   private bookingEngine: IBookingEngine;
   private cloudinaryService: CloudinaryService;
   private activityEngine: IActivityEngine;
+  private auditoriumAdapter: IAuditoriumAdapter;
 
   constructor({
     auditoriumEngine,
     bookingEngine,
     cloudinaryService,
     activityEngine,
+    auditoriumAdapter,
   }: AuditoriumUseCaseConstructorParams) {
     this.auditoriumEngine = auditoriumEngine;
     this.bookingEngine = bookingEngine;
     this.cloudinaryService = cloudinaryService;
     this.activityEngine = activityEngine;
+    this.auditoriumAdapter = auditoriumAdapter;
   }
 
   async createAuditorium(data: CreateAuditoriumDTO): Promise<boolean> {
@@ -94,7 +100,7 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
     });
   }
 
-  async getPublicAuditoriums(filters?: GetPublicAuditoriumsDTO): Promise<PaginatedPublicAuditoriumsResponse> {
+  async getPublicAuditoriums(filters?: GetPublicAuditoriumsDTO): Promise<PaginatedPublicAuditoriumsDTO> {
     const query: QueryFilter<Auditorium> = {};
 
     let page = 1;
@@ -182,12 +188,18 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
     const { auditoriums, total } = await this.auditoriumEngine.getPublicAuditoriums(query, skip, limit);
 
     return {
-      auditoriums,
+      auditoriums: this.auditoriumAdapter.toPublicDTOList(auditoriums),
       total,
       page,
       limit,
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  async getPublicAuditoriumById(id: string): Promise<PublicAuditoriumDTO | null> {
+    const auditorium = await this.auditoriumEngine.getAuditoriumById(id);
+    if (!auditorium) return null;
+    return this.auditoriumAdapter.toPublicDTO(auditorium);
   }
 
   async getAuditoriumById(id: string): Promise<Auditorium | null> {

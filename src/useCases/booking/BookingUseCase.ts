@@ -1,4 +1,4 @@
-import { Booking } from "../../domain/entities/Booking";
+import { ConfirmedBookingDTO, PublicBookingDTO } from "../../domain/dtos/booking/ConfirmedBookingDTO";
 import { CreateBookingDTO } from "../../domain/dtos/booking/CreateBookingDTO";
 import { IBookingEngine } from "../../engines/booking/IBookingEngine";
 import { IAuditoriumEngine } from "../../engines/auditorium/IAuditoriumEngine";
@@ -14,26 +14,32 @@ import { IProducer } from "../../infrastructure/amqp/producer/IProducer";
 import { BrokerConfig } from "../../infrastructure/config/brocker/brokerConfig";
 import { HttpStatus } from "../../domain/enums/HttpStatus";
 import { logger } from "../../utils/logger";
+import { IBookingAdapter } from "../../adapters/booking/IBookingAdapter";
+import { Booking } from "../../domain/entities/Booking";
 
 type BookingUseCaseConstructorParams = {
   bookingEngine: IBookingEngine;
   auditoriumEngine: IAuditoriumEngine;
   producer: IProducer;
+  bookingAdapter: IBookingAdapter;
 };
 
 export class BookingUseCase implements IBookingUseCase {
   private bookingEngine: IBookingEngine;
   private auditoriumEngine: IAuditoriumEngine;
   private producer: IProducer;
+  private bookingAdapter: IBookingAdapter;
 
   constructor({
     bookingEngine,
     auditoriumEngine,
     producer,
+    bookingAdapter,
   }: BookingUseCaseConstructorParams) {
     this.bookingEngine = bookingEngine;
     this.auditoriumEngine = auditoriumEngine;
     this.producer = producer;
+    this.bookingAdapter = bookingAdapter;
   }
 
   private async autoCompletePastBookings(): Promise<void> {
@@ -47,7 +53,7 @@ export class BookingUseCase implements IBookingUseCase {
   async createBooking(
     data: CreateBookingDTO,
     user: UserTokenDto,
-  ): Promise<Booking> {
+  ): Promise<ConfirmedBookingDTO> {
     const auditorium = await this.auditoriumEngine.getAuditoriumById(
       data.auditoriumId,
     );
@@ -92,7 +98,6 @@ export class BookingUseCase implements IBookingUseCase {
       throw new ApiError("Start date cannot be after end date", HttpStatus.BAD_REQUEST);
     }
 
-    // Check overlaps
     const availabilityFilter: QueryFilter<Booking> = {
       auditoriumId: new mongoose.Types.ObjectId(data.auditoriumId) as any,
       bookingStatus: {
@@ -169,7 +174,7 @@ export class BookingUseCase implements IBookingUseCase {
       });
     }
 
-    return newBooking;
+    return this.bookingAdapter.toConfirmedDTO(newBooking);
   }
 
   async getCustomerBookings(
@@ -177,7 +182,11 @@ export class BookingUseCase implements IBookingUseCase {
     query: CustomerBookingsQuery,
   ): Promise<CustomerBookingsPaginatedResponse> {
     await this.autoCompletePastBookings();
-    return await this.bookingEngine.listBookingsByCustomerPaginated(user.id, query);
+    const result = await this.bookingEngine.listBookingsByCustomerPaginated(user.id, query);
+    return {
+      ...result,
+      bookings: this.bookingAdapter.toPublicDTOList(result.bookings) as any,
+    };
   }
 
   async getOwnerBookings(user: UserTokenDto, filters: BookingFilters): Promise<PaginatedBookingsResponse> {
@@ -246,7 +255,7 @@ export class BookingUseCase implements IBookingUseCase {
     });
   }
 
-  async getBookingDetails(id: string, user: UserTokenDto): Promise<Booking> {
+  async getBookingDetails(id: string, user: UserTokenDto): Promise<ConfirmedBookingDTO> {
     await this.autoCompletePastBookings();
 
     const booking = await this.bookingEngine.getBookingById(id);
@@ -261,7 +270,7 @@ export class BookingUseCase implements IBookingUseCase {
       throw new ApiError("Unauthorized access to this booking details", HttpStatus.FORBIDDEN);
     }
 
-    return booking;
+    return this.bookingAdapter.toConfirmedDTO(booking);
   }
 
   async cancelPendingBooking(id: string, user: UserTokenDto): Promise<void> {
@@ -322,7 +331,7 @@ export class BookingUseCase implements IBookingUseCase {
     auditoriumId: string,
     startDate: string,
     endDate: string,
-  ): Promise<Booking[]> {
+  ): Promise<{ startDate: string; endDate: string }[]> {
     const parsedStart = parseDDMMYYYY(startDate);
     const parsedEnd = parseDDMMYYYY(endDate);
 
@@ -353,7 +362,11 @@ export class BookingUseCase implements IBookingUseCase {
       },
     };
 
-    return await this.bookingEngine.getAllBookings(filter);
+    const bookings = await this.bookingEngine.getAllBookings(filter);
+
+    return bookings.map((b) => ({
+      startDate: b.startDate,
+      endDate: b.endDate,
+    }));
   }
 }
-

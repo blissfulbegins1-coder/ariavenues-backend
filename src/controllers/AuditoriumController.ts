@@ -104,7 +104,7 @@ export class AuditoriumController {
       const { id } = await auditoriumIdParamSchema.validate(req.params, {
         abortEarly: false,
       });
-      const result = await this.auditoriumUseCase.getAuditoriumById(id);
+      const result = await this.auditoriumUseCase.getPublicAuditoriumById(id);
       if (!result) {
         return res
           .status(404)
