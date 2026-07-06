@@ -11,7 +11,7 @@ import { CloudinaryService } from "../../infrastructure/services/cloudinary/Clou
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 import { ApiError } from "../../domain/errors/ApiError";
 import { HttpStatus } from "../../domain/enums/HttpStatus";
-import { QueryFilter } from "mongoose";
+import mongoose, { QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
 import { IActivityEngine } from "../../engines/activity/IActivityEngine";
 import { AuditoriumFilters, PaginatedAuditoriumsResponse } from "../../domain/dtos/auditorium/AuditoriumDto";
@@ -203,6 +203,20 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
   }
 
   async getAuditoriumById(id: string): Promise<Auditorium | null> {
+    return await this.auditoriumEngine.getAuditoriumById(id);
+  }
+
+  async getBookedAuditoriumDetails(id: string, user: UserTokenDto): Promise<Auditorium | null> {
+    const bookings = await this.bookingEngine.getAllBookings({
+      userId: new mongoose.Types.ObjectId(user.id) as any,
+      auditoriumId: new mongoose.Types.ObjectId(id) as any,
+      bookingStatus: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] },
+    });
+
+    if (!bookings || bookings.length === 0) {
+      throw new ApiError("Access denied. You have not booked this auditorium", HttpStatus.FORBIDDEN);
+    }
+
     return await this.auditoriumEngine.getAuditoriumById(id);
   }
 

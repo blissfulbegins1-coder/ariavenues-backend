@@ -28,4 +28,9 @@ export type Booking = {
     email?: string;
     mobile?: string;
   };
+  owner?: {
+    name: string;
+    email?: string;
+    mobile?: string;
+  };
 }

@@ -12,6 +12,7 @@ export type IAuditoriumUseCase = {
   getPublicAuditoriums(filters?: GetPublicAuditoriumsDTO): Promise<PaginatedPublicAuditoriumsDTO>;
   getPublicAuditoriumById(id: string): Promise<PublicAuditoriumDTO | null>;
   getAuditoriumById(id: string): Promise<Auditorium | null>;
+  getBookedAuditoriumDetails(id: string, user: UserTokenDto): Promise<Auditorium | null>;
   updateAuditorium(
     id: string,
     user: UserTokenDto,

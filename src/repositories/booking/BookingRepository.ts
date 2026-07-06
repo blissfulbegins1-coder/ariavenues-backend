@@ -33,6 +33,11 @@ type BookingAggregationDoc = {
     email?: string;
     mobile?: string;
   };
+  owner?: {
+    name: string;
+    email?: string;
+    mobile?: string;
+  };
 }
 
 const bookingDetailsLookup = [
@@ -70,15 +75,32 @@ const bookingDetailsLookup = [
     },
   },
   { $project: { userData: 0 } },
+  {
+    $lookup: {
+      from: "users",
+      localField: "ownerId",
+      foreignField: "_id",
+      pipeline: [
+        { $project: { name: 1, email: 1, mobile: 1 } }
+      ],
+      as: "ownerData",
+    },
+  },
+  {
+    $addFields: {
+      owner: { $arrayElemAt: ["$ownerData", 0] },
+    },
+  },
+  { $project: { ownerData: 0 } },
 ];
 
 export class BookingRepository implements IBookingRepository {
   private toEntity(doc: BookingAggregationDoc): Booking {
     const start = parseDDMMYYYY(doc.startDate);
-    const end = parseDDMMYYYY(doc.endDate);
+    const docEndDate = parseDDMMYYYY(doc.endDate);
     const totalDays = Math.max(
       1,
-      Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
+      Math.round((docEndDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
     );
     const adminAdvance = doc.adminAdvance ?? 0;
     const auditoriumAdvance = doc.auditoriumAdvance ?? 0;
@@ -117,6 +139,14 @@ export class BookingRepository implements IBookingRepository {
         name: doc.user.name,
         email: doc.user.email,
         mobile: doc.user.mobile,
+      };
+    }
+
+    if (doc.owner && doc.owner.name) {
+      booking.owner = {
+        name: doc.owner.name,
+        email: doc.owner.email,
+        mobile: doc.owner.mobile,
       };
     }
 
@@ -188,7 +218,20 @@ export class BookingRepository implements IBookingRepository {
     { page, limit }: CustomerBookingsQuery,
   ): Promise<CustomerBookingsPaginatedResponse> {
     const skip = (page - 1) * limit;
-    const matchStage = { userId: new mongoose.Types.ObjectId(userId), isActive: true };
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+    const matchStage = {
+      userId: new mongoose.Types.ObjectId(userId),
+      isActive: true,
+      $or: [
+        { bookingStatus: { $ne: BookingStatus.COMPLETED } },
+        {
+          bookingStatus: BookingStatus.COMPLETED,
+          updatedAt: { $gte: twoDaysAgo }
+        }
+      ]
+    };
 
     const [data, countResult] = await Promise.all([
       BookingModel.aggregate<BookingAggregationDoc>([

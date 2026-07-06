@@ -1,6 +1,7 @@
 export type ConfirmedBookingDTO = {
   id: string;
   bookingNumber: string;
+  auditoriumId: string;
   startDate: string;
   endDate: string;
   totalDays: number;
@@ -15,11 +16,17 @@ export type ConfirmedBookingDTO = {
     address: string;
     images: string[];
   };
+  owner?: {
+    name: string;
+    email?: string;
+    mobile?: string;
+  };
 };
 
 export type PublicBookingDTO = {
   id: string;
   bookingNumber: string;
+  auditoriumId: string;
   startDate: string;
   endDate: string;
   totalDays: number;
@@ -32,5 +39,10 @@ export type PublicBookingDTO = {
   auditorium: {
     name: string;
     images: string[];
+  };
+  owner?: {
+    name: string;
+    email?: string;
+    mobile?: string;
   };
 };

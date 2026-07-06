@@ -20,6 +20,7 @@ export type Auditorium = {
   auditoriumAdvance?: number;
   isActive: boolean;
   ownerName?: string;
+  ownerMobile?: string;
   createdAt: Date;
   updatedAt: Date;
 }

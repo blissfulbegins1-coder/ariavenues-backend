@@ -18,6 +18,9 @@ export class AuditoriumRepository implements IAuditoriumRepository {
     const ownerNameStr = typeof obj.ownerId === "object" && obj.ownerId !== null && "name" in obj.ownerId
       ? obj.ownerId.name
       : undefined;
+    const ownerMobileStr = typeof obj.ownerId === "object" && obj.ownerId !== null && "mobile" in obj.ownerId
+      ? obj.ownerId.mobile
+      : undefined;
 
     return {
       id: obj._id.toString(),
@@ -41,6 +44,7 @@ export class AuditoriumRepository implements IAuditoriumRepository {
       auditoriumAdvance: obj.auditoriumAdvance,
       createdAt: obj.createdAt,
       ownerName: ownerNameStr,
+      ownerMobile: ownerMobileStr,
     } as Auditorium;
   }
 
@@ -96,7 +100,7 @@ export class AuditoriumRepository implements IAuditoriumRepository {
   }
 
   async findById(id: string): Promise<Auditorium | null> {
-    const item = await AuditoriumModel.findOne({ _id: id, isActive: true });
+    const item = await AuditoriumModel.findOne({ _id: id, isActive: true }).populate("ownerId");
     if (!item) return null;
     return this.toEntity(item);
   }

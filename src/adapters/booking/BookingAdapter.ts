@@ -7,6 +7,7 @@ export class BookingAdapter implements IBookingAdapter {
     return {
       id: booking.id,
       bookingNumber: booking.bookingNumber,
+      auditoriumId: booking.auditoriumId,
       startDate: booking.startDate,
       endDate: booking.endDate,
       totalDays: booking.totalDays,
@@ -20,6 +21,7 @@ export class BookingAdapter implements IBookingAdapter {
         name: booking.auditorium?.name ?? "",
         images: booking.auditorium?.images ?? [],
       },
+      owner: booking.owner,
     };
   }
 
@@ -27,6 +29,7 @@ export class BookingAdapter implements IBookingAdapter {
     return {
       id: booking.id,
       bookingNumber: booking.bookingNumber,
+      auditoriumId: booking.auditoriumId,
       startDate: booking.startDate,
       endDate: booking.endDate,
       totalDays: booking.totalDays,
@@ -41,6 +44,7 @@ export class BookingAdapter implements IBookingAdapter {
         address: booking.auditorium?.address ?? "",
         images: booking.auditorium?.images ?? [],
       },
+      owner: booking.owner,
     };
   }
 
