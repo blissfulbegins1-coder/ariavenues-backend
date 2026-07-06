@@ -202,6 +202,38 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
     return this.auditoriumAdapter.toPublicDTO(auditorium);
   }
 
+  async getAuditoriumDetailForUser(id: string, user?: { id: string; role: string; }): Promise<PublicAuditoriumDTO | null> {
+    const auditorium = await this.auditoriumEngine.getAuditoriumById(id);
+    if (!auditorium) return null;
+
+    const isOwner = user && (user.role === "owner" && auditorium.ownerId?.toString() === user.id);
+    const isAdmin = user && (user.role === "admin");
+
+    if (isAdmin || isOwner) {
+      return {
+        id: auditorium.id,
+        name: auditorium.name,
+        address: auditorium.address,
+        description: auditorium.description,
+        state: auditorium.state,
+        district: auditorium.district,
+        city: auditorium.city,
+        capacity: auditorium.capacity,
+        dayRate: auditorium.dayRate,
+        amenities: auditorium.amenities,
+        images: auditorium.images,
+        averageRating: auditorium.averageRating,
+        totalReviews: auditorium.totalReviews,
+        status: auditorium.status,
+        adminAdvance: auditorium.adminAdvance ?? 0,
+        auditoriumAdvance: auditorium.auditoriumAdvance ?? 0,
+        approved: auditorium.approved,
+      };
+    }
+
+    return this.auditoriumAdapter.toPublicDTO(auditorium);
+  }
+
   async getAuditoriumById(id: string): Promise<Auditorium | null> {
     return await this.auditoriumEngine.getAuditoriumById(id);
   }

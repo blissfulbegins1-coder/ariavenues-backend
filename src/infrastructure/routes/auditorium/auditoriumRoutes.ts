@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { AwilixContainer } from "awilix";
 import { IContainer } from "../../ioc/registry";
-import { requireRole } from "../../middleware/Auth/AuthMiddleware";
+import { requireRole, optionalAuthenticate } from "../../middleware/Auth/AuthMiddleware";
 import UserRoles from "../../../domain/enums/UserRole";
 
 export const setupAuditoriumRoutes = (
@@ -28,8 +28,11 @@ export const setupAuditoriumRoutes = (
     auditoriumController.getPublicAuditoriums(req, res, next),
   );
 
-  router.get("/:id", async (req: Request, res: Response, next: NextFunction) =>
-    auditoriumController.getAuditoriumById(req, res, next),
+  router.get(
+    "/:id",
+    optionalAuthenticate,
+    async (req: Request, res: Response, next: NextFunction) =>
+      auditoriumController.getAuditoriumById(req, res, next),
   );
 
   router.get(

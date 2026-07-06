@@ -11,6 +11,7 @@ export type IAuditoriumUseCase = {
   getOwnerAuditoriums(user: UserTokenDto, filters?: AuditoriumFilters): Promise<PaginatedAuditoriumsResponse>;
   getPublicAuditoriums(filters?: GetPublicAuditoriumsDTO): Promise<PaginatedPublicAuditoriumsDTO>;
   getPublicAuditoriumById(id: string): Promise<PublicAuditoriumDTO | null>;
+  getAuditoriumDetailForUser(id: string, user?: { id: string; role: string; }): Promise<PublicAuditoriumDTO | null>;
   getAuditoriumById(id: string): Promise<Auditorium | null>;
   getBookedAuditoriumDetails(id: string, user: UserTokenDto): Promise<Auditorium | null>;
   updateAuditorium(

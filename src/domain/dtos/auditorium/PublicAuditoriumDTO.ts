@@ -15,6 +15,7 @@ export type PublicAuditoriumDTO = {
   status: string;
   adminAdvance: number;
   auditoriumAdvance: number;
+  approved?: boolean;
 };
 
 export type PaginatedPublicAuditoriumsDTO = {

@@ -60,3 +60,31 @@ export const requireRole = (allowedRoles: string[]) => {
     }
   };
 };
+
+export const optionalAuthenticate = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.split(" ")[1];
+      const jwtEngine = req.container.resolve<JwtManagementEngine>(
+        "jwtManagementEngine",
+      );
+      const decoded = jwtEngine.verifyToken(token) as {
+        id: string;
+        role: UserRoles.ADMIN | UserRoles.CUSTOMER | UserRoles.OWNER;
+        mobile: string;
+      } | null;
+
+      if (decoded) {
+        req.user = decoded;
+      }
+    }
+    next();
+  } catch (error) {
+    next();
+  }
+};

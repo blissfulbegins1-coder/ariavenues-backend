@@ -28,6 +28,7 @@ export class AuditoriumAdapter implements IAuditoriumAdapter {
       status: auditorium.status,
       adminAdvance: auditorium.adminAdvance ?? 0,
       auditoriumAdvance: auditorium.auditoriumAdvance ?? 0,
+      approved: auditorium.approved,
     };
   }
 
