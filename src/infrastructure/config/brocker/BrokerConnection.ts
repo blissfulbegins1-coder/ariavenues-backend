@@ -9,8 +9,14 @@ export class BrokerConnection implements IBrokerConnection {
   private channel: any = null;
 
   async connect(): Promise<void> {
+    logger.info("Connecting to RabbitMQ...");
+    const startTime = Date.now();
+    const timer = setInterval(() => {
+      const seconds = Math.round((Date.now() - startTime) / 1000);
+      logger.info(`Connecting to RabbitMQ... (${seconds}s elapsed)`);
+    }, 1000);
+
     try {
-      logger.info("Connecting to RabbitMQ...");
       this.connection = await amqpConnect(BrokerConfig.rabbitmqUri);
       this.channel = await this.connection.createChannel();
 
@@ -34,7 +40,9 @@ export class BrokerConnection implements IBrokerConnection {
         BrokerConfig.routingKeys.ALL_NOTIFICATIONS,
       );
 
-      logger.info("RabbitMQ Connected & configured successfully!");
+      clearInterval(timer);
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+      logger.info(`✓ RabbitMQ Connected & configured successfully! (took ${elapsed}s)`);
 
       this.connection.on("error", (err: any) => {
         logger.error("RabbitMQ Connection error:", err);
@@ -46,8 +54,11 @@ export class BrokerConnection implements IBrokerConnection {
         this.reconnect();
       });
     } catch (error) {
-      logger.error("Failed to connect to RabbitMQ, retrying in 5s...", error);
-      setTimeout(() => this.connect(), 5000);
+      clearInterval(timer);
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+      logger.error(`Failed to connect to RabbitMQ after ${elapsed}s, retrying in 5s...`, error);
+      await new Promise<void>((resolve) => setTimeout(resolve, 5000));
+      return this.connect();
     }
   }
 
