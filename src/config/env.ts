@@ -5,7 +5,6 @@ export const IS_DEV: boolean = NODE_ENV === "development";
 export const DATABASE_URI: string = process.env.DATABASE_URI!;
 export const DATABASE_NAME: string = process.env.DATABASE_NAME!;
 
-export const JWT_KEY: string = process.env.JWT_KEY!;
 export const JWT_EXPIRY: string = process.env.JWT_EXPIRY!;
 export const SECRET: string = process.env.SECRET!;
 export const OTP_AUTH_KEY: string = process.env.OTP_AUTH_KEY!;
