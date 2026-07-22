@@ -32,7 +32,7 @@ export class Server {
     this.app.use(express.json({ limit: "100mb" }));
     this.app.use(express.urlencoded({ limit: "100mb", extended: false }));
     this.app.use(requestLogger);
-    // this.app.use(rateLimitMiddleware);
+    this.app.use(rateLimitMiddleware);
     this.app.use(uploadMiddleware);
     this.app.use((req, res, next) => {
       req.container = this.container;

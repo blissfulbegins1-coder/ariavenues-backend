@@ -11,7 +11,7 @@ type RateLimitRecord = {
 const ipRequestMap = new Map<string, RateLimitRecord>();
 
 const WINDOW_MS = 15 * 60 * 1000;
-const MAX_REQUESTS = 100;
+const MAX_REQUESTS = 200;
 
 export const rateLimitMiddleware = (
   req: Request,
