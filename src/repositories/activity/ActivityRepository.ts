@@ -4,7 +4,7 @@ import { IActivityRepository } from "./IActivityRepository";
 import { ClientSession } from "mongoose";
 
 export class ActivityRepository implements IActivityRepository {
-  private toEntity(doc: any): Activity {
+  private toEntity(doc: { toObject?: () => Record<string, any> } & Record<string, any>): Activity {
     if (!doc) return doc;
     const obj = doc.toObject ? doc.toObject() : doc;
     return {

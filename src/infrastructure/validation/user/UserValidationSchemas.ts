@@ -40,11 +40,6 @@ export const verifyOtpSchema = yup.object().shape({
     .matches(/^\d{6}$/, "OTP must be 6 digits"),
 });
 
-// Validation Schema for resending OTP
-export const resendOtpSchema = yup.object().shape({
-  mobile: mobileValidation,
-});
-
 // Validation Schema for ID parameter
 export const userIdParamSchema = yup.object().shape({
   id: yup.string().required("User ID is required").trim().matches(/^[a-f\d]{24}$/i, "User ID must be a valid MongoDB ObjectId"),

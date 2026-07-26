@@ -170,18 +170,6 @@ export const updateAuditoriumStatusSchema = yup.object().shape({
     .string()
     .required("Status is required")
     .oneOf([AuditoriumStatus.ACTIVE, AuditoriumStatus.REJECTED, AuditoriumStatus.BLOCKED], "Invalid status"),
-
-  adminAdvance: yup
-    .number()
-    .transform((value) => (isNaN(value) ? undefined : value))
-    .optional()
-    .min(0, "Admin advance must be a non-negative number"),
-
-  auditoriumAdvance: yup
-    .number()
-    .transform((value) => (isNaN(value) ? undefined : value))
-    .optional()
-    .min(0, "Auditorium advance must be a non-negative number"),
 });
 
 export const publicAuditoriumFilterSchema = yup.object().shape({
@@ -287,4 +275,6 @@ export const ownerAuditoriumsQuerySchema = yup.object().shape({
     .integer("Limit must be an integer")
     .min(1, "Limit must be at least 1"),
   search: yup.string().optional().default(""),
+  status: yup.string().optional(),
+  sortBy: yup.string().optional(),
 });

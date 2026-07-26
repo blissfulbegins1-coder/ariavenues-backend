@@ -105,7 +105,7 @@ export class AuditoriumController {
         abortEarly: false,
       });
 
-      const result = await this.auditoriumUseCase.getAuditoriumDetailForUser(id, req.user);
+      const result = await this.auditoriumUseCase.getAuditoriumById(id);
       if (!result) {
         return res
           .status(404)
@@ -152,31 +152,6 @@ export class AuditoriumController {
         success: true,
         data: result,
         message: "Auditorium updated successfully",
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async getBookedAuditoriumDetails(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<Response | void> {
-    try {
-      const { id } = await auditoriumIdParamSchema.validate(req.params, {
-        abortEarly: false,
-      });
-      const user = req.user as UserTokenDto;
-      const result = await this.auditoriumUseCase.getBookedAuditoriumDetails(id, user);
-      if (!result) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Auditorium not found" });
-      }
-      return res.status(200).json({
-        success: true,
-        data: result,
       });
     } catch (error) {
       next(error);

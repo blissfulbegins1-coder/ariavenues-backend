@@ -4,11 +4,10 @@ export type ConfirmedBookingDTO = {
   auditoriumId: string;
   startDate: string;
   endDate: string;
-  totalDays: number;
-  dayRate: number;
+  startTime?: string;
+  endTime?: string;
   totalAmount: number;
   bookingStatus: string;
-  guestCount: number;
   createdAt: Date;
   updatedAt: Date;
   auditorium: {
@@ -29,11 +28,10 @@ export type PublicBookingDTO = {
   auditoriumId: string;
   startDate: string;
   endDate: string;
-  totalDays: number;
-  dayRate: number;
+  startTime?: string;
+  endTime?: string;
   totalAmount: number;
   bookingStatus: string;
-  guestCount: number;
   createdAt: Date;
   updatedAt: Date;
   auditorium: {

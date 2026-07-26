@@ -12,11 +12,16 @@ export class CloudinaryService {
 
   async uploadBuffer(buffer: Buffer, originalname: string): Promise<string> {
     return new Promise((resolve, reject) => {
+      const sanitizedName = originalname.replace(/[^a-zA-Z0-9]/g, "_");
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder: "auditoriums",
-          public_id: originalname.split(".")[0] + "-" + Date.now(),
+          public_id: `aud-${Date.now()}-${Math.random().toString(36).substring(2, 7)}-${sanitizedName}`,
+          resource_type: "image",
           format: "webp",
+          transformation: [
+            { width: 1200, height: 800, crop: "limit", quality: "auto:good" },
+          ],
         },
         (error, result) => {
           if (error) {
@@ -34,8 +39,9 @@ export class CloudinaryService {
   }
 
   async uploadMultiple(files: Express.Multer.File[]): Promise<string[]> {
+    if (!files || files.length === 0) return [];
     const uploadPromises = files.map((file) =>
-      this.uploadBuffer(file.buffer, file.originalname),
+      this.uploadBuffer(file.buffer, file.originalname || "image"),
     );
     return Promise.all(uploadPromises);
   }

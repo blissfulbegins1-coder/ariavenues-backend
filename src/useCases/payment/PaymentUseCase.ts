@@ -1,5 +1,4 @@
-import mongoose, { QueryFilter } from "mongoose";
-import { Booking } from "../../domain/entities/Booking";
+import mongoose from "mongoose";
 import { Payment } from "../../domain/entities/Payment";
 import { VerifyPaymentDTO } from "../../domain/dtos/payment/VerifyPaymentDTO";
 import { IPaymentEngine } from "../../engines/payment/IPaymentEngine";
@@ -11,10 +10,8 @@ import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 import { IActivityEngine } from "../../engines/activity/IActivityEngine";
 import { PaymentStatus } from "../../domain/enums/PaymentStatus";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
-import { parseDDMMYYYY } from "../../domain/functions/dateFunctions";
-import { IProducer } from "../../infrastructure/amqp/producer/IProducer";
+import { timeToMinutes } from "../../domain/functions/dateFunctions";
 import UserRoles from "../../domain/enums/UserRole";
-import { BrokerConfig } from "../../infrastructure/config/brocker/brokerConfig";
 import { HttpStatus } from "../../domain/enums/HttpStatus";
 import { logger } from "../../utils/logger";
 
@@ -23,7 +20,6 @@ type PaymentUseCaseConstructorParams = {
   bookingEngine: IBookingEngine;
   razorpayService: IRazorpayService;
   activityEngine: IActivityEngine;
-  producer: IProducer;
 };
 
 export class PaymentUseCase implements IPaymentUseCase {
@@ -31,20 +27,17 @@ export class PaymentUseCase implements IPaymentUseCase {
   private bookingEngine: IBookingEngine;
   private razorpayService: IRazorpayService;
   private activityEngine: IActivityEngine;
-  private producer: IProducer;
 
   constructor({
     paymentEngine,
     bookingEngine,
     razorpayService,
     activityEngine,
-    producer,
   }: PaymentUseCaseConstructorParams) {
     this.paymentEngine = paymentEngine;
     this.bookingEngine = bookingEngine;
     this.razorpayService = razorpayService;
     this.activityEngine = activityEngine;
-    this.producer = producer;
   }
 
   async createRazorpayOrder(
@@ -56,7 +49,7 @@ export class PaymentUseCase implements IPaymentUseCase {
       throw new ApiError("Booking details not found", HttpStatus.NOT_FOUND);
     }
 
-    if (booking.userId !== user.id) {
+    if (booking.userId !== user.id && booking.ownerId !== user.id && user.role !== UserRoles.OWNER) {
       throw new ApiError("Access denied. Unauthorized reservation owner", HttpStatus.FORBIDDEN);
     }
 
@@ -74,7 +67,7 @@ export class PaymentUseCase implements IPaymentUseCase {
       throw new ApiError("This booking is already paid and confirmed", HttpStatus.BAD_REQUEST);
     }
 
-    const availabilityFilter: QueryFilter<Booking> = {
+    const existingBookings = await this.bookingEngine.getAllBookings({
       auditoriumId: new mongoose.Types.ObjectId(booking.auditoriumId) as any,
       bookingStatus: {
         $in: [
@@ -83,31 +76,22 @@ export class PaymentUseCase implements IPaymentUseCase {
           BookingStatus.COMPLETED,
         ],
       },
-      $expr: {
-        $and: [
-          {
-            $lte: [
-              { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
-              parseDDMMYYYY(booking.endDate),
-            ],
-          },
-          {
-            $gte: [
-              { $dateFromString: { dateString: "$endDate", format: "%d-%m-%Y" } },
-              parseDDMMYYYY(booking.startDate),
-            ],
-          },
-        ],
-      },
+      startDate: booking.startDate,
       _id: { $ne: new mongoose.Types.ObjectId(booking.id) } as any,
-    };
+    });
 
-    const isAvailable = await this.bookingEngine.checkAvailability(availabilityFilter);
-    if (!isAvailable) {
-      throw new ApiError(
-        "The selected dates are no longer available for booking",
-        HttpStatus.CONFLICT
-      );
+    const nStart = timeToMinutes(booking.startTime ?? "");
+    const nEnd = timeToMinutes(booking.endTime ?? "");
+
+    for (const existing of existingBookings) {
+      const eStart = timeToMinutes(existing.startTime ?? "");
+      const eEnd = timeToMinutes(existing.endTime ?? "");
+      if (nStart < eEnd && nEnd > eStart) {
+        throw new ApiError(
+          "The selected time slot is no longer available for booking",
+          HttpStatus.CONFLICT,
+        );
+      }
     }
 
     const existingPayment = await this.paymentEngine.getPaymentByBookingId(
@@ -178,7 +162,7 @@ export class PaymentUseCase implements IPaymentUseCase {
         throw new ApiError("Associated booking details not found", HttpStatus.NOT_FOUND);
       }
 
-      if (bookingDoc.userId.toString() !== user.id) {
+      if (bookingDoc.userId?.toString() !== user.id && bookingDoc.ownerId?.toString() !== user.id && user.role !== UserRoles.OWNER) {
         throw new ApiError(
           "Access denied. Unauthorized transaction owner",
           HttpStatus.FORBIDDEN
@@ -242,7 +226,7 @@ export class PaymentUseCase implements IPaymentUseCase {
       await this.activityEngine.createActivity({
         type: "PAYMENT_RECEIVED",
         title: "Payment Received",
-        description: `Payment of ₹${bookingDoc.adminAdvance.toLocaleString()} received for Booking #${bookingDoc.bookingNumber}`,
+        description: `Payment of ₹${bookingDoc.totalAmount.toLocaleString()} received for Booking #${bookingDoc.bookingNumber}`,
         referenceId: updatedPayment.id,
         referenceType: "PAYMENT",
         performedBy: user.id,
@@ -250,36 +234,6 @@ export class PaymentUseCase implements IPaymentUseCase {
 
       await session.commitTransaction();
       session.endSession();
-
-      // Publish notifications to RabbitMQ after commit succeeds
-      this.producer.publish(BrokerConfig.routingKeys.PAYMENT_NOTIFICATION, {
-        receiverId: bookingDoc.userId,
-        senderId: null,
-        role: UserRoles.CUSTOMER,
-        type: "payment_success",
-        title: "Booking Confirmed",
-        message: `Your booking #${bookingDoc.bookingNumber} for "${bookingDoc.auditorium?.name || "Venue"}" is confirmed.`,
-        referenceId: bookingDoc.id,
-        referenceType: "booking",
-        isRead: false,
-        readAt: null,
-        delivered: false,
-      }).catch(err => logger.error("Failed to publish customer booking notification:", err));
-
-      this.producer.publish(BrokerConfig.routingKeys.PAYMENT_NOTIFICATION, {
-        receiverId: bookingDoc.ownerId,
-        senderId: bookingDoc.userId,
-        role: UserRoles.OWNER,
-        type: "payment_received",
-        title: "Payment Received",
-        message: `Payment of ₹${bookingDoc.adminAdvance.toLocaleString()} received for booking #${bookingDoc.bookingNumber}.`,
-        referenceId: bookingDoc.id,
-        referenceType: "booking",
-        isRead: false,
-        readAt: null,
-        delivered: false,
-      }).catch(err => logger.error("Failed to publish owner booking notification:", err));
-
       return updatedPayment;
     } catch (error) {
       await session.abortTransaction();

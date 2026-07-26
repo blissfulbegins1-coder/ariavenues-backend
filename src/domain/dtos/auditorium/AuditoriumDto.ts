@@ -1,3 +1,4 @@
+import { QueryFilter } from "mongoose";
 import { Auditorium } from "../../entities/Auditorium";
 
 export type AuditoriumFilters = {
@@ -18,8 +19,8 @@ export type PaginatedAuditoriumsResponse = {
 }
 
 export type AuditoriumDbQuery = {
-  query: any;
-  sort: any;
+  query: QueryFilter<Auditorium>;
+  sort: Record<string, 1 | -1>;
   skip?: number | null;
   limit?: number | null;
 }

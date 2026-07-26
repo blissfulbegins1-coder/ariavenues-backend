@@ -1,8 +1,8 @@
-import mongoose, { ClientSession, QueryFilter } from "mongoose";
+import mongoose, { ClientSession, QueryFilter, PipelineStage } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
 import { BookingModel } from "../../infrastructure/services/mongodb/models/booking/BookingModel";
 import { IBookingRepository } from "./IBookingRepository";
-import { BookingDbQuery, PaginatedBookingsResponse, GetOwnerDashboardStatsDataParams, GetOwnerDashboardStatsDataResponse, OwnerMonthlyRevenue, OwnerActivityItem, CustomerBookingsPaginatedResponse, CustomerBookingsQuery } from "../../domain/dtos/booking/BookingDto";
+import { BookingDbQuery, PaginatedBookingsResponse, GetOwnerDashboardStatsDataParams, GetOwnerDashboardStatsDataResponse, OwnerMonthlyRevenue, OwnerActivityItem } from "../../domain/dtos/booking/BookingDto";
 import { parseDDMMYYYY } from "../../domain/functions/dateFunctions";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { logger } from "../../utils/logger";
@@ -16,6 +16,7 @@ type BookingAggregationDoc = {
   startDate: string;
   endDate: string;
   dayRate: number;
+  totalAmount?: number;
   adminAdvance?: number;
   auditoriumAdvance?: number;
   bookingStatus: string;
@@ -104,16 +105,18 @@ export class BookingRepository implements IBookingRepository {
     );
     const adminAdvance = doc.adminAdvance ?? 0;
     const auditoriumAdvance = doc.auditoriumAdvance ?? 0;
-    const totalAmount = adminAdvance + auditoriumAdvance;
+    const totalAmount = doc.totalAmount ?? (adminAdvance + auditoriumAdvance > 0 ? adminAdvance + auditoriumAdvance : 2000);
 
     const booking = {
       id: doc._id.toString(),
       bookingNumber: doc.bookingNumber,
-      auditoriumId: doc.auditoriumId.toString(),
-      userId: doc.userId.toString(),
-      ownerId: doc.ownerId.toString(),
+      auditoriumId: doc.auditoriumId ? doc.auditoriumId.toString() : "",
+      userId: doc.userId ? doc.userId.toString() : "",
+      ownerId: doc.ownerId ? doc.ownerId.toString() : "",
       startDate: doc.startDate,
       endDate: doc.endDate,
+      startTime: (doc as any).startTime || "09:00 AM",
+      endTime: (doc as any).endTime || "06:00 PM",
       totalDays,
       dayRate: doc.dayRate,
       totalAmount,
@@ -213,55 +216,6 @@ export class BookingRepository implements IBookingRepository {
     await BookingModel.findByIdAndUpdate(id, { isActive: false });
   }
 
-  async listByCustomerPaginated(
-    userId: string,
-    { page, limit }: CustomerBookingsQuery,
-  ): Promise<CustomerBookingsPaginatedResponse> {
-    const skip = (page - 1) * limit;
-    const twoDaysAgo = new Date();
-    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-
-    const matchStage = {
-      userId: new mongoose.Types.ObjectId(userId),
-      isActive: true,
-      $or: [
-        { bookingStatus: { $ne: BookingStatus.COMPLETED } },
-        {
-          bookingStatus: BookingStatus.COMPLETED,
-          updatedAt: { $gte: twoDaysAgo }
-        }
-      ]
-    };
-
-    const [data, countResult] = await Promise.all([
-      BookingModel.aggregate<BookingAggregationDoc>([
-        { $match: matchStage },
-        ...bookingDetailsLookup,
-        { $sort: { createdAt: -1 } },
-        { $skip: skip },
-        { $limit: limit },
-      ]),
-      BookingModel.countDocuments(matchStage as any),
-    ]);
-
-    const total = countResult;
-    return {
-      bookings: data.map((doc) => this.toEntity(doc)),
-      total,
-      page,
-      totalPages: Math.ceil(total / limit),
-    };
-  }
-
-  async listByOwner(ownerId: string): Promise<Booking[]> {
-    const results = await BookingModel.aggregate<BookingAggregationDoc>([
-      { $match: { ownerId: new mongoose.Types.ObjectId(ownerId), isActive: true } },
-      ...bookingDetailsLookup,
-      { $sort: { createdAt: -1 } },
-    ]);
-    return results.map((doc) => this.toEntity(doc));
-  }
-
   async checkAvailability(
     filter: QueryFilter<Booking>,
   ): Promise<boolean> {
@@ -281,7 +235,7 @@ export class BookingRepository implements IBookingRepository {
   async getBookings(dbQuery: BookingDbQuery): Promise<PaginatedBookingsResponse> {
     const { query, sort, skip, limit } = dbQuery;
 
-    const pipeline: any[] = [
+    const pipeline: PipelineStage[] = [
       { $match: { ...query, isActive: true } },
       ...bookingDetailsLookup,
     ];
@@ -295,7 +249,7 @@ export class BookingRepository implements IBookingRepository {
       pipeline.push({ $limit: limit });
     }
 
-    const statsQuery: any = { isActive: true };
+    const statsQuery: QueryFilter<Booking> = { isActive: true };
     if (query) {
       if (query.ownerId) statsQuery.ownerId = query.ownerId;
       if (query.userId) statsQuery.userId = query.userId;
@@ -306,9 +260,9 @@ export class BookingRepository implements IBookingRepository {
       BookingModel.aggregate<BookingAggregationDoc>(pipeline),
       BookingModel.countDocuments({ ...query, isActive: true }).exec(),
       BookingModel.countDocuments(statsQuery).exec(),
-      BookingModel.countDocuments({ ...statsQuery, bookingStatus: "confirmed" }).exec(),
-      BookingModel.countDocuments({ ...statsQuery, bookingStatus: "completed" }).exec(),
-      BookingModel.countDocuments({ ...statsQuery, bookingStatus: "cancelled" }).exec(),
+      BookingModel.countDocuments({ ...statsQuery, bookingStatus: BookingStatus.CONFIRMED }).exec(),
+      BookingModel.countDocuments({ ...statsQuery, bookingStatus: BookingStatus.COMPLETED }).exec(),
+      BookingModel.countDocuments({ ...statsQuery, bookingStatus: BookingStatus.CANCELLED }).exec(),
     ]);
 
     const bookings = docs.map((doc) => this.toEntity(doc));
@@ -327,6 +281,8 @@ export class BookingRepository implements IBookingRepository {
     try {
       const now = new Date();
       now.setHours(0, 0, 0, 0);
+
+      // 1. Auto-complete past confirmed bookings to completed
       await BookingModel.updateMany(
         {
           bookingStatus: BookingStatus.CONFIRMED,
@@ -341,8 +297,30 @@ export class BookingRepository implements IBookingRepository {
           $set: { bookingStatus: BookingStatus.COMPLETED },
         },
       );
+
+      // 2. Automatically cancel and deactivate stale pending_payment bookings older than 15 minutes or past start date
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+      await BookingModel.updateMany(
+        {
+          bookingStatus: BookingStatus.PENDING_PAYMENT,
+          $or: [
+            { createdAt: { $lt: fifteenMinutesAgo } },
+            {
+              $expr: {
+                $lt: [
+                  { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
+                  now,
+                ],
+              },
+            },
+          ],
+        },
+        {
+          $set: { isActive: false, bookingStatus: BookingStatus.CANCELLED },
+        },
+      );
     } catch (error) {
-      logger.error("Error auto-completing past bookings:", error);
+      logger.error("Error auto-completing past bookings and cleaning stale pending payments:", error);
     }
   }
 
@@ -354,8 +332,8 @@ export class BookingRepository implements IBookingRepository {
     const statsStart = new Date(params.statsStart);
     const statsEnd = new Date(params.statsEnd);
 
-    const baseMatch: any = {
-      ownerId,
+    const baseMatch: QueryFilter<Booking> = {
+      ownerId: ownerId as any,
       isActive: true,
       $expr: {
         $and: [
@@ -416,7 +394,7 @@ export class BookingRepository implements IBookingRepository {
       {
         $group: {
           _id: { $month: "$parsedStartDate" },
-          revenue: { $sum: "$auditoriumAdvance" },
+          revenue: { $sum: "$totalAmount" },
         },
       },
     ]);
@@ -467,7 +445,7 @@ export class BookingRepository implements IBookingRepository {
       bookingNumber: doc.bookingNumber,
       auditoriumName: doc.audData?.[0]?.name,
       customerName: doc.userData?.[0]?.name,
-      amount: doc.auditoriumAdvance ?? 0,
+      amount: doc.totalAmount ?? 2000,
       createdAt: doc.createdAt,
     }));
 

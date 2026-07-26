@@ -6,7 +6,7 @@ import UserStatus from "../../domain/enums/UserStatus";
 import { QueryFilter } from "mongoose";
 
 export class UserRepository implements IUserRepository {
-  private toEntity(doc: any): User {
+  private toEntity(doc: { toObject?: () => Record<string, any> } & Record<string, any>): User {
     if (!doc) return doc;
     const obj = doc.toObject ? doc.toObject() : doc;
     return {
@@ -26,7 +26,7 @@ export class UserRepository implements IUserRepository {
   async create(data: UserDTO): Promise<boolean> {
     const user = new UserModel({
       ...data,
-      mobileVerified: false,
+      mobileVerified: true,
       status: UserStatus.ACTIVE,
     });
     await user.save();
@@ -62,7 +62,7 @@ export class UserRepository implements IUserRepository {
       userQuery.skip(skip).limit(limit);
     }
 
-    const statsQuery: any = { isActive: true };
+    const statsQuery: QueryFilter<User> = { isActive: true };
     if (query && query.role) {
       statsQuery.role = query.role;
     }

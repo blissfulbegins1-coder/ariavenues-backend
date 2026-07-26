@@ -1,25 +1,7 @@
-export type PublicAuditoriumDTO = {
-  id: string;
-  name: string;
-  address: string;
-  description: string;
-  state: string;
-  district: string;
-  city: string;
-  capacity: number;
-  dayRate: number;
-  amenities: string[];
-  images: string[];
-  averageRating: number;
-  totalReviews: number;
-  status: string;
-  adminAdvance: number;
-  auditoriumAdvance: number;
-  approved?: boolean;
-};
+import { Auditorium } from "../../entities/Auditorium";
 
 export type PaginatedPublicAuditoriumsDTO = {
-  auditoriums: PublicAuditoriumDTO[];
+  auditoriums: Auditorium[];
   total: number;
   page: number;
   limit: number;

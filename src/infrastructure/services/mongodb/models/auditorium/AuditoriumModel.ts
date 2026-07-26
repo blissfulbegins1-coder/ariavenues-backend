@@ -60,12 +60,6 @@ const auditoriumSchema = new Schema<Auditorium>(
       default: 0,
       min: 0,
     },
-    totalBookings: {
-      type: Number,
-      required: true,
-      default: 0,
-      min: 0,
-    },
     status: {
       type: String,
       enum: [AuditoriumStatus.PENDING, AuditoriumStatus.DRAFT, AuditoriumStatus.MAINTENANCE, AuditoriumStatus.ACTIVE, AuditoriumStatus.REJECTED, AuditoriumStatus.BLOCKED],
@@ -76,14 +70,6 @@ const auditoriumSchema = new Schema<Auditorium>(
       type: Boolean,
       required: true,
       default: false,
-    },
-    adminAdvance: {
-      type: Number,
-      default: 0,
-    },
-    auditoriumAdvance: {
-      type: Number,
-      default: 0,
     },
     isActive: {
       type: Boolean,

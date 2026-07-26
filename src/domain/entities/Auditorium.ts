@@ -16,11 +16,9 @@ export type Auditorium = {
   totalBookings: number;
   status: string;
   approved: boolean;
-  adminAdvance?: number;
-  auditoriumAdvance?: number;
   isActive: boolean;
   ownerName?: string;
   ownerMobile?: string;
   createdAt: Date;
   updatedAt: Date;
-}
+};

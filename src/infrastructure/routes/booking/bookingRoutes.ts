@@ -10,20 +10,6 @@ export const setupBookingRoutes = (
   const router = Router();
   const bookingController = container.resolve("bookingController");
 
-  router.post(
-    "/",
-    requireRole([UserRoles.CUSTOMER]),
-    async (req: Request, res: Response, next: NextFunction) =>
-      bookingController.create(req, res, next),
-  );
-
-  router.get(
-    "/my",
-    requireRole([UserRoles.CUSTOMER]),
-    async (req: Request, res: Response, next: NextFunction) =>
-      bookingController.getCustomerBookings(req, res, next),
-  );
-
   router.get(
     "/owner/dashboard",
     requireRole([UserRoles.OWNER]),
@@ -38,18 +24,31 @@ export const setupBookingRoutes = (
       bookingController.getOwnerBookings(req, res, next),
   );
 
+  router.post(
+    "/owner",
+    requireRole([UserRoles.OWNER]),
+    async (req: Request, res: Response, next: NextFunction) =>
+      bookingController.createOwnerBooking(req, res, next),
+  );
+
   router.get(
     "/:id",
-    requireRole([UserRoles.CUSTOMER]),
+    requireRole([UserRoles.OWNER]),
     async (req: Request, res: Response, next: NextFunction) =>
       bookingController.getBookingById(req, res, next),
   );
 
   router.delete(
     "/:id",
-    requireRole([UserRoles.CUSTOMER]),
+    requireRole([UserRoles.OWNER]),
     async (req: Request, res: Response, next: NextFunction) =>
       bookingController.cancelBooking(req, res, next),
+  );
+
+  router.get(
+    "/public/slots",
+    async (req: Request, res: Response, next: NextFunction) =>
+      bookingController.getPublicBookedSlots(req, res, next),
   );
 
   router.get(

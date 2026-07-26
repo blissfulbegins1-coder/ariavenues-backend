@@ -1,17 +1,14 @@
 import { ConfirmedBookingDTO } from "../../domain/dtos/booking/ConfirmedBookingDTO";
-import { CreateBookingDTO } from "../../domain/dtos/booking/CreateBookingDTO";
+import { CreateOwnerBookingDTO } from "../../domain/dtos/booking/CreateBookingDTO";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 import {
   BookingFilters,
   PaginatedBookingsResponse,
   OwnerDashboardStats,
-  CustomerBookingsPaginatedResponse,
-  CustomerBookingsQuery,
 } from "../../domain/dtos/booking/BookingDto";
 
 export type IBookingUseCase = {
-  createBooking(data: CreateBookingDTO, user: UserTokenDto): Promise<ConfirmedBookingDTO>;
-  getCustomerBookings(user: UserTokenDto, query: CustomerBookingsQuery): Promise<CustomerBookingsPaginatedResponse>;
+  createOwnerBooking(data: CreateOwnerBookingDTO, user: UserTokenDto): Promise<ConfirmedBookingDTO>;
   getOwnerBookings(user: UserTokenDto, filters: BookingFilters): Promise<PaginatedBookingsResponse>;
   getOwnerDashboardStats(
     user: UserTokenDto,
@@ -26,4 +23,8 @@ export type IBookingUseCase = {
     startDate: string,
     endDate: string,
   ): Promise<{ startDate: string; endDate: string }[]>;
-}
+  getBookedSlotsForDate(
+    auditoriumId: string,
+    date: string,
+  ): Promise<{ startTime: string; endTime: string; bookingNumber: string }[]>;
+};

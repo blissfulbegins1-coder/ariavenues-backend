@@ -33,7 +33,6 @@ export type IAdminUseCase = {
     token: string;
     redirectUrl: string;
   }>;
-  resendOtp(mobile: string): Promise<{ success: boolean; message: string }>;
   getDashboardStats(startDate?: string, endDate?: string): Promise<DashboardStats>;
   getUsers(filters: UserFilters): Promise<PaginatedUsersResponse>;
   getOwners(filters: UserFilters): Promise<PaginatedUsersResponse>;
@@ -41,9 +40,7 @@ export type IAdminUseCase = {
   getBookings(filters: BookingFilters): Promise<PaginatedBookingsResponse>;
   updateAuditoriumStatus(
     id: string,
-    status: AuditoriumStatus,
-    adminAdvance?: number,
-    auditoriumAdvance?: number
+    status: AuditoriumStatus
   ): Promise<Auditorium>;
   updateUserStatus(
     id: string,

@@ -1,3 +1,4 @@
+import { QueryFilter } from "mongoose";
 import { Booking } from "../../entities/Booking";
 
 export type BookingFilters = {
@@ -10,6 +11,7 @@ export type BookingFilters = {
   month?: number | null;
   startDate?: string;
   endDate?: string;
+  auditoriumId?: string;
 }
 
 export type PaginatedBookingsResponse = {
@@ -21,21 +23,9 @@ export type PaginatedBookingsResponse = {
   cancelledCount: number;
 }
 
-export type CustomerBookingsPaginatedResponse = {
-  bookings: Booking[];
-  total: number;
-  page: number;
-  totalPages: number;
-}
-
-export type CustomerBookingsQuery = {
-  page: number;
-  limit: number;
-}
-
 export type BookingDbQuery = {
-  query: any;
-  sort: any;
+  query: QueryFilter<Booking>;
+  sort: Record<string, 1 | -1>;
   skip?: number | null;
   limit?: number | null;
 }
@@ -57,6 +47,7 @@ export type OwnerMonthlyRevenue = {
 
 export type OwnerDashboardStats = {
   totalAuditoriums: number;
+  pendingAuditoriums: number;
   totalBookings: number;
   confirmedCount: number;
   completedCount: number;

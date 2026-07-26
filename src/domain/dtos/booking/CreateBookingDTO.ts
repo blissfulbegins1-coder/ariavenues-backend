@@ -1,6 +1,8 @@
-export type CreateBookingDTO = {
+export type CreateOwnerBookingDTO = {
   auditoriumId: string;
-  startDate: string;
-  endDate: string;
-  guestCount: number;
-}
+  userName: string;
+  userMobile: string;
+  bookingDate: string;
+  startTime: string;
+  endTime: string;
+};

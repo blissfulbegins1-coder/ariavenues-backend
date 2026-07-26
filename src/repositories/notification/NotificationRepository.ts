@@ -1,11 +1,11 @@
-import mongoose from "mongoose";
+import mongoose, { QueryFilter } from "mongoose";
 import { Notification } from "../../domain/entities/Notification";
 import { PaginatedNotificationsResponse } from "../../domain/dtos/notification/NotificationDto";
 import { NotificationModel } from "../../infrastructure/services/mongodb/models/notification/NotificationModel";
 import { INotificationRepository } from "./INotificationRepository";
 
 export class NotificationRepository implements INotificationRepository {
-  private toEntity(doc: any): Notification {
+  private toEntity(doc: { toObject?: () => Record<string, any> } & Record<string, any>): Notification {
     if (!doc) return doc;
     const obj = doc.toObject ? doc.toObject() : doc;
     return {
@@ -54,7 +54,7 @@ export class NotificationRepository implements INotificationRepository {
     limit?: number | null,
   ): Promise<PaginatedNotificationsResponse> {
     const userObjectId = new mongoose.Types.ObjectId(userId);
-    const query: any = { receiverId: userObjectId };
+    const query: QueryFilter<Notification> = { receiverId: userObjectId as any };
 
     const total = await NotificationModel.countDocuments(query);
     const unreadCount = await NotificationModel.countDocuments({ ...query, isRead: false });
@@ -77,7 +77,7 @@ export class NotificationRepository implements INotificationRepository {
 
   async markAllAsRead(userId: string): Promise<void> {
     const userObjectId = new mongoose.Types.ObjectId(userId);
-    const query: any = { receiverId: userObjectId, isRead: false };
+    const query: QueryFilter<Notification> = { receiverId: userObjectId as any, isRead: false };
     await NotificationModel.updateMany(
       query,
       { $set: { isRead: true, readAt: new Date() } },

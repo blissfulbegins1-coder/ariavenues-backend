@@ -4,26 +4,23 @@ export type Booking = {
   id: string;
   bookingNumber: string;
   auditoriumId: string;
-  userId: string;
   ownerId: string;
+  userId?: string;
   startDate: string;
   endDate: string;
-  totalDays: number;
-  dayRate: number;
+  startTime?: string;
+  endTime?: string;
   totalAmount: number;
-  adminAdvance: number;
-  auditoriumAdvance: number;
   bookingStatus: BookingStatus;
-  guestCount: number;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
-  auditorium: {
+  auditorium?: {
     name: string;
     address: string;
-    images: string[];
+    images?: string[];
   };
-  user: {
+  user?: {
     name: string;
     email?: string;
     mobile?: string;
@@ -33,4 +30,4 @@ export type Booking = {
     email?: string;
     mobile?: string;
   };
-}
+};

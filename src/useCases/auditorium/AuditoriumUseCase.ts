@@ -2,7 +2,7 @@ import { Auditorium } from "../../domain/entities/Auditorium";
 import { CreateAuditoriumDTO } from "../../domain/dtos/auditorium/CreateAuditoriumDTO";
 import { UpdateAuditoriumDTO } from "../../domain/dtos/auditorium/UpdateAuditoriumDTO";
 import { GetPublicAuditoriumsDTO } from "../../domain/dtos/auditorium/GetPublicAuditoriumsDTO";
-import { PaginatedPublicAuditoriumsDTO, PublicAuditoriumDTO } from "../../domain/dtos/auditorium/PublicAuditoriumDTO";
+import { PaginatedPublicAuditoriumsDTO } from "../../domain/dtos/auditorium/PublicAuditoriumDTO";
 import { IAuditoriumEngine } from "../../engines/auditorium/IAuditoriumEngine";
 import { IBookingEngine } from "../../engines/booking/IBookingEngine";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
@@ -11,19 +11,23 @@ import { CloudinaryService } from "../../infrastructure/services/cloudinary/Clou
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 import { ApiError } from "../../domain/errors/ApiError";
 import { HttpStatus } from "../../domain/enums/HttpStatus";
-import mongoose, { QueryFilter } from "mongoose";
+import { QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
 import { IActivityEngine } from "../../engines/activity/IActivityEngine";
 import { AuditoriumFilters, PaginatedAuditoriumsResponse } from "../../domain/dtos/auditorium/AuditoriumDto";
 import { logger } from "../../utils/logger";
-import { IAuditoriumAdapter } from "../../adapters/auditorium/IAuditoriumAdapter";
+import { IUserEngine } from "../../engines/user/IUserEngine";
+import { IProducer } from "../../infrastructure/amqp/producer/IProducer";
+import UserRoles from "../../domain/enums/UserRole";
+import { BrokerConfig } from "../../infrastructure/config/brocker/brokerConfig";
 
 type AuditoriumUseCaseConstructorParams = {
   auditoriumEngine: IAuditoriumEngine;
   bookingEngine: IBookingEngine;
   cloudinaryService: CloudinaryService;
   activityEngine: IActivityEngine;
-  auditoriumAdapter: IAuditoriumAdapter;
+  userEngine: IUserEngine;
+  producer: IProducer;
 };
 
 export class AuditoriumUseCase implements IAuditoriumUseCase {
@@ -31,20 +35,23 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
   private bookingEngine: IBookingEngine;
   private cloudinaryService: CloudinaryService;
   private activityEngine: IActivityEngine;
-  private auditoriumAdapter: IAuditoriumAdapter;
+  private userEngine: IUserEngine;
+  private producer: IProducer;
 
   constructor({
     auditoriumEngine,
     bookingEngine,
     cloudinaryService,
     activityEngine,
-    auditoriumAdapter,
+    userEngine,
+    producer,
   }: AuditoriumUseCaseConstructorParams) {
     this.auditoriumEngine = auditoriumEngine;
     this.bookingEngine = bookingEngine;
     this.cloudinaryService = cloudinaryService;
     this.activityEngine = activityEngine;
-    this.auditoriumAdapter = auditoriumAdapter;
+    this.userEngine = userEngine;
+    this.producer = producer;
   }
 
   async createAuditorium(data: CreateAuditoriumDTO): Promise<boolean> {
@@ -65,12 +72,36 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
       performedBy: data.user.id,
     }).catch((err) => logger.error("Failed to log auditorium submission activity:", err));
 
+    // Notify all System Administrators of the new auditorium submission
+    try {
+      if (this.userEngine && this.producer) {
+        const admins = await this.userEngine.getAllUsers({ role: UserRoles.ADMIN });
+        for (const admin of admins) {
+          await this.producer.publish(BrokerConfig.routingKeys.ADMIN_NOTIFICATION, {
+            receiverId: admin.id,
+            senderId: data.user.id,
+            role: UserRoles.ADMIN,
+            type: "auditorium_submitted",
+            title: "New Auditorium Submission",
+            message: `New auditorium "${auditorium.name}" has been submitted for approval.`,
+            referenceId: auditorium.id,
+            referenceType: "auditorium",
+            isRead: false,
+            readAt: null,
+            delivered: false,
+          });
+        }
+      }
+    } catch (err) {
+      logger.error("Failed to notify admins of auditorium submission:", err);
+    }
+
     return true;
   }
 
 
   async getOwnerAuditoriums(user: UserTokenDto, filters?: AuditoriumFilters): Promise<PaginatedAuditoriumsResponse> {
-    const query: any = { ownerId: user.id, isActive: true };
+    const query: QueryFilter<Auditorium> = { ownerId: user.id, isActive: true };
 
     if (filters?.search) {
       const searchRegex = new RegExp(filters.search, "i");
@@ -81,10 +112,15 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
     }
 
     if (filters?.status && filters.status !== "all") {
-      query.status = filters.status;
+      if (filters.status === "active") {
+        query.approved = true;
+        query.status = "active";
+      } else {
+        query.status = filters.status;
+      }
     }
 
-    let sortObj: any = { createdAt: -1 };
+    let sortObj: Record<string, 1 | -1> = { createdAt: -1 };
     if (filters?.sortBy === "name") {
       sortObj = { name: 1 };
     }
@@ -188,7 +224,7 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
     const { auditoriums, total } = await this.auditoriumEngine.getPublicAuditoriums(query, skip, limit);
 
     return {
-      auditoriums: this.auditoriumAdapter.toPublicDTOList(auditoriums),
+      auditoriums,
       total,
       page,
       limit,
@@ -196,59 +232,7 @@ export class AuditoriumUseCase implements IAuditoriumUseCase {
     };
   }
 
-  async getPublicAuditoriumById(id: string): Promise<PublicAuditoriumDTO | null> {
-    const auditorium = await this.auditoriumEngine.getAuditoriumById(id);
-    if (!auditorium) return null;
-    return this.auditoriumAdapter.toPublicDTO(auditorium);
-  }
-
-  async getAuditoriumDetailForUser(id: string, user?: { id: string; role: string; }): Promise<PublicAuditoriumDTO | null> {
-    const auditorium = await this.auditoriumEngine.getAuditoriumById(id);
-    if (!auditorium) return null;
-
-    const isOwner = user && (user.role === "owner" && auditorium.ownerId?.toString() === user.id);
-    const isAdmin = user && (user.role === "admin");
-
-    if (isAdmin || isOwner) {
-      return {
-        id: auditorium.id,
-        name: auditorium.name,
-        address: auditorium.address,
-        description: auditorium.description,
-        state: auditorium.state,
-        district: auditorium.district,
-        city: auditorium.city,
-        capacity: auditorium.capacity,
-        dayRate: auditorium.dayRate,
-        amenities: auditorium.amenities,
-        images: auditorium.images,
-        averageRating: auditorium.averageRating,
-        totalReviews: auditorium.totalReviews,
-        status: auditorium.status,
-        adminAdvance: auditorium.adminAdvance ?? 0,
-        auditoriumAdvance: auditorium.auditoriumAdvance ?? 0,
-        approved: auditorium.approved,
-      };
-    }
-
-    return this.auditoriumAdapter.toPublicDTO(auditorium);
-  }
-
   async getAuditoriumById(id: string): Promise<Auditorium | null> {
-    return await this.auditoriumEngine.getAuditoriumById(id);
-  }
-
-  async getBookedAuditoriumDetails(id: string, user: UserTokenDto): Promise<Auditorium | null> {
-    const bookings = await this.bookingEngine.getAllBookings({
-      userId: new mongoose.Types.ObjectId(user.id) as any,
-      auditoriumId: new mongoose.Types.ObjectId(id) as any,
-      bookingStatus: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] },
-    });
-
-    if (!bookings || bookings.length === 0) {
-      throw new ApiError("Access denied. You have not booked this auditorium", HttpStatus.FORBIDDEN);
-    }
-
     return await this.auditoriumEngine.getAuditoriumById(id);
   }
 

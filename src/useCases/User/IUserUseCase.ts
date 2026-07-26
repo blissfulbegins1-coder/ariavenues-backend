@@ -1,15 +1,11 @@
 import {
-  VerifyOtpDTO,
   UserDTO,
-  UserSuccessResponse,
-  UserVerificationResponse,
+  UserAuthResponse,
 } from "../../domain/dtos/user/UserDto";
 import { User } from "../../domain/entities/User";
 
 export type IUserUseCase = {
-  signUp(input: UserDTO): Promise<UserSuccessResponse>;
-  verifyOtp(input: VerifyOtpDTO): Promise<UserVerificationResponse>;
-  resendOtp(mobile: string): Promise<UserSuccessResponse>;
-  signIn(mobile: string): Promise<UserSuccessResponse>;
+  signUp(input: UserDTO): Promise<UserAuthResponse>;
+  signIn(mobile: string): Promise<UserAuthResponse>;
   getUserByMobile(mobile: string): Promise<User | null>;
-}
+};
