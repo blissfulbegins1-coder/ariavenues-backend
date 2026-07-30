@@ -73,7 +73,7 @@ export class AuditoriumRepository implements IAuditoriumRepository {
 
     const total = await AuditoriumModel.countDocuments(query);
 
-    let queryBuilder = AuditoriumModel.find(query);
+    let queryBuilder = AuditoriumModel.find(query).populate("ownerId");
     if (skip !== undefined && skip !== null) {
       queryBuilder = queryBuilder.skip(skip);
     }
