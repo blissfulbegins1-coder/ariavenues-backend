@@ -6,7 +6,6 @@ import { AuditoriumDbQuery, PaginatedAuditoriumsResponse } from "../../domain/dt
 
 export type IAuditoriumEngine = {
   createAuditorium(data: CreateAuditoriumDTO): Promise<Auditorium>;
-  getAuditoriumsByOwner(user: UserTokenDto): Promise<Auditorium[]>;
   getPublicAuditoriums(
     filter?: QueryFilter<Auditorium>,
     skip?: number | null,

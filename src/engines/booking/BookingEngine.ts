@@ -2,7 +2,7 @@ import { ClientSession, QueryFilter } from "mongoose";
 import { Booking } from "../../domain/entities/Booking";
 import { IBookingRepository } from "../../repositories/booking/IBookingRepository";
 import { IBookingEngine } from "./IBookingEngine";
-import { BookingDbQuery, PaginatedBookingsResponse, GetOwnerDashboardStatsDataParams, GetOwnerDashboardStatsDataResponse, OwnerMonthlyRevenue, OwnerActivityItem, CustomerBookingsPaginatedResponse, CustomerBookingsQuery } from "../../domain/dtos/booking/BookingDto";
+import { BookingDbQuery, PaginatedBookingsResponse, GetOwnerDashboardStatsDataParams, GetOwnerDashboardStatsDataResponse, OwnerMonthlyRevenue, OwnerActivityItem } from "../../domain/dtos/booking/BookingDto";
 
 type BookingEngineConstructorParams = {
   bookingRepository: IBookingRepository;
@@ -39,13 +39,6 @@ export class BookingEngine implements IBookingEngine {
     session?: ClientSession,
   ): Promise<Booking | null> {
     return await this.bookingRepository.update(id, data, session);
-  }
-
-  async listBookingsByCustomerPaginated(
-    userId: string,
-    query: CustomerBookingsQuery,
-  ): Promise<CustomerBookingsPaginatedResponse> {
-    return await this.bookingRepository.listByCustomerPaginated(userId, query);
   }
 
   async checkAvailability(filter: QueryFilter<Booking>): Promise<boolean> {

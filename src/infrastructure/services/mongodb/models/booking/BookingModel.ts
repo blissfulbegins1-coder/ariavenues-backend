@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import { Booking } from "../../../../../domain/entities/Booking";
 import { BookingStatus } from "../../../../../domain/enums/BookingStatus";
+import { FIXED_BOOKING_AMOUNT } from "../../../../../config/env";
 
 const bookingSchema = new Schema<Booking>(
   {
@@ -15,12 +16,12 @@ const bookingSchema = new Schema<Booking>(
       ref: "Auditorium",
       required: true,
     },
-    userId: {
+    ownerId: {
       type: Schema.Types.ObjectId as any,
       ref: "User",
       required: true,
     },
-    ownerId: {
+    userId: {
       type: Schema.Types.ObjectId as any,
       ref: "User",
       required: true,
@@ -33,29 +34,29 @@ const bookingSchema = new Schema<Booking>(
       type: String,
       required: true,
     },
-    dayRate: {
-      type: Number,
-      required: true,
+    startTime: {
+      type: String,
+      default: "09:00 AM",
     },
-    adminAdvance: {
-      type: Number,
-      required: true,
-      default: 0,
+    endTime: {
+      type: String,
+      default: "06:00 PM",
     },
-    auditoriumAdvance: {
+    totalAmount: {
       type: Number,
       required: true,
-      default: 0,
+      default: FIXED_BOOKING_AMOUNT,
     },
     bookingStatus: {
       type: String,
-      enum: [BookingStatus.PENDING_PAYMENT, BookingStatus.CONFIRMED, BookingStatus.COMPLETED, BookingStatus.CANCELLED],
+      enum: [
+        BookingStatus.PENDING_PAYMENT,
+        BookingStatus.CONFIRMED,
+        BookingStatus.COMPLETED,
+        BookingStatus.CANCELLED,
+      ],
       required: true,
       default: BookingStatus.PENDING_PAYMENT,
-    },
-    guestCount: {
-      type: Number,
-      required: true,
     },
     isActive: {
       type: Boolean,

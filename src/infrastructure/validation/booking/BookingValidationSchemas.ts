@@ -1,15 +1,21 @@
 import * as yup from "yup";
 import { BookingStatus } from "../../../domain/enums/BookingStatus";
 
-export const createBookingSchema = yup.object().shape({
-  auditoriumId: yup.string().required("Auditorium ID is required").trim(),
-  startDate: yup.string().required("Start date is required").trim(),
-  endDate: yup.string().required("End date is required").trim(),
-  guestCount: yup
-    .number()
-    .required("Expected guest count is required")
-    .positive("Expected guest count must be a positive integer")
-    .integer("Expected guest count must be an integer"),
+export const createOwnerBookingSchema = yup.object().shape({
+  auditoriumId: yup.string().required("Auditorium is required").trim(),
+  userName: yup.string().required("Customer name is required").trim(),
+  userMobile: yup
+    .string()
+    .required("Mobile number is required")
+    .trim()
+    .matches(/^\d{10}$/, "Mobile number must be a valid 10-digit number"),
+  bookingDate: yup
+    .string()
+    .required("Booking date is required")
+    .trim()
+    .matches(/^\d{2}-\d{2}-\d{4}$/, "Booking date must be in DD-MM-YYYY format"),
+  startTime: yup.string().required("Start time is required").trim(),
+  endTime: yup.string().required("End time is required").trim(),
 });
 
 export const bookingIdParamSchema = yup.object().shape({
@@ -83,20 +89,4 @@ export const ownerDashboardStatsQuerySchema = yup.object().shape({
     statsEnd,
     targetYear,
   };
-});
-
-export const getCustomerBookingsQuerySchema = yup.object().shape({
-  page: yup
-    .number()
-    .transform((value, originalValue) => (originalValue === "" || originalValue === undefined || originalValue === null) ? 1 : Number(originalValue))
-    .integer("Page must be an integer")
-    .min(1, "Page must be 1 or greater")
-    .default(1),
-  limit: yup
-    .number()
-    .transform((value, originalValue) => (originalValue === "" || originalValue === undefined || originalValue === null) ? 6 : Number(originalValue))
-    .integer("Limit must be an integer")
-    .min(1, "Limit must be 1 or greater")
-    .max(50, "Limit cannot exceed 50")
-    .default(6),
 });

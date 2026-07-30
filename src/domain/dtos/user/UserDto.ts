@@ -1,3 +1,4 @@
+import { QueryFilter } from "mongoose";
 import UserRoles from "../../enums/UserRole";
 import { User } from "../../entities/User";
 
@@ -13,16 +14,11 @@ export type UserSuccessResponse = {
   message: string;
 }
 
-export type UserVerificationResponse = {
-  user: { id: string; name: string; };
+export type UserAuthResponse = {
+  user: { id: string; name: string };
   token: string;
   redirectUrl: string;
-}
-
-export type VerifyOtpDTO = {
-  mobile: string;
-  otp: string;
-}
+};
 
 export type UserFilters = {
   page?: number | null;
@@ -42,8 +38,8 @@ export type PaginatedUsersResponse = {
 }
 
 export type UserDbQuery = {
-  query: any;
-  sort: any;
+  query: QueryFilter<User>;
+  sort: Record<string, 1 | -1>;
   skip?: number | null;
   limit?: number | null;
 }

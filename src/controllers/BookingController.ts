@@ -1,13 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import { IBookingUseCase } from "../useCases/booking/IBookingUseCase";
 import {
-  createBookingSchema,
+  createOwnerBookingSchema,
   bookingIdParamSchema,
   getPublicBookingsSchema,
   ownerDashboardStatsQuerySchema,
-  getCustomerBookingsQuerySchema,
 } from "../infrastructure/validation/booking/BookingValidationSchemas";
-import { CreateBookingDTO } from "../domain/dtos/booking/CreateBookingDTO";
+import { CreateOwnerBookingDTO } from "../domain/dtos/booking/CreateBookingDTO";
 import UserTokenDto from "../domain/dtos/user/UserTokenDto";
 import { adminBookingsQuerySchema } from "../infrastructure/validation/user/UserValidationSchemas";
 
@@ -22,49 +21,26 @@ export class BookingController {
     this.bookingUseCase = bookingUseCase;
   }
 
-  async create(
+  async createOwnerBooking(
     req: Request,
     res: Response,
     next: NextFunction,
   ): Promise<Response | void> {
     try {
       const user = req.user as UserTokenDto;
-      const validatedData = await createBookingSchema.validate(req.body, {
+      const validatedData = await createOwnerBookingSchema.validate(req.body, {
         abortEarly: false,
       });
 
-      const result = await this.bookingUseCase.createBooking(
-        validatedData as CreateBookingDTO,
+      const result = await this.bookingUseCase.createOwnerBooking(
+        validatedData as CreateOwnerBookingDTO,
         user,
       );
 
       return res.status(201).json({
         success: true,
         data: result,
-        message: "Booking created successfully",
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async getCustomerBookings(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<Response | void> {
-    try {
-      const user = req.user as UserTokenDto;
-      const validatedQuery = await getCustomerBookingsQuerySchema.validate(req.query, {
-        abortEarly: false,
-      });
-      const result = await this.bookingUseCase.getCustomerBookings(user, {
-        page: validatedQuery.page,
-        limit: validatedQuery.limit,
-      });
-      return res.status(200).json({
-        success: true,
-        data: result,
+        message: "Owner booking created successfully",
       });
     } catch (error) {
       next(error);
@@ -180,6 +156,25 @@ export class BookingController {
         success: true,
         data: result,
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+  async getPublicBookedSlots(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<Response | void> {
+    try {
+      const { auditoriumId, date } = req.query;
+      if (!auditoriumId || !date) {
+        return res.status(400).json({ success: false, message: "auditoriumId and date are required" });
+      }
+      const result = await this.bookingUseCase.getBookedSlotsForDate(
+        String(auditoriumId),
+        String(date),
+      );
+      return res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }

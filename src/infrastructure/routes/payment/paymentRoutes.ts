@@ -12,14 +12,14 @@ export const setupPaymentRoutes = (
 
   router.post(
     "/order",
-    requireRole([UserRoles.CUSTOMER]),
+    requireRole([UserRoles.OWNER]),
     async (req: Request, res: Response, next: NextFunction) =>
       paymentController.createOrder(req, res, next),
   );
 
   router.post(
     "/verify",
-    requireRole([UserRoles.CUSTOMER]),
+    requireRole([UserRoles.OWNER]),
     async (req: Request, res: Response, next: NextFunction) =>
       paymentController.verifyPayment(req, res, next),
   );

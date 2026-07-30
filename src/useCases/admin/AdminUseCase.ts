@@ -6,7 +6,7 @@ import { IJwtManagementEngine } from "../../engines/jwt/IJwtManagementEngine";
 import { UserFilters, PaginatedUsersResponse } from "../../domain/dtos/user/UserDto";
 import { AuditoriumFilters, PaginatedAuditoriumsResponse } from "../../domain/dtos/auditorium/AuditoriumDto";
 import { BookingFilters, PaginatedBookingsResponse } from "../../domain/dtos/booking/BookingDto";
-import { OtpService } from "../../infrastructure/services/otp/OtpService";
+import { FIXED_BOOKING_AMOUNT } from "../../config/env";
 import { User } from "../../domain/entities/User";
 import { Auditorium } from "../../domain/entities/Auditorium";
 import { Booking } from "../../domain/entities/Booking";
@@ -21,15 +21,14 @@ import { parseDDMMYYYY } from "../../domain/functions/dateFunctions";
 import { IActivityEngine } from "../../engines/activity/IActivityEngine";
 import { getRelativeTime } from "../../domain/functions/getRaltiveTime";
 import { IProducer } from "../../infrastructure/amqp/producer/IProducer";
-import UserRoles from "../../domain/enums/UserRole";
 import { BrokerConfig } from "../../infrastructure/config/brocker/brokerConfig";
+import { ADMIN_LOGIN_OTP } from "../../config/env";
 
 type AdminUseCaseConstructorParams = {
   userEngine: IUserEngine;
   auditoriumEngine: IAuditoriumEngine;
   bookingEngine: IBookingEngine;
   jwtManagementEngine: IJwtManagementEngine;
-  otpService: OtpService;
   activityEngine: IActivityEngine;
   producer: IProducer;
 };
@@ -39,7 +38,6 @@ export class AdminUseCase implements IAdminUseCase {
   private auditoriumEngine: IAuditoriumEngine;
   private bookingEngine: IBookingEngine;
   private jwtManagementEngine: IJwtManagementEngine;
-  private otpService: OtpService;
   private activityEngine: IActivityEngine;
   private producer: IProducer;
 
@@ -48,7 +46,6 @@ export class AdminUseCase implements IAdminUseCase {
     auditoriumEngine,
     bookingEngine,
     jwtManagementEngine,
-    otpService,
     activityEngine,
     producer,
   }: AdminUseCaseConstructorParams) {
@@ -56,7 +53,6 @@ export class AdminUseCase implements IAdminUseCase {
     this.auditoriumEngine = auditoriumEngine;
     this.bookingEngine = bookingEngine;
     this.jwtManagementEngine = jwtManagementEngine;
-    this.otpService = otpService;
     this.activityEngine = activityEngine;
     this.producer = producer;
   }
@@ -73,8 +69,6 @@ export class AdminUseCase implements IAdminUseCase {
         HttpStatus.FORBIDDEN
       );
     }
-
-    await this.otpService.sendOtp(mobile);
 
     return {
       success: true,
@@ -95,7 +89,9 @@ export class AdminUseCase implements IAdminUseCase {
       throw new ApiError("Unauthorized admin credentials.", HttpStatus.UNAUTHORIZED);
     }
 
-    await this.otpService.verifyOtp(mobile, otp);
+    if (otp !== ADMIN_LOGIN_OTP) {
+      throw new ApiError("Invalid OTP", HttpStatus.BAD_REQUEST);
+    }
 
     const token = this.jwtManagementEngine.generateToken({
       id: user.id,
@@ -110,22 +106,6 @@ export class AdminUseCase implements IAdminUseCase {
       },
       token,
       redirectUrl: REDIRECT_PATHS.admin,
-    };
-  }
-
-  async resendOtp(
-    mobile: string
-  ): Promise<{ success: boolean; message: string }> {
-    const user = await this.userEngine.getUserByMobile(mobile);
-    if (!user || user.role !== UserRole.ADMIN) {
-      throw new ApiError("Unauthorized admin credentials.", HttpStatus.UNAUTHORIZED);
-    }
-
-    await this.otpService.sendOtp(mobile);
-
-    return {
-      success: true,
-      message: "OTP resent successfully",
     };
   }
 
@@ -184,7 +164,7 @@ export class AdminUseCase implements IAdminUseCase {
       const commissionsByMonth = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
       filteredBookings.forEach((bk) => {
-        const commission = bk.adminAdvance || 0;
+        const commission = bk.totalAmount || FIXED_BOOKING_AMOUNT;
         actualCommission += commission;
 
         const monthIndex = parseDDMMYYYY(bk.startDate).getMonth();
@@ -254,7 +234,7 @@ export class AdminUseCase implements IAdminUseCase {
       query.status = filters.status;
     }
 
-    let sortObj: any = { createdAt: -1 };
+    let sortObj: Record<string, 1 | -1> = { createdAt: -1 };
     if (filters.sortBy === "name") {
       sortObj = { name: 1 };
     }
@@ -285,7 +265,7 @@ export class AdminUseCase implements IAdminUseCase {
       query.status = filters.status;
     }
 
-    let sortObj: any = { createdAt: -1 };
+    let sortObj: Record<string, 1 | -1> = { createdAt: -1 };
     if (filters.sortBy === "name") {
       sortObj = { name: 1 };
     }
@@ -316,7 +296,7 @@ export class AdminUseCase implements IAdminUseCase {
       query.status = filters.status;
     }
 
-    let sortObj: any = { createdAt: -1 };
+    let sortObj: Record<string, 1 | -1> = { createdAt: -1 };
     if (filters.sortBy === "name") {
       sortObj = { name: 1 };
     }
@@ -342,15 +322,15 @@ export class AdminUseCase implements IAdminUseCase {
       query.$expr = {
         $and: [
           {
-            $lte: [
+            $gte: [
               { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
-              end,
+              start,
             ],
           },
           {
-            $gte: [
-              { $dateFromString: { dateString: "$endDate", format: "%d-%m-%Y" } },
-              start,
+            $lte: [
+              { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
+              end,
             ],
           },
         ],
@@ -381,7 +361,7 @@ export class AdminUseCase implements IAdminUseCase {
       }
     }
 
-    let sortObj: any = { createdAt: -1 };
+    let sortObj: Record<string, 1 | -1> = { createdAt: -1 };
     if (filters.sortBy === "oldest") {
       sortObj = { createdAt: 1 };
     }
@@ -400,14 +380,10 @@ export class AdminUseCase implements IAdminUseCase {
   async updateAuditoriumStatus(
     id: string,
     status: AuditoriumStatus,
-    adminAdvance?: number,
-    auditoriumAdvance?: number
   ): Promise<Auditorium> {
     const updateData: Partial<Auditorium> = { status };
     if (status === AuditoriumStatus.ACTIVE) {
       updateData.approved = true;
-      if (adminAdvance !== undefined) updateData.adminAdvance = adminAdvance;
-      if (auditoriumAdvance !== undefined) updateData.auditoriumAdvance = auditoriumAdvance;
     } else if (status === AuditoriumStatus.REJECTED) {
       updateData.approved = false;
     }
@@ -416,7 +392,7 @@ export class AdminUseCase implements IAdminUseCase {
       await this.producer.publish(BrokerConfig.routingKeys.ADMIN_NOTIFICATION, {
         receiverId: updated.ownerId,
         senderId: null,
-        role: UserRoles.OWNER,
+        role: UserRole.OWNER,
         type: "auditorium_status",
         title: `Auditorium status set to ${status}`,
         message: `Your auditorium "${updated.name}" is now ${status.toLowerCase()}.`,
@@ -498,7 +474,7 @@ export class AdminUseCase implements IAdminUseCase {
       await this.producer.publish(BrokerConfig.routingKeys.ADMIN_NOTIFICATION, {
         receiverId: updated.userId,
         senderId: null,
-        role: UserRoles.CUSTOMER,
+        role: UserRole.CUSTOMER,
         type: "booking_status",
         title: `Booking status updated to ${status}`,
         message: `Your booking #${updated.bookingNumber} status is now ${status.toLowerCase()}.`,
@@ -513,7 +489,7 @@ export class AdminUseCase implements IAdminUseCase {
       await this.producer.publish(BrokerConfig.routingKeys.ADMIN_NOTIFICATION, {
         receiverId: updated.ownerId,
         senderId: null,
-        role: UserRoles.OWNER,
+        role: UserRole.OWNER,
         type: "booking_status",
         title: `Booking status updated to ${status}`,
         message: `Booking #${updated.bookingNumber} status is now ${status.toLowerCase()}.`,

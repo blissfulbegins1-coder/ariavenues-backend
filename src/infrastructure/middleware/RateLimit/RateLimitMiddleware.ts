@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { logger } from "../../../utils/logger";
 import { HttpStatus } from "../../../domain/enums/HttpStatus";
 import { ApiError } from "../../../domain/errors/ApiError";
+import { RATE_LIMIT_WINDOW_MS, RATE_LIMIT_MAX_REQUESTS } from "../../../config/env";
 
 type RateLimitRecord = {
   count: number;
@@ -10,8 +11,8 @@ type RateLimitRecord = {
 
 const ipRequestMap = new Map<string, RateLimitRecord>();
 
-const WINDOW_MS = 15 * 60 * 1000;
-const MAX_REQUESTS = 200;
+const WINDOW_MS = RATE_LIMIT_WINDOW_MS;
+const MAX_REQUESTS = RATE_LIMIT_MAX_REQUESTS;
 
 export const rateLimitMiddleware = (
   req: Request,

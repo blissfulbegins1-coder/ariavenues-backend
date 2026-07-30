@@ -1,10 +1,10 @@
-import mongoose from "mongoose";
+import mongoose, { QueryFilter } from "mongoose";
 import { Review } from "../../domain/entities/Review";
 import { ReviewModel } from "../../infrastructure/services/mongodb/models/review/ReviewModel";
 import { IReviewRepository } from "./IReviewRepository";
 
 export class ReviewRepository implements IReviewRepository {
-  private toEntity(doc: any): Review {
+  private toEntity(doc: { toObject?: () => Record<string, any> } & Record<string, any>): Review {
     if (!doc) return doc;
     const obj = doc.toObject ? doc.toObject() : doc;
     return {
@@ -31,7 +31,7 @@ export class ReviewRepository implements IReviewRepository {
     limit?: number | null,
   ): Promise<{ reviews: Review[]; total: number }> {
     const audObjectId = new mongoose.Types.ObjectId(auditoriumId);
-    const query: any = { auditoriumId: audObjectId };
+    const query: QueryFilter<Review> = { auditoriumId: audObjectId as any };
 
     const total = await ReviewModel.countDocuments(query);
     let dbQuery = ReviewModel.find(query).sort({ createdAt: -1 });

@@ -2,7 +2,6 @@ import { Auditorium } from "../../domain/entities/Auditorium";
 import { CreateAuditoriumDTO } from "../../domain/dtos/auditorium/CreateAuditoriumDTO";
 import { AuditoriumModel } from "../../infrastructure/services/mongodb/models/auditorium/AuditoriumModel";
 import { IAuditoriumRepository } from "./IAuditoriumRepository";
-import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
 import { ApiError } from "../../domain/errors/ApiError";
 import { AuditoriumStatus } from "../../domain/enums/AuditoriumStatus";
 import { HttpStatus } from "../../domain/enums/HttpStatus";
@@ -10,8 +9,8 @@ import { QueryFilter } from "mongoose";
 import { AuditoriumDbQuery, PaginatedAuditoriumsResponse } from "../../domain/dtos/auditorium/AuditoriumDto";
 
 export class AuditoriumRepository implements IAuditoriumRepository {
-  private toEntity(doc: any): Auditorium {
-    const obj = doc.toObject();
+  private toEntity(doc: { toObject?: () => Record<string, any> } & Record<string, any>): Auditorium {
+    const obj = typeof doc.toObject === "function" ? doc.toObject() : doc;
     const ownerIdStr = typeof obj.ownerId === "object" && obj.ownerId !== null && "_id" in obj.ownerId
       ? obj.ownerId._id.toString()
       : obj.ownerId?.toString() || "";
@@ -33,15 +32,12 @@ export class AuditoriumRepository implements IAuditoriumRepository {
       district: obj.district,
       capacity: obj.capacity,
       dayRate: obj.dayRate,
-      amenities: obj.amenities,
       images: obj.images,
       averageRating: obj.averageRating,
       totalReviews: obj.totalReviews,
       totalBookings: obj.totalBookings,
       status: obj.status,
       approved: obj.approved,
-      adminAdvance: obj.adminAdvance,
-      auditoriumAdvance: obj.auditoriumAdvance,
       createdAt: obj.createdAt,
       ownerName: ownerNameStr,
       ownerMobile: ownerMobileStr,
@@ -57,17 +53,10 @@ export class AuditoriumRepository implements IAuditoriumRepository {
       totalReviews: 0,
       totalBookings: 0,
       approved: false,
-      adminAdvance: 0,
-      auditoriumAdvance: 0,
       isActive: true,
     });
     const saved = await auditorium.save();
     return this.toEntity(saved);
-  }
-
-  async listByOwner(user: UserTokenDto): Promise<Auditorium[]> {
-    const items = await AuditoriumModel.find({ ownerId: user.id, isActive: true });
-    return items.map((item) => this.toEntity(item));
   }
 
   async listPublic(
@@ -84,7 +73,7 @@ export class AuditoriumRepository implements IAuditoriumRepository {
 
     const total = await AuditoriumModel.countDocuments(query);
 
-    let queryBuilder = AuditoriumModel.find(query);
+    let queryBuilder = AuditoriumModel.find(query).populate("ownerId");
     if (skip !== undefined && skip !== null) {
       queryBuilder = queryBuilder.skip(skip);
     }

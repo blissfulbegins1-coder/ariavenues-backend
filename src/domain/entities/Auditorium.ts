@@ -9,18 +9,15 @@ export type Auditorium = {
   city: string;
   capacity: number;
   dayRate: number;
-  amenities: string[];
   images: string[];
   averageRating: number;
   totalReviews: number;
-  totalBookings: number;
+  totalBookings?: number;
   status: string;
   approved: boolean;
-  adminAdvance?: number;
-  auditoriumAdvance?: number;
   isActive: boolean;
   ownerName?: string;
   ownerMobile?: string;
   createdAt: Date;
   updatedAt: Date;
-}
+};

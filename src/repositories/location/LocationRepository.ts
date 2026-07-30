@@ -3,7 +3,7 @@ import { LocationModel } from "../../infrastructure/services/mongodb/models/loca
 import { ILocationRepository } from "./ILocationRepository";
 
 export class LocationRepository implements ILocationRepository {
-  private toEntity(doc: any): Location {
+  private toEntity(doc: { toObject?: () => Record<string, any> } & Record<string, any>): Location {
     const obj = doc.toObject ? doc.toObject() : doc;
     return {
       id: obj._id.toString(),

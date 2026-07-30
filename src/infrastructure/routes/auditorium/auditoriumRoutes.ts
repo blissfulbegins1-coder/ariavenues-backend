@@ -35,13 +35,6 @@ export const setupAuditoriumRoutes = (
       auditoriumController.getAuditoriumById(req, res, next),
   );
 
-  router.get(
-    "/:id/booked-details",
-    requireRole([UserRoles.CUSTOMER]),
-    async (req: Request, res: Response, next: NextFunction) =>
-      auditoriumController.getBookedAuditoriumDetails(req, res, next),
-  );
-
   router.put(
     "/:id",
     requireRole([UserRoles.OWNER]),

@@ -3,7 +3,6 @@ import { IAdminUseCase } from "../useCases/admin/IAdminUseCase";
 import {
   signInSchema,
   verifyOtpSchema,
-  resendOtpSchema,
   userIdParamSchema,
   updateUserStatusSchema,
   dashboardStatsQuerySchema,
@@ -63,23 +62,6 @@ export class AdminController {
         data: result,
         message: "Verification successful",
       });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async resendOtp(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> {
-    try {
-      const validatedData = await resendOtpSchema.validate(req.body, {
-        abortEarly: false,
-      });
-
-      const result = await this.adminUseCase.resendOtp(validatedData.mobile);
-      return res.status(200).json(result);
     } catch (error) {
       next(error);
     }
@@ -200,8 +182,6 @@ export class AdminController {
       const result = await this.adminUseCase.updateAuditoriumStatus(
         id,
         validatedData.status,
-        validatedData.adminAdvance,
-        validatedData.auditoriumAdvance
       );
       return res.status(200).json({
         success: true,

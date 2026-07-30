@@ -1,45 +1,37 @@
-import { ConfirmedBookingDTO, PublicBookingDTO } from "../../domain/dtos/booking/ConfirmedBookingDTO";
-import { CreateBookingDTO } from "../../domain/dtos/booking/CreateBookingDTO";
+import { ConfirmedBookingDTO } from "../../domain/dtos/booking/ConfirmedBookingDTO";
+import { CreateOwnerBookingDTO } from "../../domain/dtos/booking/CreateBookingDTO";
 import { IBookingEngine } from "../../engines/booking/IBookingEngine";
 import { IAuditoriumEngine } from "../../engines/auditorium/IAuditoriumEngine";
 import { IBookingUseCase } from "./IBookingUseCase";
 import UserTokenDto from "../../domain/dtos/user/UserTokenDto";
-import { BookingFilters, PaginatedBookingsResponse, OwnerDashboardStats, CustomerBookingsPaginatedResponse, CustomerBookingsQuery } from "../../domain/dtos/booking/BookingDto";
+import { BookingFilters, PaginatedBookingsResponse, OwnerDashboardStats } from "../../domain/dtos/booking/BookingDto";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { ApiError } from "../../domain/errors/ApiError";
 import UserRoles from "../../domain/enums/UserRole";
-import { parseDDMMYYYY } from "../../domain/functions/dateFunctions";
+import { parseDDMMYYYY, timeToMinutes } from "../../domain/functions/dateFunctions";
 import mongoose, { QueryFilter } from "mongoose";
-import { IProducer } from "../../infrastructure/amqp/producer/IProducer";
-import { BrokerConfig } from "../../infrastructure/config/brocker/brokerConfig";
 import { HttpStatus } from "../../domain/enums/HttpStatus";
 import { logger } from "../../utils/logger";
-import { IBookingAdapter } from "../../adapters/booking/IBookingAdapter";
 import { Booking } from "../../domain/entities/Booking";
+import { UserModel } from "../../infrastructure/services/mongodb/models/user/UserModel";
+import UserStatus from "../../domain/enums/UserStatus";
+import { FIXED_BOOKING_AMOUNT } from "../../config/env";
 
 type BookingUseCaseConstructorParams = {
   bookingEngine: IBookingEngine;
   auditoriumEngine: IAuditoriumEngine;
-  producer: IProducer;
-  bookingAdapter: IBookingAdapter;
 };
 
 export class BookingUseCase implements IBookingUseCase {
   private bookingEngine: IBookingEngine;
   private auditoriumEngine: IAuditoriumEngine;
-  private producer: IProducer;
-  private bookingAdapter: IBookingAdapter;
 
   constructor({
     bookingEngine,
     auditoriumEngine,
-    producer,
-    bookingAdapter,
   }: BookingUseCaseConstructorParams) {
     this.bookingEngine = bookingEngine;
     this.auditoriumEngine = auditoriumEngine;
-    this.producer = producer;
-    this.bookingAdapter = bookingAdapter;
   }
 
   private async autoCompletePastBookings(): Promise<void> {
@@ -50,8 +42,8 @@ export class BookingUseCase implements IBookingUseCase {
     }
   }
 
-  async createBooking(
-    data: CreateBookingDTO,
+  async createOwnerBooking(
+    data: CreateOwnerBookingDTO,
     user: UserTokenDto,
   ): Promise<ConfirmedBookingDTO> {
     const auditorium = await this.auditoriumEngine.getAuditoriumById(
@@ -61,44 +53,30 @@ export class BookingUseCase implements IBookingUseCase {
       throw new ApiError("Auditorium not found", HttpStatus.NOT_FOUND);
     }
 
-    if (auditorium.ownerId === user.id) {
-      throw new ApiError("You cannot book your own auditorium", HttpStatus.BAD_REQUEST);
+    if (auditorium.ownerId !== user.id) {
+      throw new ApiError("Unauthorized access to this auditorium", HttpStatus.FORBIDDEN);
     }
 
-    if (auditorium.adminAdvance === 0 || auditorium.auditoriumAdvance === 0) {
-      throw new ApiError("Advance is not available to book this auditorium", HttpStatus.BAD_REQUEST);
-    }
-
-    if (!auditorium.approved) {
-      throw new ApiError("Auditorium is not verified to book", HttpStatus.BAD_REQUEST);
-    }
-
-    if (data.guestCount > auditorium.capacity) {
-      throw new ApiError(
-        `Guest count exceeds auditorium maximum capacity of ${auditorium.capacity}`,
-        HttpStatus.BAD_REQUEST
-      );
-    }
-
-    const start = parseDDMMYYYY(data.startDate);
-    const end = parseDDMMYYYY(data.endDate);
-
+    const bookingDate = parseDDMMYYYY(data.bookingDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      throw new ApiError("Invalid dates provided", HttpStatus.BAD_REQUEST);
+    if (isNaN(bookingDate.getTime())) {
+      throw new ApiError("Invalid date provided", HttpStatus.BAD_REQUEST);
     }
 
-    if (start.getTime() < today.getTime()) {
+    if (bookingDate.getTime() < today.getTime()) {
       throw new ApiError("Cannot book a date in the past", HttpStatus.BAD_REQUEST);
     }
 
-    if (start.getTime() > end.getTime()) {
-      throw new ApiError("Start date cannot be after end date", HttpStatus.BAD_REQUEST);
+    const newStartMinutes = timeToMinutes(data.startTime);
+    const newEndMinutes = timeToMinutes(data.endTime);
+
+    if (newStartMinutes >= newEndMinutes) {
+      throw new ApiError("End time must be after start time", HttpStatus.BAD_REQUEST);
     }
 
-    const availabilityFilter: QueryFilter<Booking> = {
+    const existingBookings = await this.bookingEngine.getAllBookings({
       auditoriumId: new mongoose.Types.ObjectId(data.auditoriumId) as any,
       bookingStatus: {
         $in: [
@@ -107,92 +85,73 @@ export class BookingUseCase implements IBookingUseCase {
           BookingStatus.COMPLETED,
         ],
       },
-      $expr: {
-        $and: [
-          {
-            $lte: [
-              { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
-              end,
-            ],
-          },
-          {
-            $gte: [
-              { $dateFromString: { dateString: "$endDate", format: "%d-%m-%Y" } },
-              start,
-            ],
-          },
-        ],
-      },
-    };
+      startDate: data.bookingDate,
+    });
 
-    const isAvailable = await this.bookingEngine.checkAvailability(availabilityFilter);
-    if (!isAvailable) {
+    for (const existing of existingBookings) {
+      const eStart = timeToMinutes(existing.startTime ?? "");
+      const eEnd = timeToMinutes(existing.endTime ?? "");
+
+      if (newStartMinutes < eEnd && newEndMinutes > eStart) {
+        throw new ApiError(
+          `The time slot ${data.startTime} - ${data.endTime} overlaps with an existing booking (${existing.startTime} - ${existing.endTime}) for this venue.`,
+          HttpStatus.CONFLICT,
+        );
+      }
+    }
+
+    const randomSuffix = Math.floor(100000 + Math.random() * 900000).toString();
+    const bookingNumber = `BK-${randomSuffix}`;
+
+    const fixedAmount = FIXED_BOOKING_AMOUNT;
+
+    if (data.totalAmount !== undefined && Number(data.totalAmount) !== fixedAmount) {
       throw new ApiError(
-        "Auditorium is already reserved or booked for these dates",
-        HttpStatus.CONFLICT
+        `Invalid booking amount ₹${data.totalAmount}. Expected fixed amount ₹${fixedAmount}.`,
+        HttpStatus.BAD_REQUEST,
       );
     }
 
-    const dayRate = auditorium.dayRate;
-    const adminAdvance = auditorium.adminAdvance;
-    const auditoriumAdvance = auditorium.auditoriumAdvance;
+    const userMobile = data.userMobile.trim();
+    const userName = data.userName.trim();
 
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-    const dateStr = `${year}${month}${day}`;
-    const randomDigits = Math.floor(1000 + Math.random() * 9000);
-    const bookingNumber = `BOOK${randomDigits}${dateStr}`;
-
-    const newBooking = await this.bookingEngine.createBooking({
-      bookingNumber,
-      auditoriumId: data.auditoriumId,
-      userId: user.id,
-      ownerId: auditorium.ownerId,
-      startDate: data.startDate,
-      endDate: data.endDate,
-      dayRate,
-      adminAdvance,
-      auditoriumAdvance,
-      bookingStatus: BookingStatus.PENDING_PAYMENT,
-      guestCount: data.guestCount,
-    });
-
-    if (newBooking) {
-      await this.producer.publish(BrokerConfig.routingKeys.BOOKING_NOTIFICATION, {
-        receiverId: newBooking.ownerId,
-        senderId: user.id,
-        role: UserRoles.OWNER,
-        type: "booking_created",
-        title: "New Booking Request",
-        message: `You have a new booking request for "${auditorium.name}" (Ref: ${bookingNumber}).`,
-        referenceId: newBooking.id,
-        referenceType: "booking",
-        isRead: false,
-        readAt: null,
-        delivered: false,
+    let customerUser = await UserModel.findOne({ mobile: userMobile });
+    if (!customerUser) {
+      customerUser = await UserModel.create({
+        name: userName,
+        mobile: userMobile,
+        role: UserRoles.CUSTOMER,
+        status: UserStatus.ACTIVE,
+        mobileVerified: true,
+        isActive: true,
       });
     }
 
-    return this.bookingAdapter.toConfirmedDTO(newBooking);
-  }
+    const created = await this.bookingEngine.createBooking({
+      bookingNumber,
+      auditoriumId: data.auditoriumId,
+      ownerId: user.id,
+      userId: customerUser._id.toString(),
+      startDate: data.bookingDate,
+      endDate: data.bookingDate,
+      startTime: data.startTime,
+      endTime: data.endTime,
+      totalAmount: fixedAmount,
+      bookingStatus: BookingStatus.PENDING_PAYMENT,
+      isActive: true,
+    } as any);
 
-  async getCustomerBookings(
-    user: UserTokenDto,
-    query: CustomerBookingsQuery,
-  ): Promise<CustomerBookingsPaginatedResponse> {
-    await this.autoCompletePastBookings();
-    const result = await this.bookingEngine.listBookingsByCustomerPaginated(user.id, query);
-    return {
-      ...result,
-      bookings: this.bookingAdapter.toPublicDTOList(result.bookings) as any,
-    };
+    return created as ConfirmedBookingDTO;
   }
 
   async getOwnerBookings(user: UserTokenDto, filters: BookingFilters): Promise<PaginatedBookingsResponse> {
     await this.autoCompletePastBookings();
 
     const query: any = { isActive: true, ownerId: new mongoose.Types.ObjectId(user.id) };
+
+    if (filters.auditoriumId && filters.auditoriumId !== "all") {
+      query.auditoriumId = new mongoose.Types.ObjectId(filters.auditoriumId);
+    }
 
     if (filters.startDate && filters.endDate) {
       const start = parseDDMMYYYY(filters.startDate);
@@ -202,15 +161,15 @@ export class BookingUseCase implements IBookingUseCase {
       query.$expr = {
         $and: [
           {
-            $lte: [
+            $gte: [
               { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
-              end,
+              start,
             ],
           },
           {
-            $gte: [
-              { $dateFromString: { dateString: "$endDate", format: "%d-%m-%Y" } },
-              start,
+            $lte: [
+              { $dateFromString: { dateString: "$startDate", format: "%d-%m-%Y" } },
+              end,
             ],
           },
         ],
@@ -239,7 +198,7 @@ export class BookingUseCase implements IBookingUseCase {
       }
     }
 
-    let sortObj: any = { createdAt: -1 };
+    let sortObj: Record<string, 1 | -1> = { createdAt: -1 };
     if (filters.sortBy === "oldest") {
       sortObj = { createdAt: 1 };
     }
@@ -270,7 +229,7 @@ export class BookingUseCase implements IBookingUseCase {
       throw new ApiError("Unauthorized access to this booking details", HttpStatus.FORBIDDEN);
     }
 
-    return this.bookingAdapter.toConfirmedDTO(booking);
+    return booking as ConfirmedBookingDTO;
   }
 
   async cancelPendingBooking(id: string, user: UserTokenDto): Promise<void> {
@@ -279,7 +238,7 @@ export class BookingUseCase implements IBookingUseCase {
       throw new ApiError("Booking not found", HttpStatus.NOT_FOUND);
     }
 
-    if (booking.userId !== user.id) {
+    if (booking.userId !== user.id && booking.ownerId !== user.id) {
       throw new ApiError(
         "Unauthorized: you cannot cancel this booking",
         HttpStatus.FORBIDDEN
@@ -316,8 +275,17 @@ export class BookingUseCase implements IBookingUseCase {
 
     const totalRevenue = statsData.monthlyRevenue.reduce((s, m) => s + m.revenue, 0);
 
+    const approvedAuditoriumsCount = auditoriums.filter(
+      (a) => a.approved === true || a.status === "active",
+    ).length;
+
+    const pendingAuditoriumsCount = auditoriums.filter(
+      (a) => a.approved === false || a.status === "pending",
+    ).length;
+
     return {
-      totalAuditoriums: auditoriums.length,
+      totalAuditoriums: approvedAuditoriumsCount,
+      pendingAuditoriums: pendingAuditoriumsCount,
       totalBookings: statsData.totalBookings,
       confirmedCount: statsData.confirmedCount,
       completedCount: statsData.completedCount,
@@ -367,6 +335,29 @@ export class BookingUseCase implements IBookingUseCase {
     return bookings.map((b) => ({
       startDate: b.startDate,
       endDate: b.endDate,
+    }));
+  }
+
+  async getBookedSlotsForDate(
+    auditoriumId: string,
+    date: string,
+  ): Promise<{ startTime: string; endTime: string; bookingNumber: string }[]> {
+    const bookings = await this.bookingEngine.getAllBookings({
+      auditoriumId: new mongoose.Types.ObjectId(auditoriumId) as any,
+      bookingStatus: {
+        $in: [
+          BookingStatus.PENDING_PAYMENT,
+          BookingStatus.CONFIRMED,
+          BookingStatus.COMPLETED,
+        ],
+      },
+      startDate: date,
+    });
+
+    return bookings.map((b) => ({
+      startTime: b.startTime ?? "",
+      endTime: b.endTime ?? "",
+      bookingNumber: b.bookingNumber,
     }));
   }
 }

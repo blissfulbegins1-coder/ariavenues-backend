@@ -1,39 +1,28 @@
 # Auditorium Booking Backend
 
-A modern, layered backend architecture built with **Express**, **MongoDB/Mongoose**, **Awilix (DI)**, and **TypeScript**.
+## Running Instructions
 
-## Setup & Installation
-
-### 1. Install dependencies
+### 1. Install Dependencies
 ```bash
 npm install
 ```
 
-### 2. Create `.env` file
-```bash
-cp .env.example .env
-```
-
-Edit `.env`:
-```
+### 2. Environment Configuration
+Ensure `.env` file exists with required variables:
+```env
 PORT=3000
-MONGO_URI=mongodb://localhost:27017/auditorium-booking
-NODE_ENV=development
+MONGODB_URI=mongodb://localhost:27017/auditorium-booking
+JWT_SECRET=your_secret_key
+CORS_ORIGINS=http://localhost:5173
 ```
-### 3. Run the server
-```bash
-# Development mode (with auto-reload)
-npm run dev
 
-# Production build
+### 3. Run Development Server
+```bash
+npm run dev
+```
+
+### 4. Production Build & Start
+```bash
 npm run build
 npm start
 ```
-
-- **Express.js** - Web framework
-- **MongoDB** - Database
-- **Mongoose** - ODM for MongoDB
-- **Awilix** - Dependency injection container
-- **TypeScript** - Language
-- **TSX** - TypeScript executor for development
-- **CORS** - Cross-origin requests

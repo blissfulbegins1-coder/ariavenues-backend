@@ -9,4 +9,4 @@ export type IUserRepository = {
   update(id: string, data: Partial<User>): Promise<User | null>;
   findAll(filter?: QueryFilter<User>): Promise<User[]>;
   getUsers(dbQuery: UserDbQuery): Promise<PaginatedUsersResponse>;
-}
+};

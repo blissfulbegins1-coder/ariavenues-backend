@@ -23,12 +23,6 @@ export const setupAdminRoutes = (
       adminController.verifyOtp(req, res, next)
   );
 
-  router.post(
-    "/resend-otp",
-    async (req: Request, res: Response, next: NextFunction) =>
-      adminController.resendOtp(req, res, next)
-  );
-
   // Protected admin management routes
   router.get(
     "/dashboard-stats",

@@ -4,7 +4,7 @@ import { PaymentModel } from "../../infrastructure/services/mongodb/models/payme
 import { IPaymentRepository } from "./IPaymentRepository";
 
 export class PaymentRepository implements IPaymentRepository {
-  private toEntity(doc: any): Payment {
+  private toEntity(doc: { toObject?: () => Record<string, any> } & Record<string, any>): Payment {
     const obj = doc.toObject ? doc.toObject() : doc;
     return {
       id: obj._id.toString(),
