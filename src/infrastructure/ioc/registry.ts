@@ -8,7 +8,7 @@ import { DatabaseService } from "../services/mongodb/DatabaseService";
 import { UserRepository } from "../../repositories/user/UserRepository";
 import { UserEngine } from "../../engines/user/UserEngine";
 import { JwtManagementEngine } from "../../engines/jwt/JwtManagementEngine";
-import { UserUseCase } from "../../useCases/user/UserUseCase";
+import { UserUseCase } from "../../useCases/publicUser/UserUseCase";
 import { UserController } from "../../controllers/UserController";
 import { AuditoriumRepository } from "../../repositories/auditorium/AuditoriumRepository";
 import { AuditoriumEngine } from "../../engines/auditorium/AuditoriumEngine";

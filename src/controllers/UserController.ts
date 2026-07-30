@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { IUserUseCase } from "../useCases/user/IUserUseCase";
+import { IUserUseCase } from "../useCases/publicUser/IUserUseCase";
 import {
   signUpSchema,
   signInSchema,
