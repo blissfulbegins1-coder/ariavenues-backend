@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import { Booking } from "../../../../../domain/entities/Booking";
 import { BookingStatus } from "../../../../../domain/enums/BookingStatus";
+import { FIXED_BOOKING_AMOUNT } from "../../../../../config/env";
 
 const bookingSchema = new Schema<Booking>(
   {
@@ -44,7 +45,7 @@ const bookingSchema = new Schema<Booking>(
     totalAmount: {
       type: Number,
       required: true,
-      default: 2000,
+      default: FIXED_BOOKING_AMOUNT,
     },
     bookingStatus: {
       type: String,

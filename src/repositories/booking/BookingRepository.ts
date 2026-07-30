@@ -6,6 +6,7 @@ import { BookingDbQuery, PaginatedBookingsResponse, GetOwnerDashboardStatsDataPa
 import { parseDDMMYYYY } from "../../domain/functions/dateFunctions";
 import { BookingStatus } from "../../domain/enums/BookingStatus";
 import { logger } from "../../utils/logger";
+import { FIXED_BOOKING_AMOUNT } from "../../config/env";
 
 type BookingAggregationDoc = {
   _id: mongoose.Types.ObjectId;
@@ -15,12 +16,10 @@ type BookingAggregationDoc = {
   ownerId: mongoose.Types.ObjectId;
   startDate: string;
   endDate: string;
-  dayRate: number;
+  startTime?: string;
+  endTime?: string;
   totalAmount?: number;
-  adminAdvance?: number;
-  auditoriumAdvance?: number;
   bookingStatus: string;
-  guestCount: number;
   isActive?: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -97,15 +96,7 @@ const bookingDetailsLookup = [
 
 export class BookingRepository implements IBookingRepository {
   private toEntity(doc: BookingAggregationDoc): Booking {
-    const start = parseDDMMYYYY(doc.startDate);
-    const docEndDate = parseDDMMYYYY(doc.endDate);
-    const totalDays = Math.max(
-      1,
-      Math.round((docEndDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
-    );
-    const adminAdvance = doc.adminAdvance ?? 0;
-    const auditoriumAdvance = doc.auditoriumAdvance ?? 0;
-    const totalAmount = doc.totalAmount ?? (adminAdvance + auditoriumAdvance > 0 ? adminAdvance + auditoriumAdvance : 2000);
+    const totalAmount = doc.totalAmount ?? FIXED_BOOKING_AMOUNT;
 
     const booking = {
       id: doc._id.toString(),
@@ -115,15 +106,10 @@ export class BookingRepository implements IBookingRepository {
       ownerId: doc.ownerId ? doc.ownerId.toString() : "",
       startDate: doc.startDate,
       endDate: doc.endDate,
-      startTime: (doc as any).startTime || "09:00 AM",
-      endTime: (doc as any).endTime || "06:00 PM",
-      totalDays,
-      dayRate: doc.dayRate,
+      startTime: doc.startTime || "09:00 AM",
+      endTime: doc.endTime || "06:00 PM",
       totalAmount,
-      adminAdvance,
-      auditoriumAdvance,
       bookingStatus: doc.bookingStatus as Booking["bookingStatus"],
-      guestCount: doc.guestCount,
       isActive: doc.isActive ?? true,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
@@ -445,7 +431,7 @@ export class BookingRepository implements IBookingRepository {
       bookingNumber: doc.bookingNumber,
       auditoriumName: doc.audData?.[0]?.name,
       customerName: doc.userData?.[0]?.name,
-      amount: doc.totalAmount ?? 2000,
+      amount: doc.totalAmount ?? FIXED_BOOKING_AMOUNT,
       createdAt: doc.createdAt,
     }));
 

@@ -5,4 +5,5 @@ export type CreateOwnerBookingDTO = {
   bookingDate: string;
   startTime: string;
   endTime: string;
+  totalAmount?: number;
 };

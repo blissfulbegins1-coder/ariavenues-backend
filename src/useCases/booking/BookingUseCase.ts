@@ -105,6 +105,13 @@ export class BookingUseCase implements IBookingUseCase {
 
     const fixedAmount = FIXED_BOOKING_AMOUNT;
 
+    if (data.totalAmount !== undefined && Number(data.totalAmount) !== fixedAmount) {
+      throw new ApiError(
+        `Invalid booking amount ₹${data.totalAmount}. Expected fixed amount ₹${fixedAmount}.`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     const userMobile = data.userMobile.trim();
     const userName = data.userName.trim();
 

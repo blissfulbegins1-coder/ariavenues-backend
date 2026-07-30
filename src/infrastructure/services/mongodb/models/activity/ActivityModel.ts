@@ -28,7 +28,7 @@ const activitySchema = new Schema<Activity>(
     },
     referenceType: {
       type: String,
-      enum: ["USER", "OWNER", "ONWER", "AUDITORIUM", "BOOKING", "PAYMENT"],
+      enum: ["USER", "OWNER", "AUDITORIUM", "BOOKING", "PAYMENT"],
       required: true,
     },
     performedBy: {

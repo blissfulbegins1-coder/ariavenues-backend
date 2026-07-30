@@ -6,6 +6,7 @@ import { IJwtManagementEngine } from "../../engines/jwt/IJwtManagementEngine";
 import { UserFilters, PaginatedUsersResponse } from "../../domain/dtos/user/UserDto";
 import { AuditoriumFilters, PaginatedAuditoriumsResponse } from "../../domain/dtos/auditorium/AuditoriumDto";
 import { BookingFilters, PaginatedBookingsResponse } from "../../domain/dtos/booking/BookingDto";
+import { FIXED_BOOKING_AMOUNT } from "../../config/env";
 import { User } from "../../domain/entities/User";
 import { Auditorium } from "../../domain/entities/Auditorium";
 import { Booking } from "../../domain/entities/Booking";
@@ -163,7 +164,7 @@ export class AdminUseCase implements IAdminUseCase {
       const commissionsByMonth = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
       filteredBookings.forEach((bk) => {
-        const commission = bk.totalAmount || 2000;
+        const commission = bk.totalAmount || FIXED_BOOKING_AMOUNT;
         actualCommission += commission;
 
         const monthIndex = parseDDMMYYYY(bk.startDate).getMonth();

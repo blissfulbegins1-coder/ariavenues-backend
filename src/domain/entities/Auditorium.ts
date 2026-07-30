@@ -13,7 +13,7 @@ export type Auditorium = {
   images: string[];
   averageRating: number;
   totalReviews: number;
-  totalBookings: number;
+  totalBookings?: number;
   status: string;
   approved: boolean;
   isActive: boolean;
