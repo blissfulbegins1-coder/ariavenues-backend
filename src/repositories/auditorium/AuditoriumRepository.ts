@@ -32,7 +32,6 @@ export class AuditoriumRepository implements IAuditoriumRepository {
       district: obj.district,
       capacity: obj.capacity,
       dayRate: obj.dayRate,
-      amenities: obj.amenities,
       images: obj.images,
       averageRating: obj.averageRating,
       totalReviews: obj.totalReviews,

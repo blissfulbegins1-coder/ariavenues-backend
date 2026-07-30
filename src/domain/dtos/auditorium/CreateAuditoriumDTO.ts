@@ -11,7 +11,6 @@ export type CreateAuditoriumDTO = {
   city: string;
   capacity: number;
   dayRate: number;
-  amenities: string[];
   images: Express.Multer.File[] | string[];
   status?: AuditoriumStatus;
 }

@@ -39,22 +39,6 @@ export const createAuditoriumSchema = yup.object().shape({
     .required("Day rate is required")
     .positive("Day rate must be positive")
     .min(0, "Day rate cannot be negative"),
-  amenities: yup
-    .array()
-    .of(yup.string().required())
-    .transform((value, originalValue) => {
-      if (typeof originalValue === "string") {
-        try {
-          return JSON.parse(originalValue);
-        } catch (e) {
-          return [];
-        }
-      }
-      return value;
-    })
-    .required("Amenities are required")
-    .min(1, "At least one amenity is required")
-    .max(20, "Maximum of 20 amenities allowed"),
   images: yup
     .array()
     .required("Exactly 6 images are required")
@@ -106,22 +90,6 @@ export const updateAuditoriumSchema = yup
       .required("Day rate is required")
       .positive("Day rate must be positive")
       .min(0, "Day rate cannot be negative"),
-    amenities: yup
-      .array()
-      .of(yup.string().required())
-      .transform((value, originalValue) => {
-        if (typeof originalValue === "string") {
-          try {
-            return JSON.parse(originalValue);
-          } catch (e) {
-            return [];
-          }
-        }
-        return value;
-      })
-      .required("Amenities are required")
-      .min(1, "At least one amenity is required")
-      .max(20, "Maximum of 20 amenities allowed"),
     existingImages: yup
       .array()
       .of(yup.string().defined())

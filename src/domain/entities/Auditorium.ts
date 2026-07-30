@@ -9,7 +9,6 @@ export type Auditorium = {
   city: string;
   capacity: number;
   dayRate: number;
-  amenities: string[];
   images: string[];
   averageRating: number;
   totalReviews: number;

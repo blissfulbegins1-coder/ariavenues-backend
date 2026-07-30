@@ -39,10 +39,6 @@ const auditoriumSchema = new Schema<Auditorium>(
     dayRate: {
       type: Number,
     },
-    amenities: {
-      type: [String],
-      default: [],
-    },
     images: {
       type: [String],
       default: [],

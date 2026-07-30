@@ -7,7 +7,6 @@ export type UpdateAuditoriumDTO = {
   city: string;
   capacity: number;
   dayRate: number;
-  amenities: string[];
   existingImages: string[];
   newImages?: Express.Multer.File[];
   status?: string;
